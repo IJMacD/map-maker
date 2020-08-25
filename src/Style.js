@@ -89,7 +89,10 @@ export function parseStyle (styleText) {
     const declarations = {};
     
     match[2].split(";").map(s => s.trim()).filter(s => s).forEach(s => {
-      const [ property, value ] = s.split(":").map(s => s.trim());
+      // s.split(":", 2) is not the same as PHP
+      const i = s.indexOf(":");
+      const property = s.substring(0,i).trim();
+      const value = s.substring(i+1).trim();
       declarations[property] = value;
     });
 

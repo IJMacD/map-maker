@@ -9,73 +9,96 @@ import { matchRule } from "./Style";
 export function renderMap(bbox, result, canvasRef, style, database) {
     const [minLon, minLat, maxLon, maxLat] = bbox.split(",").map(parseFloat);
     if (result && canvasRef.current && !isNaN(minLon) && !isNaN(minLat) && !isNaN(maxLon) && !isNaN(maxLat)) {
-    const ctx = canvasRef.current.getContext("2d");
-    const { clientWidth, clientHeight } = canvasRef.current;
+        const ctx = canvasRef.current.getContext("2d");
+        const { clientWidth, clientHeight } = canvasRef.current;
 
-    const width = clientWidth * devicePixelRatio;
-    const height = clientHeight * devicePixelRatio;
+        const width = clientWidth * devicePixelRatio;
+        const height = clientHeight * devicePixelRatio;
 
-    canvasRef.current.width = width;
-    canvasRef.current.height = height;
+        canvasRef.current.width = width;
+        canvasRef.current.height = height;
 
-    /** @type {(lon: number, lat: number) => [number, number]} */
-    const projection = mercatorProjection(minLon, minLat, maxLon, maxLat, width, height);
+        /** @type {(lon: number, lat: number) => [number, number]} */
+        const projection = mercatorProjection(minLon, minLat, maxLon, maxLat, width, height);
 
-    for (const el of result.elements) {
-        const rule = matchRule(style, el);
-        
-        if (rule) {
-            if (el.type === "node") {
-                ctx.fillStyle = rule.declarations["fill"];
-                ctx.strokeStyle = rule.declarations["stroke"];
-                ctx.lineWidth = +rule.declarations["stroke-width"];
+        for (const el of result.elements) {
+            const rule = matchRule(style, el);
 
-                const r = +rule.declarations["size"];
-                const [x, y] = projection(el.lon, el.lat);
-
-                ctx.beginPath();
-                ctx.ellipse(x, y, r, r, 0, 0, Math.PI * 2);
-
-                rule.declarations["fill"] && ctx.fill();
-                rule.declarations["stroke"] && ctx.stroke();
-            }
-            else if (el.type === "way") {
-                if (!el.nodes) continue;
-                database.getNodes(el.nodes).then(nodes => {
+            ctx.save();
+            
+            if (rule) {
+                if (el.type === "node") {
                     ctx.fillStyle = rule.declarations["fill"];
                     ctx.strokeStyle = rule.declarations["stroke"];
                     ctx.lineWidth = +rule.declarations["stroke-width"];
 
+                    const r = +rule.declarations["size"];
+                    const [x, y] = projection(el.lon, el.lat);
+
                     ctx.beginPath();
-                    ctx.moveTo(...projection(nodes[0].lon, nodes[0].lat));
-                    for (let i = 1; i < nodes.length; i++) {
-                        ctx.lineTo(...projection(nodes[i].lon, nodes[i].lat));
-                    }
-                    
-                    rule.declarations["fill"] && ctx.fill();
-                    rule.declarations["stroke"] && ctx.stroke();
-                });
-            }
-            else if (el.type === "area") {
-                if (!el.nodes) continue;
-                database.getNodes(el.nodes).then(nodes => {
-                    ctx.fillStyle = rule.declarations["fill"];
-                    ctx.strokeStyle = rule.declarations["stroke"];
-                    ctx.lineWidth = +rule.declarations["stroke-width"];
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(...projection(nodes[0].lon, nodes[0].lat));
-                    for (let i = 1; i < nodes.length; i++) {
-                        ctx.lineTo(...projection(nodes[i].lon, nodes[i].lat));
-                    }
-                    ctx.closePath();
+                    ctx.ellipse(x, y, r, r, 0, 0, Math.PI * 2);
 
                     rule.declarations["fill"] && ctx.fill();
                     rule.declarations["stroke"] && ctx.stroke();
-                });
+
+                    if (rule.declarations["content"]) {
+                        let content = rule.declarations["content"];
+                        
+                        if (content.match(/^".*"$/g)) {
+                            content = content.replace(/^"|"$/g, "");
+                        } else if (content.match(/tag\(([^)]+)\)/)) {
+                            const m = content.match(/tag\(([^)]+)\)/);
+                            content = el.tags[m[1]] || "";
+                        } else {
+                            content = "?";
+                        }
+
+                        if (rule.declarations["font-size"]) {
+                            ctx.font = rule.declarations["font-size"] + " sans-serif";
+                        }
+
+                        ctx.fillText(content, x, y);
+                    }
+                }
+                else if (el.type === "way") {
+                    if (!el.nodes) continue;
+                    database.getNodes(el.nodes).then(nodes => {
+                        ctx.fillStyle = rule.declarations["fill"];
+                        ctx.strokeStyle = rule.declarations["stroke"];
+                        ctx.lineWidth = +rule.declarations["stroke-width"];
+
+                        ctx.beginPath();
+                        ctx.moveTo(...projection(nodes[0].lon, nodes[0].lat));
+                        for (let i = 1; i < nodes.length; i++) {
+                            ctx.lineTo(...projection(nodes[i].lon, nodes[i].lat));
+                        }
+                        
+                        rule.declarations["fill"] && ctx.fill();
+                        rule.declarations["stroke"] && ctx.stroke();
+                    });
+                }
+                else if (el.type === "area") {
+                    if (!el.nodes) continue;
+                    database.getNodes(el.nodes).then(nodes => {
+                        ctx.fillStyle = rule.declarations["fill"];
+                        ctx.strokeStyle = rule.declarations["stroke"];
+                        ctx.lineWidth = +rule.declarations["stroke-width"];
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(...projection(nodes[0].lon, nodes[0].lat));
+                        for (let i = 1; i < nodes.length; i++) {
+                            ctx.lineTo(...projection(nodes[i].lon, nodes[i].lat));
+                        }
+                        ctx.closePath();
+
+                        rule.declarations["fill"] && ctx.fill();
+                        rule.declarations["stroke"] && ctx.stroke();
+                    });
+                }
             }
+
+            ctx.restore();
         }
-    }
 
     }
 }
