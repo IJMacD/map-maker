@@ -1,7 +1,7 @@
 import React from 'react';
 import './App.css';
 import useSavedState from './useSavedState';
-import Database from './database';
+import HashMapDatabase from './database.hashmap.js';
 
 const API_ROOT = "https://lz4.overpass-api.de/api/interpreter"
 
@@ -12,11 +12,11 @@ function App() {
   const [ result, setResult ] = React.useState(null);
   /** @type {React.MutableRefObject<HTMLCanvasElement>} */
   const canvasRef = React.useRef();
-  /** @type {React.MutableRefObject<Database>} */
+  /** @type {React.MutableRefObject<NodeDatabase>} */
   const databaseRef = React.useRef();
 
   if (!databaseRef.current) {
-    databaseRef.current = new Database("OverlayElements");
+    databaseRef.current = new HashMapDatabase();
   }
   
   const parsedStyle = React.useMemo(() => parseStyle(style), [style]);
@@ -244,3 +244,10 @@ StyleSelector.parse = function (text) {
 
   return new StyleSelector(type, tags);
 }
+
+/**
+ * @typedef NodeDatabase
+ * @property {(nodes: object[]) => void} saveNodes
+ * @property {(id: number) => object} getNode
+ * @property {(ids: number[]) => Promise<object[]>} getNodes
+ */

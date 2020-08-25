@@ -1,4 +1,4 @@
-export default class Database {
+export default class IDBDatabase {
     constructor (name) {
         const request = indexedDB.open(name);
         request.addEventListener("upgradeneeded", ev => {
