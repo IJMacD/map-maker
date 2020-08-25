@@ -1,5 +1,5 @@
 export default class ObjectDatabase {
-    constructor (name) {
+    constructor () {
         this.store = {};
     }
 
