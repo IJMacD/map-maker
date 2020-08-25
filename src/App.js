@@ -14,7 +14,7 @@ function App() {
   const debouncedStyle = useDebounce(style, 1000);
   const [ query, setQuery ] = React.useState("");
   const debouncedQuery = useDebounce(query, 5000);
-  const [ bbox, setBbox ] = React.useState("7.0,50.6,7.3,50.8");
+  const [ bbox, setBbox ] = useSavedState("USER_BBOX", "7.0,50.6,7.3,50.8");
   const [ result, setResult ] = React.useState(null);
   /** @type {React.MutableRefObject<HTMLCanvasElement>} */
   const canvasRef = React.useRef();
@@ -40,12 +40,12 @@ function App() {
   }, [parsedStyle]);
 
   // Auto render
-  React.useEffect(fetchHandler, [debouncedQuery]);
+  React.useEffect(fetchHandler, [debouncedQuery, bbox]);
 
   function fetchHandler () {
-    if (query) {
+    if (debouncedQuery) {
       setFetching(true);
-      runQuery(query, bbox).then(r => {
+      runQuery(debouncedQuery, bbox).then(r => {
         setResult(r);
         
         databaseRef.current.saveNodes(r.elements.filter(r => r.type === "node"));

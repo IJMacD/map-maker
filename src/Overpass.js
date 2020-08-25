@@ -6,7 +6,7 @@ const API_ROOT = require("./const").API_ROOT;
 export function rulesToQuery(style) {
     const q =
       `(\n${style.rules.map(r => r.selectors.map(s => 
-        `${s}${s.type==="way"?";\n>":""}`
+        `${s}${s.type==="way"||s.type==="area"?";\n>":""}`
       )).flat().join(";\n")};\n);\n`;
     return `[out:json][bbox];\n${q}out;`;
 }
@@ -19,7 +19,7 @@ export function runQuery(query, bbox) {
 /** @typedef {import('./Style.js').StyleRule} StyleRule */
 
 /**
- * @typedef {OverpassNodeElement|OverpassWayElement} OverpassElement
+ * @typedef {OverpassNodeElement|OverpassWayElement|OverpassAreaElement} OverpassElement
  */
 
 /**
@@ -35,6 +35,14 @@ export function runQuery(query, bbox) {
  * @typedef OverpassWayElement
  * @property {number} id
  * @property {"way"} type
+ * @property {number[]} nodes
+ * @property {{ [key: string]: string }} [tags]
+ */
+
+/**
+ * @typedef OverpassAreaElement
+ * @property {number} id
+ * @property {"area"} type
  * @property {number[]} nodes
  * @property {{ [key: string]: string }} [tags]
  */
