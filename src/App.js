@@ -19,6 +19,7 @@ function App() {
   /** @type {React.MutableRefObject<Overpass>} */
   const overpassRef = React.useRef();
   const [ fetching, setFetching ] = React.useState(false);
+  const [ error, setError ] = React.useState("");
   
   if (!databaseRef.current) {
     databaseRef.current = new HashMapDatabase();
@@ -38,19 +39,25 @@ function App() {
   React.useEffect(() => {
     async function run () {
       setFetching(true);
-      const rules = expandRules(parsedStyle.rules);
-      const map = rules.map(rule => {
-        return {
-          rule,
-          promise: overpassRef.current.getElements(rule.selector),
+      setError("");
+      try {
+        const rules = expandRules(parsedStyle.rules);
+        const map = rules.map(rule => {
+          return {
+            rule,
+            promise: overpassRef.current.getElements(rule.selector),
+          }
+        });
+        clearMap(canvasRef);
+        for (const item of map) {
+          const elements = await item.promise;
+          renderMap(bbox, elements, canvasRef, item.rule);
         }
-      });
-      clearMap(canvasRef);
-      for (const item of map) {
-        const elements = await item.promise;
-        renderMap(bbox, elements, canvasRef, item.rule);
+      } catch (e) {
+        setError("Error Fetching");
+      } finally {
+        setFetching(false);
       }
-      setFetching(false);
     }
 
     run();
@@ -61,9 +68,8 @@ function App() {
       <div className="sidebar">
         <label>Bounding Box <input value={bbox} onChange={e => setBbox(e.target.value)} /></label>
         <label>Style <textarea value={style} onChange={e => setStyle(e.target.value)} /></label>
-        { fetching ? 
-          <p>Fetching...</p> : null
-        }
+        { fetching && <p>Fetching...</p> }
+        { error && <p style={{color:"red"}}>{error}</p> }
       </div>
       <canvas ref={canvasRef} />
     </div>
