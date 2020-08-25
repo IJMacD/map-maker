@@ -1,28 +1,40 @@
-import { matchRule } from "./Style";
+
+export function clearMap (canvasRef) {
+    const { clientWidth, clientHeight } = canvasRef.current;
+
+    const width = clientWidth * devicePixelRatio;
+    const height = clientHeight * devicePixelRatio;
+
+    canvasRef.current.width = width;
+    canvasRef.current.height = height;
+}
 
 /**
  * @param {string} bbox
- * @param {{ elements: import("./Overpass").OverpassElement[]; }} result
+ * @param {import("./Overpass").OverpassElement[]} elements
  * @param {React.MutableRefObject<HTMLCanvasElement>} canvasRef
- * @param {{ rules: import("./Style").StyleRule[]; }} style
+ * @param {import("./Style").StyleRule} rule
  */
-export function renderMap(bbox, result, canvasRef, style, database) {
+export function renderMap (bbox, elements, canvasRef, rule) {
     const [minLon, minLat, maxLon, maxLat] = bbox.split(",").map(parseFloat);
-    if (result && canvasRef.current && !isNaN(minLon) && !isNaN(minLat) && !isNaN(maxLon) && !isNaN(maxLat)) {
+
+    if (canvasRef.current && !isNaN(minLon) && !isNaN(minLat) && !isNaN(maxLon) && !isNaN(maxLat)) {
+
+        // Prepare node map
+        const nodeMap = {};
+        elements.filter(n => n.type === "node").forEach(n => nodeMap[n.id] = n);
+        
         const ctx = canvasRef.current.getContext("2d");
         const { clientWidth, clientHeight } = canvasRef.current;
 
         const width = clientWidth * devicePixelRatio;
         const height = clientHeight * devicePixelRatio;
 
-        canvasRef.current.width = width;
-        canvasRef.current.height = height;
-
         /** @type {(lon: number, lat: number) => [number, number]} */
         const projection = mercatorProjection(minLon, minLat, maxLon, maxLat, width, height);
 
-        for (const el of result.elements) {
-            const rule = matchRule(style, el);
+        for (const el of elements) {
+            if (el.type !== rule.selector.type) continue;
 
             ctx.save();
             
@@ -62,38 +74,40 @@ export function renderMap(bbox, result, canvasRef, style, database) {
                 }
                 else if (el.type === "way") {
                     if (!el.nodes) continue;
-                    database.getNodes(el.nodes).then(nodes => {
-                        ctx.fillStyle = rule.declarations["fill"];
-                        ctx.strokeStyle = rule.declarations["stroke"];
-                        ctx.lineWidth = +rule.declarations["stroke-width"];
 
-                        ctx.beginPath();
-                        ctx.moveTo(...projection(nodes[0].lon, nodes[0].lat));
-                        for (let i = 1; i < nodes.length; i++) {
-                            ctx.lineTo(...projection(nodes[i].lon, nodes[i].lat));
-                        }
-                        
-                        rule.declarations["fill"] && ctx.fill();
-                        rule.declarations["stroke"] && ctx.stroke();
-                    });
+                    const nodes = el.nodes.map(id => nodeMap[id]);
+                    
+                    ctx.fillStyle = rule.declarations["fill"];
+                    ctx.strokeStyle = rule.declarations["stroke"];
+                    ctx.lineWidth = +rule.declarations["stroke-width"];
+
+                    ctx.beginPath();
+                    ctx.moveTo(...projection(nodes[0].lon, nodes[0].lat));
+                    for (let i = 1; i < nodes.length; i++) {
+                        ctx.lineTo(...projection(nodes[i].lon, nodes[i].lat));
+                    }
+                    
+                    rule.declarations["fill"] && ctx.fill();
+                    rule.declarations["stroke"] && ctx.stroke();
                 }
                 else if (el.type === "area") {
                     if (!el.nodes) continue;
-                    database.getNodes(el.nodes).then(nodes => {
-                        ctx.fillStyle = rule.declarations["fill"];
-                        ctx.strokeStyle = rule.declarations["stroke"];
-                        ctx.lineWidth = +rule.declarations["stroke-width"];
-                        
-                        ctx.beginPath();
-                        ctx.moveTo(...projection(nodes[0].lon, nodes[0].lat));
-                        for (let i = 1; i < nodes.length; i++) {
-                            ctx.lineTo(...projection(nodes[i].lon, nodes[i].lat));
-                        }
-                        ctx.closePath();
 
-                        rule.declarations["fill"] && ctx.fill();
-                        rule.declarations["stroke"] && ctx.stroke();
-                    });
+                    const nodes = el.nodes.map(id => nodeMap[id]);
+                
+                    ctx.fillStyle = rule.declarations["fill"];
+                    ctx.strokeStyle = rule.declarations["stroke"];
+                    ctx.lineWidth = +rule.declarations["stroke-width"];
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(...projection(nodes[0].lon, nodes[0].lat));
+                    for (let i = 1; i < nodes.length; i++) {
+                        ctx.lineTo(...projection(nodes[i].lon, nodes[i].lat));
+                    }
+                    ctx.closePath();
+
+                    rule.declarations["fill"] && ctx.fill();
+                    rule.declarations["stroke"] && ctx.stroke();
                 }
             }
 

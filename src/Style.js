@@ -1,7 +1,8 @@
 
 /** 
  * @typedef StyleRule
- * @property {StyleSelector[]} selectors
+ * @property {StyleSelector} [selector]
+ * @property {StyleSelector[]} [selectors]
  * @property {{ [key: string]: string }} declarations
  */
 
@@ -106,5 +107,20 @@ export function parseStyle (styleText) {
     }
   }
 
+  return out;
+}
+
+/**
+ * 
+ * @param {StyleRule[]} rules 
+ */
+export function expandRules (rules) {
+  const out = [];
+  for (const rule of rules) {
+    const { declarations } = rule;
+    for (const selector of rule.selectors) {
+      out.push({ selector, declarations });
+    }
+  }
   return out;
 }
