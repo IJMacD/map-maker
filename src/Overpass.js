@@ -13,7 +13,7 @@ export function rulesToQuery(style) {
 
 export function runQuery(query, bbox) {
     const url = `${API_ROOT}?data=${query.replace(/\n/,"")}&bbox=${bbox}`;
-    return fetch(url.toString()).then(r => r.json());
+    return fetch(url.toString()).then(r => r.ok ? r.json() : Promise.reject("Bad response"));
 }
 
 /** @typedef {import('./Style.js').StyleRule} StyleRule */

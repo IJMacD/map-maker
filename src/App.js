@@ -5,24 +5,28 @@ import HashMapDatabase from './database.hashmap.js';
 import { parseStyle } from './Style';
 import { renderMap } from './render';
 import { rulesToQuery, runQuery } from './Overpass';
+import { useDebounce } from './useDebounce';
 
 /** @typedef {import("./Overpass").NodeDatabase} NodeDatabase */
 
 function App() {
   const [ style, setStyle ] = useSavedState("USER_STYLE", "node[amenity=post_box] {\n\tfill: black;\n\tsize: 2;\n}");
-  const [ query, setQuery ] = React.useState("[out:json][bbox];\nnode[amenity=post_box];\nout;");
+  const debouncedStyle = useDebounce(style, 1000);
+  const [ query, setQuery ] = React.useState("");
+  const debouncedQuery = useDebounce(query, 5000);
   const [ bbox, setBbox ] = React.useState("7.0,50.6,7.3,50.8");
   const [ result, setResult ] = React.useState(null);
   /** @type {React.MutableRefObject<HTMLCanvasElement>} */
   const canvasRef = React.useRef();
   /** @type {React.MutableRefObject<NodeDatabase>} */
   const databaseRef = React.useRef();
+  const [ fetching, setFetching ] = React.useState(false);
 
   if (!databaseRef.current) {
     databaseRef.current = new HashMapDatabase();
   }
   
-  const parsedStyle = React.useMemo(() => parseStyle(style), [style]);
+  const parsedStyle = React.useMemo(() => parseStyle(debouncedStyle), [debouncedStyle]);
   
   // Render map when bbox, result or style change
   React.useEffect(() => {
@@ -35,12 +39,18 @@ function App() {
     setQuery(query);
   }, [parsedStyle]);
 
+  // Auto render
+  React.useEffect(fetchHandler, [debouncedQuery]);
+
   function fetchHandler () {
-    runQuery(query, bbox).then(r => {
-      setResult(r);
-      
-      databaseRef.current.saveNodes(r.elements.filter(r => r.type === "node"));
-    });
+    if (query) {
+      setFetching(true);
+      runQuery(query, bbox).then(r => {
+        setResult(r);
+        
+        databaseRef.current.saveNodes(r.elements.filter(r => r.type === "node"));
+      }, console.log).then(() => setFetching(false));
+    }
   }
 
   return (
@@ -48,8 +58,10 @@ function App() {
       <div className="sidebar">
         <label>Bounding Box <input value={bbox} onChange={e => setBbox(e.target.value)} /></label>
         <label>Style <textarea value={style} onChange={e => setStyle(e.target.value)} /></label>
-        <label>Query <textarea value={query} onChange={e => setQuery(e.target.value)} /></label>
-        <button onClick={fetchHandler}>Fetch</button>
+        { fetching ? 
+          <p>Fetching...</p> :
+          <button onClick={fetchHandler}>Fetch</button>
+        }
         { result && <p>{result.elements.length} Elements</p> }  
       </div>
       <canvas ref={canvasRef} />
