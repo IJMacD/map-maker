@@ -60,13 +60,10 @@ export default App;
  * @param {{ rules: StyleRule[]; }} style
  */
 function rulesToQuery(style) {
-  const q = style.rules.length > 1 ?
-    `(\n${style.rules.map(r => `${r.selector}${r.selector.type==="way"?";\n>":""}`).join(";\n")};\n);\n`
-    : (
-      style.rules.length > 0 ?
-        style.rules[0].selector + ";\n"
-        : ""
-    );
+  const q =
+    `(\n${style.rules.map(r => r.selectors.map(s => 
+      `${s}${s.type==="way"?";\n>":""}`
+    )).flat().join(";\n")};\n);\n`;
   return `[out:json][bbox];\n${q}out;`;
 }
 
@@ -134,18 +131,20 @@ function renderMap(bbox, result, canvasRef, style, database) {
  */
 function matchRule (style, element) {
   for (const rule of style.rules) {
-    if (element.type !== rule.selector.type) continue;
+    for (const selector of rule.selectors) {
+      if (element.type !== selector.type) continue;
 
-    let match = true;
+      let match = true;
 
-    for (const [key, value] of Object.entries(rule.selector.tags)) {
-      if (!element.tags || element.tags[key] !== value) {
-        match = false;
-        break;
+      for (const [key, value] of Object.entries(selector.tags)) {
+        if (!element.tags || element.tags[key] !== value) {
+          match = false;
+          break;
+        }
       }
-    }
 
-    if (match)  return rule;
+      if (match)  return rule;
+    }
   }
 }
 
@@ -159,11 +158,11 @@ function runQuery(query, bbox) {
  * @returns {{ rules: StyleRule[] }}
  */
 function parseStyle (styleText) {
-  const re = /([^\s{}]+)\s*{([^{}]*)}/g;
+  const re = /([^{}]+)\s*{([^{}]*)}/g;
   let match;
   const out = { rules: [] };
 
-    while(match = re.exec(styleText)) {
+  while(match = re.exec(styleText)) {
     const declarations = {};
     
     match[2].split(";").map(s => s.trim()).filter(s => s).forEach(s => {
@@ -171,10 +170,14 @@ function parseStyle (styleText) {
       declarations[property] = value;
     });
 
-    out.rules.push({
-      selector: StyleSelector.parse(match[1]),
-      declarations,
-    });
+    const selectors = StyleSelector.parseMultiple(match[1]);
+
+    if (selectors.length) {
+      out.rules.push({
+        selectors,
+        declarations,
+      });
+    }
   }
 
   return out;
@@ -203,7 +206,7 @@ function parseStyle (styleText) {
 
 /** 
  * @typedef StyleRule
- * @property {StyleSelector} selector
+ * @property {StyleSelector[]} selectors
  * @property {{ [key: string]: string }} declarations
  */
 
@@ -223,7 +226,7 @@ class StyleSelector {
 }
 
 StyleSelector.parse = function (text) {
-  const re = /^(node|way|relation|area)/;
+  const re = /(node|way|relation|area)/;
   const m = re.exec(text);
 
   if (!m) return null;
@@ -243,6 +246,14 @@ StyleSelector.parse = function (text) {
   }
 
   return new StyleSelector(type, tags);
+}
+
+/**
+ * 
+ * @param {string} text 
+ */
+StyleSelector.parseMultiple = function (text) {
+  return text.split(",").map(StyleSelector.parse).filter(x => x);
 }
 
 /**
