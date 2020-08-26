@@ -42,9 +42,9 @@ export function renderMap (bbox, elements, canvasRef, rule) {
                 if (el.type === "node") {
                     ctx.fillStyle = rule.declarations["fill"];
                     ctx.strokeStyle = rule.declarations["stroke"];
-                    ctx.lineWidth = +rule.declarations["stroke-width"];
+                    ctx.lineWidth = +rule.declarations["stroke-width"] * devicePixelRatio;
 
-                    const r = +rule.declarations["size"];
+                    const r = +rule.declarations["size"] * devicePixelRatio;
                     const [x, y] = projection(el.lon, el.lat);
 
                     ctx.beginPath();
@@ -65,11 +65,26 @@ export function renderMap (bbox, elements, canvasRef, rule) {
                             content = "?";
                         }
 
+                        let fontSize = `${10 * devicePixelRatio}px`;
+                        let fontWeight = "normal";
+                        let fontFamily = "sans-serif";
+
                         if (rule.declarations["font-size"]) {
-                            ctx.font = rule.declarations["font-size"] + " sans-serif";
+                            fontSize = rule.declarations["font-size"].replace(/^\d[\d.]*/, m => `${+m * devicePixelRatio}`);
                         }
 
-                        ctx.fillText(content, x, y);
+                        if (rule.declarations["font-weight"]) {
+                            fontWeight = rule.declarations["font-weight"];
+                        }
+
+                        if (rule.declarations["font-family"]) {
+                            fontFamily = rule.declarations["font-family"];
+                        }
+
+                        ctx.font = rule.declarations["font"] || `${fontWeight} ${fontSize} ${fontFamily}`;
+
+                        if (rule.declarations["stroke"]) ctx.strokeText(content, x, y);
+                        else ctx.fillText(content, x, y);
                     }
                 }
                 else if (el.type === "way") {
@@ -79,7 +94,7 @@ export function renderMap (bbox, elements, canvasRef, rule) {
                     
                     ctx.fillStyle = rule.declarations["fill"];
                     ctx.strokeStyle = rule.declarations["stroke"];
-                    ctx.lineWidth = +rule.declarations["stroke-width"];
+                    ctx.lineWidth = +rule.declarations["stroke-width"] * devicePixelRatio;
 
                     ctx.beginPath();
                     ctx.moveTo(...projection(nodes[0].lon, nodes[0].lat));
@@ -97,7 +112,7 @@ export function renderMap (bbox, elements, canvasRef, rule) {
                 
                     ctx.fillStyle = rule.declarations["fill"];
                     ctx.strokeStyle = rule.declarations["stroke"];
-                    ctx.lineWidth = +rule.declarations["stroke-width"];
+                    ctx.lineWidth = +rule.declarations["stroke-width"] * devicePixelRatio;
                     
                     ctx.beginPath();
                     ctx.moveTo(...projection(nodes[0].lon, nodes[0].lat));
