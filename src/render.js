@@ -131,25 +131,27 @@ function flatProjection (minLon, minLat, maxLon, maxLat, width, height) {
  * @returns {(lon: number, lat: number) => [number, number]} 
  */
 function mercatorProjection (minLon, minLat, maxLon, maxLat, width, height) {
+    const size = Math.max(width,height);    
+
     const QUARTER_PI = Math.PI / 4;
-    const worldWidth = (width / 360);
+    const worldWidth = (size / 360);
     const minX = (minLon + 180) * worldWidth;
     const maxX = (maxLon + 180) * worldWidth;
     const NMin = Math.log(Math.tan(QUARTER_PI + (minLat / 180 * Math.PI) / 2));
-    const minY = (height / 2) - (height * NMin / (2 * Math.PI));
+    const minY = (size / 2) - (size * NMin / (2 * Math.PI));
     const NMax = Math.log(Math.tan(QUARTER_PI + (maxLat / 180 * Math.PI) / 2));
-    const maxY = (height / 2) - (height * NMax / (2 * Math.PI));
+    const maxY = (size / 2) - (size * NMax / (2 * Math.PI));
 
-    const xScale = width / (maxX - minX);
-    const yScale = height / (maxY - minY);
+    const xScale = size / (maxX - minX);
+    const yScale = size / (minY - maxY);
     const scale = Math.min(xScale, yScale);
 
     return (lon, lat) => {
         const E = (lon + 180)
         const x = E * worldWidth;
         const N = Math.log(Math.tan(QUARTER_PI + (lat / 180 * Math.PI) / 2));
-        const y = (height / 2) - (height * N / (2 * Math.PI));
+        const y = (size / 2) - (size * N / (2 * Math.PI));
 
-        return [(x - minX)*-scale, height+(y-minY)*-scale];
+        return [(x - minX)*scale, height+(y-minY)*scale];
     }
 }
