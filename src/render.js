@@ -37,93 +37,88 @@ export function renderMap (bbox, elements, canvasRef, rule) {
             if (el.type !== rule.selector.type) continue;
 
             ctx.save();
+
+            ctx.fillStyle = rule.declarations["fill"];
+            ctx.strokeStyle = rule.declarations["stroke"];
+            ctx.lineWidth = +rule.declarations["stroke-width"] * devicePixelRatio;
             
-            if (rule) {
-                if (el.type === "node") {
-                    ctx.fillStyle = rule.declarations["fill"];
-                    ctx.strokeStyle = rule.declarations["stroke"];
-                    ctx.lineWidth = +rule.declarations["stroke-width"] * devicePixelRatio;
+            if (rule.declarations["opacity"]) 
+                ctx.globalAlpha = +rule.declarations["opacity"];
 
-                    const r = +rule.declarations["size"] * devicePixelRatio;
-                    const [x, y] = projection(el.lon, el.lat);
+            // Paths
+            ctx.beginPath();
 
-                    ctx.beginPath();
-                    ctx.ellipse(x, y, r, r, 0, 0, Math.PI * 2);
+            if (el.type === "node") {
 
-                    rule.declarations["fill"] && ctx.fill();
-                    rule.declarations["stroke"] && ctx.stroke();
+                const r = +rule.declarations["size"] * devicePixelRatio;
+                const [x, y] = projection(el.lon, el.lat);
 
-                    if (rule.declarations["content"]) {
-                        let content = rule.declarations["content"];
-                        
-                        if (content.match(/^".*"$/g)) {
-                            content = content.replace(/^"|"$/g, "");
-                        } else if (content.match(/tag\(([^)]+)\)/)) {
-                            const m = content.match(/tag\(([^)]+)\)/);
-                            content = el.tags[m[1]] || "";
-                        } else {
-                            content = "?";
-                        }
+                ctx.ellipse(x, y, r, r, 0, 0, Math.PI * 2);
 
-                        let fontSize = `${10 * devicePixelRatio}px`;
-                        let fontWeight = "normal";
-                        let fontFamily = "sans-serif";
+            }
+            else if (el.type === "way") {
+                if (!el.nodes) continue;
 
-                        if (rule.declarations["font-size"]) {
-                            fontSize = rule.declarations["font-size"].replace(/^\d[\d.]*/, m => `${+m * devicePixelRatio}`);
-                        }
+                const nodes = el.nodes.map(id => nodeMap[id]);
 
-                        if (rule.declarations["font-weight"]) {
-                            fontWeight = rule.declarations["font-weight"];
-                        }
-
-                        if (rule.declarations["font-family"]) {
-                            fontFamily = rule.declarations["font-family"];
-                        }
-
-                        ctx.font = rule.declarations["font"] || `${fontWeight} ${fontSize} ${fontFamily}`;
-
-                        if (rule.declarations["stroke"]) ctx.strokeText(content, x, y);
-                        else ctx.fillText(content, x, y);
-                    }
+                ctx.moveTo(...projection(nodes[0].lon, nodes[0].lat));
+                for (let i = 1; i < nodes.length; i++) {
+                    ctx.lineTo(...projection(nodes[i].lon, nodes[i].lat));
                 }
-                else if (el.type === "way") {
-                    if (!el.nodes) continue;
+            }
+            else if (el.type === "area") {
+                if (!el.nodes) continue;
 
-                    const nodes = el.nodes.map(id => nodeMap[id]);
-                    
-                    ctx.fillStyle = rule.declarations["fill"];
-                    ctx.strokeStyle = rule.declarations["stroke"];
-                    ctx.lineWidth = +rule.declarations["stroke-width"] * devicePixelRatio;
+                const nodes = el.nodes.map(id => nodeMap[id]);
 
-                    ctx.beginPath();
-                    ctx.moveTo(...projection(nodes[0].lon, nodes[0].lat));
-                    for (let i = 1; i < nodes.length; i++) {
-                        ctx.lineTo(...projection(nodes[i].lon, nodes[i].lat));
-                    }
-                    
-                    rule.declarations["fill"] && ctx.fill();
-                    rule.declarations["stroke"] && ctx.stroke();
+                ctx.moveTo(...projection(nodes[0].lon, nodes[0].lat));
+                for (let i = 1; i < nodes.length; i++) {
+                    ctx.lineTo(...projection(nodes[i].lon, nodes[i].lat));
                 }
-                else if (el.type === "area") {
-                    if (!el.nodes) continue;
+                ctx.closePath();
+            }
 
-                    const nodes = el.nodes.map(id => nodeMap[id]);
+            rule.declarations["fill"] && ctx.fill();
+            rule.declarations["stroke"] && ctx.stroke();
+
+            // Text Handling 
+            
+            if (rule.declarations["content"] && el.type === "node") {
+                const [x, y] = projection(el.lon, el.lat);
+
+                let content = rule.declarations["content"];
                 
-                    ctx.fillStyle = rule.declarations["fill"];
-                    ctx.strokeStyle = rule.declarations["stroke"];
-                    ctx.lineWidth = +rule.declarations["stroke-width"] * devicePixelRatio;
-                    
-                    ctx.beginPath();
-                    ctx.moveTo(...projection(nodes[0].lon, nodes[0].lat));
-                    for (let i = 1; i < nodes.length; i++) {
-                        ctx.lineTo(...projection(nodes[i].lon, nodes[i].lat));
-                    }
-                    ctx.closePath();
-
-                    rule.declarations["fill"] && ctx.fill();
-                    rule.declarations["stroke"] && ctx.stroke();
+                if (content.match(/^".*"$/g)) {
+                    content = content.replace(/^"|"$/g, "");
+                } else if (content.match(/tag\(([^)]+)\)/)) {
+                    const m = content.match(/tag\(([^)]+)\)/);
+                    content = el.tags[m[1]] || "";
+                } else {
+                    content = "?";
                 }
+
+                let fontSize = `${10 * devicePixelRatio}px`;
+                let fontWeight = "normal";
+                let fontFamily = "sans-serif";
+
+                if (rule.declarations["font-size"]) {
+                    fontSize = rule.declarations["font-size"].replace(/^\d[\d.]*/, m => `${+m * devicePixelRatio}`);
+                }
+
+                if (rule.declarations["font-weight"]) {
+                    fontWeight = rule.declarations["font-weight"];
+                }
+
+                if (rule.declarations["font-family"]) {
+                    fontFamily = rule.declarations["font-family"];
+                }
+
+                ctx.font = rule.declarations["font"] || `${fontWeight} ${fontSize} ${fontFamily}`;
+
+                if (rule.declarations["stroke"]) 
+                    ctx.strokeText(content, x, y);
+                if (rule.declarations["fill"] || !rule.declarations["stroke"]) 
+                    ctx.fillText(content, x, y);
             }
 
             ctx.restore();
