@@ -2,10 +2,13 @@
   "name": "map-maker",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://ijmacd.github.io/map-maker",
   "dependencies": {
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
+    "gh-pages": "^3.1.0",
+    "icon-gen": "^2.0.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-scripts": "3.4.3"
@@ -14,7 +17,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "favicon": "icon-gen -r -i ./res/logo.svg -o ./public --favicon name=logo sizes=192,512 --ico name=favicon sizes=16,24,32,64",
+    "deploy": "gh-pages -d ./build"
   },
   "eslintConfig": {
     "extends": "react-app"

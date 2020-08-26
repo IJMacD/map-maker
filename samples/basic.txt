@@ -1,0 +1,104 @@
+way[landuse=farmland] {
+    fill: lightgreen;
+}
+way[natural=wood],
+way[landuse=forest] {
+    fill: rgba(0,128,0,0.2);
+}
+way[landuse=meadow] {
+    fill: #CCFFCC;
+}
+way[landuse=residential] {
+    fill: #EEEEEE;
+}
+way[leisure=pitch],
+way[landuse=recreation_ground] {
+    fill: #CCFFCC;
+}
+way[landuse=retail],
+way[landuse=commercial] {
+    fill: #FFCCCC;
+} 
+way[natural=scrub] {
+    fill: #FFF8DD;
+}
+way[building=yes] {
+    fill: pink;
+}
+way[natural=coastline] {
+    stroke: black;
+    stroke-width: 1;
+}
+way[waterway=stream] {
+    stroke: lightblue;
+    stroke-width: 1;
+}
+way[waterway=river] {
+    stroke: lightblue; 
+    stroke-width: 1.5;
+}
+way[natural=water],
+way[waterway=riverbank] {
+    fill: lightblue;
+}
+way[highway=motorway],
+way[highway=motorway_link] {
+    stroke: blue;
+    stroke-width: 2.5;
+}
+way[highway=trunk],
+way[highway=trunk_link] {
+    stroke: purple;
+    stroke-width: 2;
+}
+way[highway=primary],
+way[highway=primary_link] {
+    stroke: red;
+    stroke-width: 1.5;
+}
+way[highway=secondary] {
+    stroke: orange;
+    stroke-width: 1;
+}
+way[highway=tertiary],
+way[highway=unclassified] {
+    stroke: grey;
+    stroke-width: 0.5;
+}
+way[highway=residential],
+way[highway=unclassified],
+way[highway=service] {
+    stroke: lightgrey;
+    stroke-width: 0.5;
+}
+way[railway=rail] {
+    stroke: black;
+    stroke-width: 1;
+}
+node[amenity=post_box] {
+    fill: red;
+    content: "📮";
+    font-size: 10px;
+    opacity: 0.8;
+} 
+node[amenity=telephone] {
+    fill: black;
+    content: "📞";
+    font-size: 10px;
+}
+node[place=town] {
+   fill: black;
+   stroke: rgba(255,255,255,0.8);
+   stroke-width: 5;
+   content: tag(name);
+   font-size: 20px;
+   font-weight: bold;
+}
+node[place=village] { 
+   content: tag(name);
+   fill: black;
+   stroke: rgba(255,255,255,0.8);
+   stroke-width: 3;
+   font-size: 15px;
+   font-weight: bold;
+}
