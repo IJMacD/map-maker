@@ -8,7 +8,12 @@ export class Overpass {
     }
 
     setBBox (bbox) {
-        this.bbox = bbox;
+        // If the new bbox is completely contained within the
+        // old one then we don't need to clear our cache
+        if (!contains(this.bbox, bbox)) {
+            this.elements.clear();
+            this.bbox = bbox;
+        }
     }
 
     query (selector) {
@@ -22,26 +27,18 @@ export class Overpass {
         return fetch(url.toString()).then(r => r.ok ? r.json() : Promise.reject(r.status));
     }
 
-    tryElements (selector) {
+    tryElements (selector, tries=5) {
         return new Promise ((resolve, reject) => {
             this.query(selector).then(d => {
                 resolve(d.elements);
             }, e => {
                 if (e !== 429) reject("Bad Response");
-                // Retry 1
-                else setTimeout(() => {
-                    this.query(selector).then(d => {
-                        resolve(d.elements);
-                    }, e => {
-                        if (e !== 429) reject("Bad Response");
-                        // Retry 2
-                        else setTimeout(() => {
-                            this.query(selector).then(d => {
-                                resolve(d.elements);
-                            }, reject);
-                        }, 5000);
-                    });
-                }, 5000);
+                else if (tries > 0) {
+                    setTimeout(() => {
+                        this.tryElements(selector, tries - 1).then(resolve, reject);
+                    }, 10000);
+                }
+                else reject(e);
             });
         });
     }
@@ -101,3 +98,17 @@ export class Overpass {
  * @property {(id: number) => object} getNode
  * @property {(ids: number[]) => Promise<object[]>} getNodes
  */
+
+/**
+ * Determines whether or not areaB is entirely contained
+ * within areaA
+ * @param {string} areaA 
+ * @param {string} areaB 
+ * @returns {boolean}
+ */
+function contains (areaA, areaB) {
+    const [Ax1,Ay1,Ax2,Ay2] = areaA.split(",");
+    const [Bx1,By1,Bx2,By2] = areaB.split(",");
+
+    return (Bx1 >= Ax1 && By1 >= Ay1 && Bx2 <= Ax2 && By2 <= Ay2);
+}

@@ -29,17 +29,20 @@ function App() {
     overpassRef.current = new Overpass(bbox);
   }
 
+  const debouncedBBox = useDebounce(bbox, 500);
+  
   const debouncedStyle = useDebounce(style, 500);
   
   const parsedStyle = React.useMemo(() => parseStyle(debouncedStyle), [debouncedStyle]);
 
-  React.useEffect(() => overpassRef.current.setBBox(bbox), [bbox]);
+  React.useEffect(() => overpassRef.current.setBBox(debouncedBBox), [debouncedBBox]);
   
   // Refetch/Render map when bbox, or style change
   React.useEffect(() => {
     async function run () {
       setFetching(true);
       setError("");
+
       try {
         const rules = expandRules(parsedStyle.rules);
         const map = rules.map(rule => {
@@ -48,10 +51,12 @@ function App() {
             promise: overpassRef.current.getElements(rule.selector),
           }
         });
+
         clearMap(canvasRef);
+
         for (const item of map) {
           const elements = await item.promise;
-          renderMap(bbox, elements, canvasRef, item.rule);
+          renderMap(debouncedBBox, elements, canvasRef, item.rule);
         }
       } catch (e) {
         setError("Error Fetching");
@@ -61,7 +66,7 @@ function App() {
     }
 
     run();
-  }, [bbox, parsedStyle]);
+  }, [debouncedBBox, parsedStyle]);
 
   return (
     <div className="App">
