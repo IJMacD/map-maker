@@ -8,7 +8,7 @@
 
 export class StyleSelector {
     /**
-     * @param {string} type
+     * @param {"node"|"way"|"relation"|"area"} type
      * @param {{ [key: string]: string }} tags
      */
     constructor (type, tags) {
@@ -22,16 +22,21 @@ export class StyleSelector {
 }
   
 StyleSelector.parse = function (text) {
-    const re = /(node|way|relation|area)/;
+    const re = /(node|way|rel(?:ation)?|area)/;
     const m = re.exec(text);
   
     if (!m) return null;
-  
-    const type = m[1];
+
+    let type = m[1];
+
+    if (type === "rel") {
+      type = "relation";
+    }
+
     /** @type {{ [key: string]: string }} */
     const tags = {};
   
-    text = text.substring(type.length);
+    text = text.substring(m[1].length);
   
     const re2 = /\[([^[\]=]+)=([^[\]=]+)\]/g;
   

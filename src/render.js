@@ -21,8 +21,13 @@ export function renderMap (bbox, elements, canvasRef, rule) {
     if (canvasRef.current && !isNaN(minLon) && !isNaN(minLat) && !isNaN(maxLon) && !isNaN(maxLat)) {
 
         // Prepare node map
+        /** @type {{ [id: number]: import("./Overpass").OverpassNodeElement }} */
         const nodeMap = {};
         elements.filter(n => n.type === "node").forEach(n => nodeMap[n.id] = n);
+        // Prepare way map
+        /** @type {{ [id: number]: import("./Overpass").OverpassWayElement }} */
+        const wayMap = {};
+        elements.filter(n => n.type === "way").forEach(n => wayMap[n.id] = n);
         
         const ctx = canvasRef.current.getContext("2d");
         const { clientWidth, clientHeight } = canvasRef.current;
@@ -74,6 +79,25 @@ export function renderMap (bbox, elements, canvasRef, rule) {
                 ctx.moveTo(...projection(nodes[0].lon, nodes[0].lat));
                 for (let i = 1; i < nodes.length; i++) {
                     ctx.lineTo(...projection(nodes[i].lon, nodes[i].lat));
+                }
+                ctx.closePath();
+            }
+            else if (el.type === "relation") {
+                if (!el.members) continue;
+
+                // As long as outer ways go anti-clockwise and inner rings go clockwise
+                // (or possibly vice-versa) then the CanvasRenderingContext2D can handle
+                // rending "holes".
+
+                const ways = el.members.filter(m => m.type === "way").map(m => wayMap[m.ref]);
+
+                for (const way of ways) {
+                    const nodes = way.nodes.map(id => nodeMap[id]);
+
+                    ctx.moveTo(...projection(nodes[0].lon, nodes[0].lat));
+                    for (let i = 1; i < nodes.length; i++) {
+                        ctx.lineTo(...projection(nodes[i].lon, nodes[i].lat));
+                    }
                 }
                 ctx.closePath();
             }

@@ -1,5 +1,7 @@
 const API_ROOT = require("./const").API_ROOT;
 
+const recurRe = /(way|rel(?:ation)?|area)/;
+
 export class Overpass {
     constructor (bbox) {
         /** @type {Map<string, Promise<OverpassElement[]>>} */
@@ -18,7 +20,7 @@ export class Overpass {
 
     query (selector) {
         let query;
-        if (selector.type==="way"||selector.type==="area") {
+        if (recurRe.test(selector.type)) {
             query = `[out:json][bbox];\n(\n\t${selector};\n\t>;\n);\nout;`;
         } else {
             query = `[out:json][bbox];\n${selector};\nout;`;
@@ -64,7 +66,7 @@ export class Overpass {
 /** @typedef {import('./Style.js').StyleRule} StyleRule */
 
 /**
- * @typedef {OverpassNodeElement|OverpassWayElement|OverpassAreaElement} OverpassElement
+ * @typedef {OverpassNodeElement|OverpassWayElement|OverpassAreaElement|OverpassRelElement} OverpassElement
  */
 
 /**
@@ -93,10 +95,11 @@ export class Overpass {
  */
 
 /**
- * @typedef NodeDatabase
- * @property {(nodes: object[]) => void} saveNodes
- * @property {(id: number) => object} getNode
- * @property {(ids: number[]) => Promise<object[]>} getNodes
+ * @typedef OverpassRelElement
+ * @property {number} id
+ * @property {"relation"} type
+ * @property {{ ref: number, role: "inner"|"outer", type: "node"|"way"|"relation" }[]} members
+ * @property {{ [key: string]: string }} [tags]
  */
 
 /**
