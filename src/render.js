@@ -23,11 +23,11 @@ export function renderMap (bbox, elements, canvasRef, rule) {
         // Prepare node map
         /** @type {{ [id: number]: import("./Overpass").OverpassNodeElement }} */
         const nodeMap = {};
-        elements.filter(n => n.type === "node").forEach(n => nodeMap[n.id] = n);
+        elements.forEach(n => n.type === "node" && (nodeMap[n.id] = n));
         // Prepare way map
         /** @type {{ [id: number]: import("./Overpass").OverpassWayElement }} */
         const wayMap = {};
-        elements.filter(n => n.type === "way").forEach(n => wayMap[n.id] = n);
+        elements.forEach(n => n.type === "way" && (wayMap[n.id] = n));
         
         const ctx = canvasRef.current.getContext("2d");
         const { clientWidth, clientHeight } = canvasRef.current;

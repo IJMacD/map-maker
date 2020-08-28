@@ -1,3 +1,6 @@
+import IDBElementDatabase from "./database.idb";
+import { contains } from "./bbox";
+
 const API_ROOT = require("./const").API_ROOT;
 
 const recurRe = /(way|rel(?:ation)?|area)/;
@@ -7,6 +10,7 @@ export class Overpass {
         /** @type {Map<string, Promise<OverpassElement[]>>} */
         this.elements = new Map();
         this.bbox = bbox;
+        this.database = new IDBElementDatabase();
     }
 
     setBBox (bbox) {
@@ -29,7 +33,7 @@ export class Overpass {
         return fetch(url.toString()).then(r => r.ok ? r.json() : Promise.reject(r.status));
     }
 
-    tryElements (selector, tries=5) {
+    tryElements (selector, tries=10) {
         return new Promise ((resolve, reject) => {
             this.query(selector).then(d => {
                 resolve(d.elements);
@@ -49,15 +53,35 @@ export class Overpass {
      * @param {import("./Style").StyleSelector} selector
      * @returns {Promise<OverpassElement[]>}
      */
-    getElements (selector) {
+    async getElements (selector) {
         const s = selector.toString();
         if (this.elements.has(s)) return this.elements.get(s);
+
+        const dbResult = await this.database.getElements(this.bbox, selector.toString());
+
+        if (dbResult) {
+            const { elements } = dbResult;
+            this.elements.set(s, Promise.resolve(elements));
+            return elements;
+        }
+
+        const dbSearchResult = await this.database.searchElements(this.bbox, selector.toString());
+
+        if (dbSearchResult) {
+            const { elements } = dbSearchResult;
+            this.elements.set(s, Promise.resolve(elements));
+            return elements;
+        }
 
         const p = this.tryElements(selector);
         
         this.elements.set(s, p);
         
         p.catch(() => this.elements.delete(s));
+
+        p.then(elements => {
+            this.database.saveElements(this.bbox, selector.toString(), { elements, cached: Date.now() });
+        });
 
         return p;
     }
@@ -101,17 +125,3 @@ export class Overpass {
  * @property {{ ref: number, role: "inner"|"outer", type: "node"|"way"|"relation" }[]} members
  * @property {{ [key: string]: string }} [tags]
  */
-
-/**
- * Determines whether or not areaB is entirely contained
- * within areaA
- * @param {string} areaA 
- * @param {string} areaB 
- * @returns {boolean}
- */
-function contains (areaA, areaB) {
-    const [Ax1,Ay1,Ax2,Ay2] = areaA.split(",");
-    const [Bx1,By1,Bx2,By2] = areaB.split(",");
-
-    return (Bx1 >= Ax1 && By1 >= Ay1 && Bx2 <= Ax2 && By2 <= Ay2);
-}

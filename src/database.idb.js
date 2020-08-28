@@ -1,30 +1,45 @@
-export default class IDBDatabase {
-    constructor (name) {
+import { contains, getArea } from "./bbox";
+
+export default class IDBElementDatabase {
+    constructor (name="OverpassElements") {
         const request = indexedDB.open(name);
+
         request.addEventListener("upgradeneeded", ev => {
             /** @type {IDBOpenDBRequest} */
             const request = (ev.target);
             const db = request.result;
             db.createObjectStore("nodes", { keyPath: "id" });
+
+            const store = db.createObjectStore("elements");
+            store.createIndex("selectorIndex", ["selector", "area"], { unique: false });
         });
-        request.addEventListener("success", ev => {
-            /** @type {IDBOpenDBRequest} */
-            const request = (ev.target);
-            this.db = request.result;
-        });
-        
+
+        /** @type {Promise<IDBDatabase>} */
+        this.db = new Promise((resolve, reject) => {
+            request.addEventListener("success", ev => {
+                /** @type {IDBOpenDBRequest} */
+                const request = (ev.target);
+                resolve(request.result);
+            });
+
+            request.addEventListener("error", reject);
+        })
+
     }
 
-    saveNodes (nodes) {
-        const store = this.db.transaction("nodes", "readwrite").objectStore("nodes");
+    async saveNodes (nodes) {
+        const db = await this.db;
+        const store = db.transaction("nodes", "readwrite").objectStore("nodes");
         for (const n of nodes) {
             store.put(n);
         }
     }
 
-    getNode (id) {
+    async getNode (id) {
+        const db = await this.db;
+
         return new Promise((resolve, reject) => {
-            const store = this.db.transaction("nodes", "readonly").objectStore("nodes");
+            const store = db.transaction("nodes", "readonly").objectStore("nodes");
             const request = store.get(id);
             request.addEventListener("success", e => resolve(request.result));
             request.addEventListener("error", e => reject(e));
@@ -38,4 +53,76 @@ export default class IDBDatabase {
     getNodes (ids) {
         return Promise.all(ids.map(id => this.getNode(id)));
     }
+
+    /**
+     * 
+     * @param {string} bbox 
+     * @param {string} selector 
+     */
+    async getElements (bbox, selector) {
+        const db = await this.db;
+        const key = makeKey(bbox, selector);
+
+        return new Promise((resolve, reject) => {
+            const objectStore = db.transaction("elements", "readonly").objectStore("elements");
+            const request = objectStore.get(key);
+            request.addEventListener("success", e => resolve(request.result));
+            request.addEventListener("error", reject);
+        });
+    }
+
+    /**
+     * 
+     * @param {string} bbox 
+     * @param {string} selector 
+     */
+    async searchElements (bbox, selector) {
+        const db = await this.db;
+
+        return new Promise((resolve, reject) => {
+            const objectStore = db.transaction("elements", "readonly").objectStore("elements");
+            const index = objectStore.index("selectorIndex");
+            const range = IDBKeyRange.bound([selector,0], [selector,Number.MAX_VALUE]);
+            const request = index.openCursor(range);
+            request.addEventListener("success", e => {
+                const cursor = request.result;
+                
+                if (cursor) {
+                    if (contains(cursor.value.bbox, bbox)) {
+                        resolve(cursor.value);
+                        return;
+                    }
+                    cursor.continue();
+                }
+                else {
+                    resolve(null);
+                }
+            });
+            request.addEventListener("error", reject);
+        });
+    }
+
+    /**
+     * 
+     * @param {string} bbox 
+     * @param {string} selector 
+     * @param {{ elements: import("./Overpass").OverpassElement[], cached: number }} record 
+     */
+    async saveElements (bbox, selector, record) {
+        const db = await this.db;
+        const key = makeKey(bbox, selector);
+        const area = getArea(bbox);
+
+        return new Promise((resolve, reject) => {
+            const objectStore = db.transaction("elements", "readwrite").objectStore("elements");
+            const request = objectStore.put({ selector, bbox, area, ...record }, key);
+            request.addEventListener("success", resolve);
+            request.addEventListener("error", reject);
+        });
+    }
+}
+
+function makeKey (bbox, selector) {
+    const bkey = bbox.split(",").map(p => (+p).toFixed(3)).join(",");
+    return `${bkey}#${selector}`;
 }

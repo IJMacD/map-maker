@@ -1,30 +1,22 @@
 import React from 'react';
 import './App.css';
 import useSavedState from './useSavedState';
-import HashMapDatabase from './database.hashmap.js';
 import { parseStyle, expandRules } from './Style';
 import { renderMap, clearMap } from './render';
 import { Overpass } from './Overpass';
 import { useDebounce } from './useDebounce';
-
-/** @typedef {import("./Overpass").NodeDatabase} NodeDatabase */
+import { isValid } from './bbox';
 
 function App() {
   const [ style, setStyle ] = useSavedState("USER_STYLE", "node[amenity=post_box] {\n\tfill: black;\n\tsize: 2;\n}");
   const [ bbox, setBbox ] = useSavedState("USER_BBOX", "7.0,50.6,7.3,50.8");
   /** @type {React.MutableRefObject<HTMLCanvasElement>} */
   const canvasRef = React.useRef();
-  /** @type {React.MutableRefObject<NodeDatabase>} */
-  const databaseRef = React.useRef();
   /** @type {React.MutableRefObject<Overpass>} */
   const overpassRef = React.useRef();
   const [ fetching, setFetching ] = React.useState(false);
   const [ error, setError ] = React.useState("");
-  
-  if (!databaseRef.current) {
-    databaseRef.current = new HashMapDatabase();
-  }
-  
+
   if (!overpassRef.current) {
     overpassRef.current = new Overpass(bbox);
   }
@@ -40,6 +32,8 @@ function App() {
   // Refetch/Render map when bbox, or style change
   React.useEffect(() => {
     async function run () {
+      if (!isValid(debouncedBBox)) return;
+
       setFetching(true);
       setError("");
 
