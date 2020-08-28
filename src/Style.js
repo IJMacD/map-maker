@@ -21,8 +21,11 @@ export class StyleSelector {
     }
 }
   
-StyleSelector.parse = function (text) {
-    const re = /(node|way|rel(?:ation)?|area)/;
+StyleSelector.parse = /**
+ * @param {string} text
+ */
+function (text) {
+    const re = /\s*(node|way|rel(?:ation)?|area)/;
     const m = re.exec(text);
   
     if (!m) return null;
@@ -36,18 +39,27 @@ StyleSelector.parse = function (text) {
     /** @type {{ [key: string]: string }} */
     const tags = {};
   
-    text = text.substring(m[1].length);
+    let tagText = text.substring(m[0].length).trim();
   
-    const re2 = /\[([^[\]=]+)=([^[\]=]+)\]/g;
-  
-    let m2;
-  
-    while (m2 = re2.exec(text)) {
+    const re2 = /^\[([^[\]=]+)=([^[\]=]+)\]/;
+
+    while (true) {
+      const m2 = re2.exec(tagText);
+
+      if (!m2) break;
+
       tags[m2[1]] = m2[2];
+
+      tagText = tagText.substring(m2[0].length);
+    }
+
+    if (tagText.length) {
+      console.log(`Invalid selector: ${text} unexpected part: '${tagText}'`);
+      return null;
     }
   
     return new StyleSelector(type, tags);
-}
+};
   
 /**
  * 
