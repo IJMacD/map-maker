@@ -158,8 +158,8 @@ export class Overpass {
         const dbSearchResult = await this.database.searchElements(this.bbox, selector.toString());
 
         if (dbSearchResult) {
-            const { elements } = dbSearchResult;
-            this.elements.set(s, Promise.resolve(elements));
+            const elements = this.database.getElementsByKey(dbSearchResult).then(r => r.elements);
+            this.elements.set(s, elements);
             return elements;
         }
 

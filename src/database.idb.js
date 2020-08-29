@@ -11,7 +11,7 @@ export default class IDBElementDatabase {
             db.createObjectStore("nodes", { keyPath: "id" });
 
             const store = db.createObjectStore("elements");
-            store.createIndex("selectorIndex", ["selector", "area"], { unique: false });
+            store.createIndex("selectorIndex", ["selector", "area", "bbox"], { unique: false });
         });
 
         /** @type {Promise<IDBDatabase>} */
@@ -60,10 +60,18 @@ export default class IDBElementDatabase {
      * @param {string} selector 
      * @returns {Promise<{ elements: import("./Overpass").OverpassElement[] }>}
      */
-    async getElements (bbox, selector) {
-        const db = await this.db;
+    getElements (bbox, selector) {
         const key = makeKey(bbox, selector);
+        return this.getElementsByKey(key);
+    }
 
+    /**
+     * 
+     * @param {string} key 
+     * @returns {Promise<{ elements: import("./Overpass").OverpassElement[] }>}
+     */
+    async getElementsByKey (key) {
+        const db = await this.db;
         return new Promise((resolve, reject) => {
             const objectStore = db.transaction("elements", "readonly").objectStore("elements");
             const request = objectStore.get(key);
@@ -76,7 +84,7 @@ export default class IDBElementDatabase {
      * 
      * @param {string} bbox 
      * @param {string} selector 
-     * @returns {Promise<{ elements: import("./Overpass").OverpassElement[] }>}
+     * @returns {Promise<string>}
      */
     async searchElements (bbox, selector) {
         const db = await this.db;
@@ -84,17 +92,19 @@ export default class IDBElementDatabase {
         return new Promise((resolve, reject) => {
             const objectStore = db.transaction("elements", "readonly").objectStore("elements");
             const index = objectStore.index("selectorIndex");
-            const range = IDBKeyRange.bound([selector,0], [selector,Number.MAX_VALUE]);
-            const request = index.openCursor(range);
+            const range = IDBKeyRange.bound([selector,0,"0"], [selector,Number.MAX_VALUE,"999999999999999999"]);
+            const request = index.openKeyCursor(range);
             let count = 0;
             request.addEventListener("success", e => {
                 const cursor = request.result;
                 
                 if (cursor) {
+                    const { key, primaryKey } = cursor;
+                    const keyBBox = key[2];
                     count++;
-                    if (contains(cursor.value.bbox, bbox)) {
+                    if (contains(keyBBox, bbox)) {
                         console.debug(`${selector} found after checking ${count} records`);
-                        resolve(cursor.value);
+                        resolve(primaryKey);
                         return;
                     }
                     cursor.continue();
