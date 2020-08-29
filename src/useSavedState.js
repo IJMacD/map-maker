@@ -1,15 +1,23 @@
 import React from 'react';
 
+/**
+ * @template T
+ * @param {string} key 
+ * @param {T} initalState 
+ * @returns {[ T, (newState: T) => void ]}
+ */
 export default function useSavedState (key, initalState) {
-    const saved = localStorage.getItem(key);
+    const [ state, setState ] = React.useState(() => {
+        const saved = localStorage.getItem(key);
+    
+        if (saved) {
+            try {
+                initalState = JSON.parse(saved);
+            } catch (e) {}
+        }
 
-    if (saved) {
-        try {
-            initalState = JSON.parse(saved);
-        } catch (e) {}
-    }
-
-    const [ state, setState ] = React.useState(initalState);
+        return initalState;
+    });
 
     return [
         state,

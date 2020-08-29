@@ -58,6 +58,7 @@ export default class IDBElementDatabase {
      * 
      * @param {string} bbox 
      * @param {string} selector 
+     * @returns {Promise<{ elements: import("./Overpass").OverpassElement[] }>}
      */
     async getElements (bbox, selector) {
         const db = await this.db;
@@ -75,6 +76,7 @@ export default class IDBElementDatabase {
      * 
      * @param {string} bbox 
      * @param {string} selector 
+     * @returns {Promise<{ elements: import("./Overpass").OverpassElement[] }>}
      */
     async searchElements (bbox, selector) {
         const db = await this.db;
@@ -84,17 +86,21 @@ export default class IDBElementDatabase {
             const index = objectStore.index("selectorIndex");
             const range = IDBKeyRange.bound([selector,0], [selector,Number.MAX_VALUE]);
             const request = index.openCursor(range);
+            let count = 0;
             request.addEventListener("success", e => {
                 const cursor = request.result;
                 
                 if (cursor) {
+                    count++;
                     if (contains(cursor.value.bbox, bbox)) {
+                        console.debug(`${selector} found after checking ${count} records`);
                         resolve(cursor.value);
                         return;
                     }
                     cursor.continue();
                 }
                 else {
+                    console.debug(`${selector} not found after checking ${count} records`);
                     resolve(null);
                 }
             });
@@ -116,7 +122,10 @@ export default class IDBElementDatabase {
         return new Promise((resolve, reject) => {
             const objectStore = db.transaction("elements", "readwrite").objectStore("elements");
             const request = objectStore.put({ selector, bbox, area, ...record }, key);
-            request.addEventListener("success", resolve);
+            request.addEventListener("success", () => {
+                console.debug(`Saved ${selector}/${bbox} to database with ${record.elements.length} elements`);
+                resolve();
+            });
             request.addEventListener("error", reject);
         });
     }

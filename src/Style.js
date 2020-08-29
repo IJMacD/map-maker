@@ -78,20 +78,28 @@ StyleSelector.parseMultiple = function (text) {
 export function matchRule (style, element) {
     for (const rule of style.rules) {
       for (const selector of rule.selectors) {
-        if (element.type !== selector.type) continue;
-  
-        let match = true;
-  
-        for (const [key, value] of Object.entries(selector.tags)) {
-          if (!element.tags || element.tags[key] !== value) {
-            match = false;
-            break;
-          }
-        }
-  
-        if (match)  return rule;
+        if (matchSelector(selector, element))  return rule;
       }
     }
+}
+
+/**
+ * @param {StyleSelector} selector
+ * @param {import("./Overpass").OverpassElement} element
+ */
+export function matchSelector (selector, element) {
+  if (element.type !== selector.type) return false;
+
+  let match = true;
+
+  for (const [key, value] of Object.entries(selector.tags)) {
+    if (!element.tags || element.tags[key] !== value) {
+      match = false;
+      break;
+    }
+  }
+
+  return match;
 }
 
 /**

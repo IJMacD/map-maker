@@ -1,5 +1,6 @@
 import IDBElementDatabase from "./database.idb";
 import { contains } from "./bbox";
+import { StyleSelector, matchSelector } from "./Style";
 
 const API_ROOT = require("./const").API_ROOT;
 
@@ -22,20 +23,96 @@ export class Overpass {
         }
     }
 
-    query (selector) {
-        let query;
-        if (recurRe.test(selector.type)) {
-            query = `[out:json][bbox];\n(\n\t${selector};\n\t>;\n);\nout;`;
-        } else {
-            query = `[out:json][bbox];\n${selector};\nout;`;
+    /**
+     * 
+     * @param {StyleSelector[]} selectors 
+     */
+    async preLoadElements (selectors) {
+        const { bbox } = this;
+
+        const set = {};
+        selectors.forEach(s => set[s] = s);
+
+        console.debug(`Preloading Elements: ${selectors.length} requested (${Object.keys(set).length} unique)`);
+
+        for (const [key, selector] of Object.entries(set)) {
+            if (this.elements.has(key)) delete set[key];
         }
+        console.debug(`Preloading Elements: ${Object.keys(set).length} not in HashMap`); 
+        
+        await Promise.all(Object.keys(set).map(s => {
+            return this.database.searchElements(bbox, s)
+                .then(els => {
+                    if (els) delete set[s];
+                });
+        }));
+        console.debug(`Preloading Elements: ${Object.keys(set).length} not in Database`);
+
+        if (Object.keys(set).length === 0) return;
+
+        const { elements } = await this.query(Object.values(set));
+
+        console.debug(`Preloading Elements: Fetched ${elements.length} elements from Server`);
+
+        // Prepare node map
+        /** @type {{ [id: number]: import("./Overpass").OverpassNodeElement }} */
+        const nodeMap = {};
+        elements.forEach(n => n.type === "node" && (nodeMap[n.id] = n));
+        // Prepare way map
+        /** @type {{ [id: number]: import("./Overpass").OverpassWayElement }} */
+        const wayMap = {};
+        elements.forEach(n => n.type === "way" && (wayMap[n.id] = n));
+
+        return Promise.all(Object.values(set).map(selector => {
+            const out = elements.filter(el => matchSelector(selector, el));
+
+            if (selector.type === "relation") {
+                /** @type {OverpassRelElement[]} */
+                const rels = (out.slice());
+
+                /** @type {OverpassWayElement[]} */
+                const ways = [];
+
+                for (const rel of rels) {
+                    const refs = rel.members.map(m => m.ref);
+                    ways.push(...refs.map(id => wayMap[id]));
+                }
+
+                out.push(...ways);
+
+                for (const way of ways) {
+                    out.push(...way.nodes.map(id => nodeMap[id]));
+                }
+
+            } else if (selector.type === "way") {
+                /** @type {OverpassWayElement[]} */
+                const ways = (out.slice());
+
+                for (const way of ways) {
+                    out.push(...way.nodes.map(id => nodeMap[id]));
+                }
+            }
+
+            this.elements.set(selector.toString(), Promise.resolve(out));
+            return this.database.saveElements(bbox, selector.toString(), { elements: out, cached: Date.now() });
+        }));
+        }
+
+    /**
+     * 
+     * @param {StyleSelector[]} selectors 
+     * @returns {Promise<{ elements: OverpassElement[] }>}
+     */
+    query (selectors) {
+        const sMap = selectors.map(s => recurRe.test(s.type) ? `\n\t${s};\n\t>;` : s.toString() + ";");
+        const query = `[out:json][bbox];\n(${sMap.join("")}\n);\nout;`
         const url = `${API_ROOT}?data=${query.replace(/\s/,"")}&bbox=${this.bbox}`;
         return fetch(url.toString()).then(r => r.ok ? r.json() : Promise.reject(r.status));
     }
 
     tryElements (selector, tries=10) {
         return new Promise ((resolve, reject) => {
-            this.query(selector).then(d => {
+            this.query([selector]).then(d => {
                 resolve(d.elements);
             }, e => {
                 if (e !== 429) reject("Bad Response");

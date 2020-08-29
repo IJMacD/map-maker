@@ -38,3 +38,28 @@ export function getArea (bbox) {
     const parts = bbox.split(",");
     return (+parts[2] - +parts[0]) * (+parts[3] - +parts[1]);
 }
+
+/**
+ * 
+ * @param {[number, number]} centre 
+ * @param {number} scale 
+ * @param {[number, number]} size 
+ */
+export function makeBBox (centre, scale, size) {
+    const baseTileSize = 256;
+
+    const [ lon, lat ] = centre;
+    const [ width, height ] = size;
+
+    const tileCount = Math.pow(2, scale)
+    const xSpan = 180 / tileCount;
+    const ySpan = 180 / tileCount;
+    
+    const hTileCount = width / baseTileSize;
+    const vTileCount = height / baseTileSize;
+
+    const dLon = xSpan * hTileCount;
+    const dLat = ySpan * vTileCount;
+
+    return [ lon - dLon, lat - dLat, lon + dLon, lat + dLat ].map(p => p.toFixed(3)).join(",");
+}

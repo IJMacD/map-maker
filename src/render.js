@@ -1,3 +1,4 @@
+import { makeBBox } from "./bbox";
 
 export function clearMap (canvasRef) {
     const { clientWidth, clientHeight } = canvasRef.current;
@@ -9,16 +10,18 @@ export function clearMap (canvasRef) {
     canvasRef.current.height = height;
 }
 
+const debugBox = true;
+const debugLines = true;
+
 /**
- * @param {string} bbox
+ * @param {[number,number]} centre
+ * @param {number} scale
  * @param {import("./Overpass").OverpassElement[]} elements
  * @param {React.MutableRefObject<HTMLCanvasElement>} canvasRef
  * @param {import("./Style").StyleRule} rule
  */
-export function renderMap (bbox, elements, canvasRef, rule) {
-    const [minLon, minLat, maxLon, maxLat] = bbox.split(",").map(parseFloat);
-
-    if (canvasRef.current && !isNaN(minLon) && !isNaN(minLat) && !isNaN(maxLon) && !isNaN(maxLat)) {
+export function renderMap (centre, scale, elements, canvasRef, rule) {
+    if (canvasRef.current) {
 
         // Prepare node map
         /** @type {{ [id: number]: import("./Overpass").OverpassNodeElement }} */
@@ -36,7 +39,42 @@ export function renderMap (bbox, elements, canvasRef, rule) {
         const height = clientHeight * devicePixelRatio;
 
         /** @type {(lon: number, lat: number) => [number, number]} */
-        const projection = mercatorProjection(minLon, minLat, maxLon, maxLat, width, height);
+        const projection = mercatorProjection(centre, scale, width, height);
+
+        if (debugBox) {
+            const bbox = makeBBox(centre, scale, [width, height]);
+            const parts = bbox.split(",");
+            const [ x1, y1 ] = projection(+parts[0], +parts[1]);
+            const [ x2, y2 ] = projection(+parts[2], +parts[3]);
+            ctx.beginPath();
+            ctx.rect(x1, y1, x2 - x1, y2 - y1);
+            ctx.strokeStyle = "black";
+            ctx.stroke();
+        }
+
+        if (debugLines) {
+            const xmin = 6.5;
+            const xmax = 7.5;
+            const xstep = 0.1;
+            const ymin = 50;
+            const ymax = 51;
+            const ystep = 0.1;
+            ctx.beginPath();
+            for (let i = xmin; i < xmax; i += xstep) {
+                ctx.moveTo(...projection(i, ymin));
+                for (let j = ymin; j < ymax; j += ystep) {
+                    ctx.lineTo(...projection(i, j));
+                }
+            }
+            for (let j = ymin; j < ymax; j += ystep) {
+                ctx.moveTo(...projection(xmin, j));
+                for (let i = ymin; i < ymax; i += ystep) {
+                    ctx.lineTo(...projection(i, j));
+                }
+            }
+            ctx.strokeStyle = "black";
+            ctx.stroke();
+        }
 
         for (const el of elements) {
             if (el.type !== rule.selector.type) continue;
@@ -162,30 +200,41 @@ function flatProjection (minLon, minLat, maxLon, maxLat, width, height) {
 }
 
 /**
+ * @param {[number, number]} centre
+ * @param {number} scale
+ * @param {number} width
+ * @param {number} height
  * @returns {(lon: number, lat: number) => [number, number]} 
  */
-function mercatorProjection (minLon, minLat, maxLon, maxLat, width, height) {
-    const size = Math.max(width,height);    
+function mercatorProjection (centre, scale, width, height) {
+    const baseTileSize = 256;
+
+    const [ cLon, cLat ] = centre;
+
+    const tileCount = Math.pow(2, scale)
+    const degPerTileH = 180 / tileCount;
+    const degPerTileV = 180 / tileCount;  
+
+    const hPixelsPerDeg = baseTileSize / degPerTileH;
+    const vPixelsPerDeg = baseTileSize / degPerTileV;
 
     const QUARTER_PI = Math.PI / 4;
-    const worldWidth = (size / 360);
-    const minX = (minLon + 180) * worldWidth;
-    const maxX = (maxLon + 180) * worldWidth;
-    const NMin = Math.log(Math.tan(QUARTER_PI + (minLat / 180 * Math.PI) / 2));
-    const minY = (size / 2) - (size * NMin / (2 * Math.PI));
-    const NMax = Math.log(Math.tan(QUARTER_PI + (maxLat / 180 * Math.PI) / 2));
-    const maxY = (size / 2) - (size * NMax / (2 * Math.PI));
 
-    const xScale = size / (maxX - minX);
-    const yScale = size / (minY - maxY);
-    const scale = Math.min(xScale, yScale);
+    const cX = width / 2;
+    const cY = height / 2;
+
+    const cLatPrime = Math.log(Math.tan(QUARTER_PI + (cLat / 180 * Math.PI) / 2)) * 180 / Math.PI;
 
     return (lon, lat) => {
-        const E = (lon + 180)
-        const x = E * worldWidth;
-        const N = Math.log(Math.tan(QUARTER_PI + (lat / 180 * Math.PI) / 2));
-        const y = (size / 2) - (size * N / (2 * Math.PI));
+        const E = lon;
+        const N = Math.log(Math.tan(QUARTER_PI + (lat / 180 * Math.PI) / 2)) * 180 / Math.PI;
 
-        return [(x - minX)*scale, height+(y-minY)*scale];
+        const dLon = E - cLon;
+        const dLat = N - cLatPrime;
+
+        const dX = dLon * hPixelsPerDeg;
+        const dY = dLat * vPixelsPerDeg;
+
+        return [cX + dX, cY - dY];
     }
 }
