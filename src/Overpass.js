@@ -4,6 +4,7 @@ import { StyleSelector, matchSelector } from "./Style";
 
 const API_ROOT = require("./const").API_ROOT;
 
+const overpassRe = /(node|way|rel(?:ation)?|area)/;
 const recurRe = /(way|rel(?:ation)?|area)/;
 
 export class Overpass {
@@ -30,16 +31,26 @@ export class Overpass {
     async preLoadElements (selectors) {
         const { bbox } = this;
 
+        // Create set of selectors
+        /** @type {{ [key: string]: StyleSelector }} */
         const set = {};
-        selectors.forEach(s => set[s] = s);
+        selectors.forEach(s => set[s.toString()] = s);
 
         console.debug(`Preloading Elements: ${selectors.length} requested (${Object.keys(set).length} unique)`);
 
+        // Remove non-overpass selectors
         for (const [key, selector] of Object.entries(set)) {
+            if (!overpassRe.test(selector.type)) delete set[key];
+        }
+        console.debug(`Preloading Elements: ${Object.keys(set).length} are Overpass Elements`); 
+
+        // Remove selectors in local hash map cache
+        for (const key of Object.keys(set)) {
             if (this.elements.has(key)) delete set[key];
         }
         console.debug(`Preloading Elements: ${Object.keys(set).length} not in HashMap`); 
         
+        // Remove selectors in database
         await Promise.all(Object.keys(set).map(s => {
             return this.database.searchElements(bbox, s)
                 .then(els => {
@@ -52,7 +63,7 @@ export class Overpass {
 
         const { elements } = await this.query(Object.values(set));
 
-        console.debug(`Preloading Elements: Fetched ${elements.length} elements from Server`);
+        console.log(`Preloading Elements: Fetched ${elements.length} elements from Server`);
 
         // Prepare node map
         /** @type {{ [id: number]: import("./Overpass").OverpassNodeElement }} */
@@ -131,6 +142,8 @@ export class Overpass {
      * @returns {Promise<OverpassElement[]>}
      */
     async getElements (selector) {
+        if (!overpassRe.test(selector.type)) return;
+
         const s = selector.toString();
         if (this.elements.has(s)) return this.elements.get(s);
 

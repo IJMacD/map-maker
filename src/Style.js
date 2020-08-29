@@ -8,12 +8,14 @@
 
 export class StyleSelector {
     /**
-     * @param {"node"|"way"|"relation"|"area"} type
+     * @param {string} type
      * @param {{ [key: string]: string }} tags
+     * @param {{ name: string, params: string[] }[]} pseudoClasses
      */
-    constructor (type, tags) {
+    constructor (type, tags, pseudoClasses=[]) {
       this.type = type;
       this.tags = tags;
+      this.pseudoClasses = pseudoClasses;
     }
   
     toString () {
@@ -25,7 +27,7 @@ StyleSelector.parse = /**
  * @param {string} text
  */
 function (text) {
-    const re = /\s*(node|way|rel(?:ation)?|area)/;
+    const re = /^\s*([a-z]+)/;
     const m = re.exec(text);
   
     if (!m) return null;
@@ -53,12 +55,27 @@ function (text) {
       tagText = tagText.substring(m2[0].length);
     }
 
+    /** @type {{ name: string, params: string[] }[]} */
+    const pseudoClasses = [];
+  
+    const re3 = /^:([a-z]+)(?:\(([^)]+)\))?/;
+
+    while (true) {
+      const m3 = re3.exec(tagText);
+
+      if (!m3) break;
+
+      pseudoClasses.push({ name: m3[1], params: m3[2] ? m3[2].split(",") : [] });
+
+      tagText = tagText.substring(m3[0].length);
+    }
+
     if (tagText.length) {
       console.log(`Invalid selector: ${text} unexpected part: '${tagText}'`);
       return null;
     }
   
-    return new StyleSelector(type, tags);
+    return new StyleSelector(type, tags, pseudoClasses);
 };
   
 /**

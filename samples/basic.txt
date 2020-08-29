@@ -43,10 +43,13 @@ way[natural=water],
 way[waterway=riverbank] {
     fill: lightblue;
 }
-way[highway=motorway],
-way[highway=motorway_link] {
+way[highway=motorway] {
     stroke: blue;
     stroke-width: 2.5;
+}
+way[highway=motorway_link] {
+    stroke: blue;
+    stroke-width: 2;
 }
 way[highway=trunk],
 way[highway=trunk_link] {
@@ -90,6 +93,15 @@ node[amenity=telephone] {
     fill: black;
     content: "📞";
     font-size: 10px;
+}
+gridlines:vertical(0.01deg),
+gridlines:horizontal(0.01deg) {
+   stroke: rgba(128,64,0,0.2);
+}
+gridlines:vertical(0.1deg),
+gridlines:horizontal(0.1deg) {
+   stroke: rgba(128,64,0,0.2);
+   stroke-width: 1.25;
 }
 node[place=city] {
    fill: black;
