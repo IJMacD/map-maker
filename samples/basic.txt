@@ -1,10 +1,10 @@
 map {
     fill: lightblue;
 }
-way[natural=coastline] {
+way[natural=coastline] { 
     fill: white;
 }
-@media (zoom >= 12) {
+@match (zoom >= 12) {
     way[landuse=residential] {
         fill: #EEEEEE;
     }
@@ -40,7 +40,7 @@ way[natural=coastline] {
         fill: #FFFFCC;
     }
 }
-@media (zoom >= 14) {
+@match (zoom >= 14) {
     way[building=yes] {
         fill: pink;
     }
@@ -86,27 +86,27 @@ way[highway=primary_link] {
     stroke: #D00000;
     stroke-width: 1.5;
 }
-@media (zoom >= 10) {
+@match (zoom >= 10) {
     way[highway=secondary] {
         stroke: darkorange;
         stroke-width: 1;
     }
 }
-@media (zoom >= 11) {
+@match (zoom >= 11) {
     way[highway=tertiary],
     way[highway=unclassified] {
         stroke: grey;
         stroke-width: 0.5;
     }
 }
-@media (zoom >= 13) {
+@match (14 <= zoom < 17) {
     way[highway=residential],
     way[highway=service] {
         stroke: lightgrey;
         stroke-width: 0.5;
     }
 }
-@media (zoom >= 17) {
+@match (zoom >= 17) {
     way[highway=residential],
     way[highway=service] {
         stroke: lightgrey;
@@ -145,7 +145,7 @@ way[highway=primary_link] {
         stroke-width: 7;
     }
 }
-@media (zoom >= 16) {
+@match (zoom >= 16) {
     way[highway=footway],
     way[highway=path] {
         stroke: pink;
@@ -160,8 +160,7 @@ way[railway=rail] {
     stroke: black;
     stroke-width: 1;
 }
-@media (zoom >= 13) {
-    way[railway=tram],
+@match (zoom >= 13) {
     way[railway=light_rail] {
         stroke: black;
         stroke-width: 0.5;
@@ -171,14 +170,14 @@ way[railway=rail] {
         stroke-width: 0.5;
     } 
 }
-@media (zoom >= 12) {
+@match (zoom >= 12) {
     way[barrier=wall],
     way[barrier=fence],
     way[barrier=retaining_wall] {
         stroke: black
     }
 }
-@media (zoom > 13) {
+@match (zoom > 13) {
     node[amenity=post_box] {
         fill: red;
         content: "📮";
@@ -191,10 +190,10 @@ way[railway=rail] {
         font-size: 10px;
     }
 }
-@media (zoom >= 11) {
+@match (zoom >= 11) {
     gridlines:vertical(0.01deg),
     gridlines:horizontal(0.01deg) {
-    stroke: rgba(128,64,0,0.2);
+        stroke: rgba(128,64,0,0.2);
     }
 }
 gridlines:vertical(0.1deg),
@@ -210,7 +209,7 @@ node[place=city] {
    font-size: 30px;
    font-weight: bold;
 }
-@media (zoom >= 11) {
+@match (zoom >= 10) {
     node[place=town] {
         fill: black;
         stroke: rgba(255,255,255,0.8);
@@ -220,7 +219,7 @@ node[place=city] {
         font-weight: bold;
     }
 }
-@media (zoom >= 12) {
+@match (zoom >= 12) {
     node[place=village] { 
         content: tag(name);
         fill: black;
@@ -230,7 +229,7 @@ node[place=city] {
         font-weight: bold;
     }
 }
-@media (zoom >= 13) {
+@match (zoom >= 13) {
     node[place=hamlet] { 
         content: tag(name);
         fill: black;
@@ -241,8 +240,6 @@ node[place=city] {
     }
 }
 current {
-    size: 10;
-    fill: blue;
-    stroke: rgba(255,255,255,0.5); 
-    stroke-width: 3;
+    content: "🔵";
+    fill: black;
 }

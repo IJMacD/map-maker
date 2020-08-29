@@ -1,4 +1,3 @@
-
 /** 
  * @typedef StyleRule
  * @property {"rule"} type
@@ -10,10 +9,16 @@
 /**
  * @typedef MediaQuery
  * @property {"query"} type
- * @property {{ left: string, operator: string, right: string }} predicate 
+ * @property {Predicate} predicate 
  * @property {StyleRule[]} rules
  */
 
+/**
+ * @typedef Predicate
+ * @property {string|Predicate} left
+ * @property {string} operator
+ * @property {string|Predicate} right
+ */
 
 export class StyleSelector {
     /**
@@ -164,7 +169,7 @@ export function parseStyle (styleText) {
  * @param {string} mediaText
  */
 function parseMedia (mediaText) {
-  const re = /^\s*@media\s+\(([a-z-]+)\s*(:|=|<=|>=|<|>)\s*([^)]+)\)\s*{/;
+  const re = /^\s*@match\s*\(([^\s)]+)\s*(:|=|<=|>=|<|>|and|or)\s*([^\s)]+)(?:\s*(=|<=|>=|<|>)\s*([^\s)]+))?\)\s*{/;
   /** @type {{ mediaQueries: MediaQuery[], index: number }} */
   const out = { mediaQueries: [], index: 0 };
   let match;
@@ -173,11 +178,27 @@ function parseMedia (mediaText) {
   let match2;
 
   while (match = re.exec(mediaText)) {
-    const predicate = {
-      left: match[1].trim(),
-      operator: match[2].trim(),
-      right: match[3].trim(),
-    };
+    let predicate;
+
+    if (match[4]) {
+      // MediaQueries4 syntax:
+      //  @match (10 < zoom <= 14)
+      predicate = {
+        left: { left: match[1], operator: match[2], right: match[3] },
+        operator: "and",
+        right: { left: match[3], operator: match[4], right: match[5] },
+      };
+    } else {
+      // MediaQueries4 syntax:
+      //  @match (zoom <= 14)
+      // MediaQueries3 syntax:
+      //  @match (max-zoom: 14) [TODO - it's parsed just not handled correctly]
+      predicate = {
+        left: match[1],
+        operator: match[2],
+        right: match[3],
+      };
+    }
 
     out.index += match[0].length;
 
@@ -268,16 +289,22 @@ export function expandRules (rules, context) {
 
 /**
  * 
- * @param {{ left: string, operator: string, right: string }} predicate 
+ * @param {Predicate} predicate 
  * @param {object} context 
  * @returns {boolean}
  */
 function testPredicate (predicate, context) {
-  if (predicate.left === "zoom") {
-    return COMPARE[predicate.operator](context.zoom, predicate.right);
-  }
+  let left = typeof predicate.left === "string" ? predicate.left : testPredicate(predicate.left, context);
+  let right = typeof predicate.right === "string" ? predicate.right : testPredicate(predicate.right, context);
 
-  return false;
+  if (typeof left === "string" && left in context) left = context[left];
+  if (typeof right === "string" && right in context) right = context[right];
+    
+  const op = COMPARE[predicate.operator];
+
+  if (!op) return false;
+  
+  return op(left, right);
 }
 
 const COMPARE = {
@@ -287,4 +314,6 @@ const COMPARE = {
   "<": (a,b) => a < b,
   ">=": (a,b) => a >= b,
   "<=": (a,b) => a <= b,
+  "and": (a,b) => a && b,
+  "or": (a,b) => a || b,
 }

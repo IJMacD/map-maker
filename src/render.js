@@ -107,6 +107,10 @@ export function renderMap (centre, scale, elements=[], canvasRef, rule, context)
                 
                 rule.declarations["fill"] && ctx.fill();
                 rule.declarations["stroke"] && ctx.stroke();
+
+                if (rule.declarations["content"]) {
+                    renderText(ctx, projection, [coords.longitude, coords.latitude], rule);
+                }
             }
         }
 
@@ -170,45 +174,14 @@ export function renderMap (centre, scale, elements=[], canvasRef, rule, context)
             rule.declarations["stroke"] && ctx.stroke();
 
             // Text Handling 
-            
-            if (rule.declarations["content"] && el.type === "node") {
-                const [x, y] = projection(el.lon, el.lat);
-
-                let content = rule.declarations["content"];
-                
-                if (content.match(/^".*"$/g)) {
-                    content = content.replace(/^"|"$/g, "");
-                } else if (content.match(/tag\(([^)]+)\)/)) {
-                    const m = content.match(/tag\(([^)]+)\)/);
-                    content = el.tags[m[1]] || "";
-                } else {
-                    content = "?";
+            if (rule.declarations["content"]) {
+                if (el.type === "node")
+                    renderText(ctx, projection, [el.lon, el.lat], rule, el);
+                else if (el.type === "way") {
+                    // find mid-point (and average gradient?)
+                    // renderText(ctx, projection, [midLon, midLat], rule, el);
                 }
-
-                let fontSize = `${10 * devicePixelRatio}px`;
-                let fontWeight = "normal";
-                let fontFamily = "sans-serif";
-
-                if (rule.declarations["font-size"]) {
-                    fontSize = rule.declarations["font-size"].replace(/^\d[\d.]*/, m => `${+m * devicePixelRatio}`);
-                }
-
-                if (rule.declarations["font-weight"]) {
-                    fontWeight = rule.declarations["font-weight"];
-                }
-
-                if (rule.declarations["font-family"]) {
-                    fontFamily = rule.declarations["font-family"];
-                }
-
-                ctx.font = rule.declarations["font"] || `${fontWeight} ${fontSize} ${fontFamily}`;
-
-                if (rule.declarations["stroke"]) 
-                    ctx.strokeText(content, x, y);
-                if (rule.declarations["fill"] || !rule.declarations["stroke"]) 
-                    ctx.fillText(content, x, y);
             }
-
         }
 
         if (rule.selector.type === "gridlines") {
@@ -264,6 +237,53 @@ export function renderMap (centre, scale, elements=[], canvasRef, rule, context)
 
         ctx.restore();
     }
+}
+
+/**
+ * @param {CanvasRenderingContext2D} ctx
+ * @param { (lon: number, lat: number) => [number, number] } projection
+ * @param {[number, number]} param2
+ * @param {import("./Style").StyleRule} rule
+ * @param {import("./Overpass").OverpassElement} [element]
+ */
+function renderText(ctx, projection, [lon, lat], rule, element=null) {
+    const [x, y] = projection(lon, lat);
+
+    let content = rule.declarations["content"];
+
+    if (content.match(/^".*"$/g)) {
+        content = content.replace(/^"|"$/g, "");
+    }
+    else if (content.match(/tag\(([^)]+)\)/)) {
+        const m = content.match(/tag\(([^)]+)\)/);
+        content = element.tags[m[1]] || "";
+    }
+    else {
+        content = "?";
+    }
+
+    let fontSize = `${10 * devicePixelRatio}px`;
+    let fontWeight = "normal";
+    let fontFamily = "sans-serif";
+
+    if (rule.declarations["font-size"]) {
+        fontSize = rule.declarations["font-size"].replace(/^\d[\d.]*/, m => `${+m * devicePixelRatio}`);
+    }
+
+    if (rule.declarations["font-weight"]) {
+        fontWeight = rule.declarations["font-weight"];
+    }
+
+    if (rule.declarations["font-family"]) {
+        fontFamily = rule.declarations["font-family"];
+    }
+
+    ctx.font = rule.declarations["font"] || `${fontWeight} ${fontSize} ${fontFamily}`;
+
+    if (rule.declarations["stroke"])
+        ctx.strokeText(content, x, y);
+    if (rule.declarations["fill"] || !rule.declarations["stroke"])
+        ctx.fillText(content, x, y);
 }
 
 /**
