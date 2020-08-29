@@ -19,8 +19,9 @@ const debugLines = false;
  * @param {import("./Overpass").OverpassElement[]} elements
  * @param {React.MutableRefObject<HTMLCanvasElement>} canvasRef
  * @param {import("./Style").StyleRule} rule
+ * @param {{ zoom: number, current: Position }} context
  */
-export function renderMap (centre, scale, elements=[], canvasRef, rule) {
+export function renderMap (centre, scale, elements=[], canvasRef, rule, context) {
     if (canvasRef.current) {
 
         // Prepare node map
@@ -92,6 +93,21 @@ export function renderMap (centre, scale, elements=[], canvasRef, rule) {
             
             rule.declarations["fill"] && ctx.fill();
             rule.declarations["stroke"] && ctx.stroke();
+        }
+        else if (rule.selector.type === "current") {
+            if (context.current) {
+                const { coords } = context.current;
+
+                ctx.beginPath();
+
+                const r = +rule.declarations["size"] * devicePixelRatio;
+                const [x, y] = projection(coords.longitude, coords.latitude);
+
+                ctx.ellipse(x, y, r, r, 0, 0, Math.PI * 2);
+                
+                rule.declarations["fill"] && ctx.fill();
+                rule.declarations["stroke"] && ctx.stroke();
+            }
         }
 
         // Then iterate all elements

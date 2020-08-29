@@ -6,11 +6,13 @@ import { renderMap, clearMap } from './render';
 import { Overpass } from './Overpass';
 import { useDebounce } from './useDebounce';
 import { makeBBox } from './bbox';
+import useLocation from './useLocation';
 
 function App() {
   const [ style, setStyle ] = useSavedState("USER_STYLE", "node[amenity=post_box] {\n\tfill: black;\n\tsize: 2;\n}");
   const [ centre, setCentre ] = useSavedState("USER_CENTRE", "7.1,50.7");
   const [ scale, setScale ] = useSavedState("USER_SCALE", 14);
+  const current = useLocation();
   /** @type {React.MutableRefObject<HTMLCanvasElement>} */
   const canvasRef = React.useRef();
   /** @type {React.MutableRefObject<Overpass>} */
@@ -42,7 +44,8 @@ function App() {
       setError("");
 
       try {
-        const rules = expandRules(parsedStyle.rules, { zoom: scale });
+        const context = { zoom: debouncedScale, current };
+        const rules = expandRules(parsedStyle.rules, context);
         await overpassRef.current.preLoadElements(rules.map(r => r.selector));
         
         const map = rules.map(rule => {
@@ -59,7 +62,7 @@ function App() {
 
         for (const item of map) {
           const elements = await item.promise;
-          renderMap(centrePoint, debouncedScale, elements, canvasRef, item.rule);
+          renderMap(centrePoint, debouncedScale, elements, canvasRef, item.rule, context);
         }
       } catch (e) {
         setError("Error Fetching");
@@ -69,7 +72,7 @@ function App() {
     }
 
     run();
-  }, [debouncedCentre, debouncedScale, parsedStyle]);
+  }, [debouncedCentre, debouncedScale, parsedStyle, current]);
 
   function move (dX, dY) {
     /** @type {[number, number]} */
@@ -89,6 +92,7 @@ function App() {
         <button onClick={() => move(0,-1)}>⏷</button>
         <button onClick={() => setScale(scale + 1)}>➕</button>
         <button onClick={() => setScale(scale - 1)}>➖</button>
+        { current && <button onClick={() => setCentre(`${current.coords.longitude},${current.coords.latitude}`)}>📍</button> }
         <label>Zoom <input type="number" value={scale} onChange={e => setScale(+e.target.value)} /></label>
         <label>Bounding Box <input value={bbox} readOnly /></label>
         <label>Style <textarea value={style} onChange={e => setStyle(e.target.value)} /></label>

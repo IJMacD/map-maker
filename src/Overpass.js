@@ -1,6 +1,8 @@
 import IDBElementDatabase from "./database.idb";
 import { contains } from "./bbox";
-import { StyleSelector, matchSelector } from "./Style";
+import { matchSelector } from "./Style";
+
+/** @typedef {import("./Style").StyleSelector} StyleSelector */
 
 const API_ROOT = require("./const").API_ROOT;
 

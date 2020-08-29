@@ -20,6 +20,7 @@ way[natural=coastline] {
     way[landuse=meadow] { 
         fill: #CCFFCC;
     }
+    way[leisure=park],
     way[leisure=pitch],
     way[landuse=recreation_ground] {
         fill: #CCFFCC;
@@ -38,17 +39,11 @@ way[natural=coastline] {
     way[natural=beach] { 
         fill: #FFFFCC;
     }
-    way[barrier=wall],
-    way[barrier=fence],
-    way[barrier=retaining_wall] {
-        stroke: black
-    }
 }
 @media (zoom >= 14) {
     way[building=yes] {
         fill: pink;
     }
-
     way[waterway=stream] {
         stroke: lightblue;
         stroke-width: 1;
@@ -91,9 +86,11 @@ way[highway=primary_link] {
     stroke: #D00000;
     stroke-width: 1.5;
 }
-way[highway=secondary] {
-    stroke: darkorange;
-    stroke-width: 1;
+@media (zoom >= 10) {
+    way[highway=secondary] {
+        stroke: darkorange;
+        stroke-width: 1;
+    }
 }
 @media (zoom >= 11) {
     way[highway=tertiary],
@@ -164,6 +161,7 @@ way[railway=rail] {
     stroke-width: 1;
 }
 @media (zoom >= 13) {
+    way[railway=tram],
     way[railway=light_rail] {
         stroke: black;
         stroke-width: 0.5;
@@ -172,6 +170,13 @@ way[railway=rail] {
         stroke: grey;
         stroke-width: 0.5;
     } 
+}
+@media (zoom >= 12) {
+    way[barrier=wall],
+    way[barrier=fence],
+    way[barrier=retaining_wall] {
+        stroke: black
+    }
 }
 @media (zoom > 13) {
     node[amenity=post_box] {
@@ -205,7 +210,7 @@ node[place=city] {
    font-size: 30px;
    font-weight: bold;
 }
-@media (zoom >= 10) {
+@media (zoom >= 11) {
     node[place=town] {
         fill: black;
         stroke: rgba(255,255,255,0.8);
@@ -234,4 +239,10 @@ node[place=city] {
         font-size: 10px;
         font-weight: bold;
     }
+}
+current {
+    size: 10;
+    fill: blue;
+    stroke: rgba(255,255,255,0.5); 
+    stroke-width: 3;
 }
