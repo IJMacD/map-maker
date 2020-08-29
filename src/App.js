@@ -71,11 +71,25 @@ function App() {
     run();
   }, [debouncedCentre, debouncedScale, parsedStyle]);
 
+  function move (dX, dY) {
+    /** @type {[number, number]} */
+    const centrePoint = (debouncedCentre.split(",").map(p => +p));
+    const stepSize = 360 / Math.pow(2, scale);
+    const newCentre = [ centrePoint[0] + dX * stepSize, centrePoint[1] + dY * stepSize ];
+    setCentre(newCentre.join(","));
+  }
+
   return (
     <div className="App">
       <div className="sidebar">
         <label>Centre <input value={centre} onChange={e => setCentre(e.target.value)} /></label>
-        <label>Scale <input type="number" value={scale} onChange={e => setScale(+e.target.value)} /></label>
+        <button onClick={() => move(-1,0)}>⏴</button>
+        <button onClick={() => move(1,0)}>⏵</button>
+        <button onClick={() => move(0,1)}>⏶</button>
+        <button onClick={() => move(0,-1)}>⏷</button>
+        <button onClick={() => setScale(scale + 1)}>➕</button>
+        <button onClick={() => setScale(scale - 1)}>➖</button>
+        <label>Zoom <input type="number" value={scale} onChange={e => setScale(+e.target.value)} /></label>
         <label>Bounding Box <input value={bbox} readOnly /></label>
         <label>Style <textarea value={style} onChange={e => setStyle(e.target.value)} /></label>
         { fetching && <p>Loading...</p> }

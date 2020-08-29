@@ -18,7 +18,7 @@ way[landuse=recreation_ground] {
 }
 way[landuse=retail],
 way[landuse=commercial] {
-    fill: #FFCCCC;
+    fill: #FFEEEE;
 }
 way[natural=scrub] {
     fill: #FFF8DD;
@@ -53,16 +53,21 @@ way[highway=motorway_link] {
 }
 way[highway=trunk],
 way[highway=trunk_link] {
-    stroke: purple;
+    stroke: darkgreen;
     stroke-width: 2;
+}
+way[highway=trunk],
+way[highway=trunk_link] {
+    stroke: green;
+    stroke-width: 1;
 }
 way[highway=primary],
 way[highway=primary_link] {
-    stroke: red;
+    stroke: #D00000;
     stroke-width: 1.5;
 }
 way[highway=secondary] {
-    stroke: orange;
+    stroke: darkorange;
     stroke-width: 1;
 }
 way[highway=tertiary],
