@@ -6,13 +6,13 @@ import { renderMap, clearMap } from './render';
 import { Overpass } from './Overpass';
 import { useDebounce } from './useDebounce';
 import { makeBBox } from './bbox';
-import useLocation from './useLocation';
+import useGeolocation from './useGeolocation';
 
 function App() {
   const [ style, setStyle ] = useSavedState("USER_STYLE", "node[amenity=post_box] {\n\tfill: black;\n\tsize: 2;\n}");
   const [ centre, setCentre ] = useSavedState("USER_CENTRE", "7.1,50.7");
   const [ scale, setScale ] = useSavedState("USER_SCALE", 14);
-  const current = useLocation();
+  const current = useGeolocation();
   /** @type {React.MutableRefObject<HTMLCanvasElement>} */
   const canvasRef = React.useRef();
   /** @type {React.MutableRefObject<Overpass>} */

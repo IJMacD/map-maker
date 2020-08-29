@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function useLocation () {
+export default function useGeolocation () {
     const { geolocation } = navigator;
 
     /** @type {[Position, (newPos: Position) => void]} */
