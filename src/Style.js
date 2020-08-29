@@ -1,10 +1,19 @@
 
 /** 
  * @typedef StyleRule
+ * @property {"rule"} type
  * @property {StyleSelector} [selector]
  * @property {StyleSelector[]} [selectors]
  * @property {{ [key: string]: string }} declarations
  */
+
+/**
+ * @typedef MediaQuery
+ * @property {"query"} type
+ * @property {{ left: string, operator: string, right: string }} predicate 
+ * @property {StyleRule[]} rules
+ */
+
 
 export class StyleSelector {
     /**
@@ -121,14 +130,92 @@ export function matchSelector (selector, element) {
 
 /**
  * @param {string} styleText
- * @returns {{ rules: StyleRule[] }}
  */
 export function parseStyle (styleText) {
-  const re = /([^{}]+)\s*{([^{}]*)}/g;
-  let match;
+  /** @type {{ rules: (StyleRule|MediaQuery)[] }} */
   const out = { rules: [] };
 
-  while(match = re.exec(styleText)) {
+  let length = styleText.length;
+
+  while (length > 0) {
+
+    // Try parsing rule list
+    const rulesResult = parseRules(styleText);
+    out.rules.push(...rulesResult.rules);
+    styleText = styleText.substring(rulesResult.index).trim();
+
+    // Try parsing media query
+    const mediaResult = parseMedia(styleText);
+    out.rules.push(...mediaResult.mediaQueries);
+    styleText = styleText.substring(mediaResult.index).trim();
+
+    if (styleText.length === length) {
+      console.log("Got stuck parsing style at: " + styleText);
+      break;
+    }
+
+    length = styleText.length;
+  }
+
+  return out;
+}
+
+/**
+ * @param {string} mediaText
+ */
+function parseMedia (mediaText) {
+  const re = /^\s*@media\s+\(([a-z-]+)\s*(:|=|<=|>=|<|>)\s*([^)]+)\)\s*{/;
+  /** @type {{ mediaQueries: MediaQuery[], index: number }} */
+  const out = { mediaQueries: [], index: 0 };
+  let match;
+
+  const re2 = /^\s*}/;
+  let match2;
+
+  while (match = re.exec(mediaText)) {
+    const predicate = {
+      left: match[1].trim(),
+      operator: match[2].trim(),
+      right: match[3].trim(),
+    };
+
+    out.index += match[0].length;
+
+    mediaText = mediaText.substring(match[0].length);
+
+    const { rules, index } = parseRules(mediaText);
+
+    out.index += index;
+
+    mediaText = mediaText.substring(index);
+
+    match2 = re2.exec(mediaText);
+    
+    if (match2) {
+      out.mediaQueries.push({
+        type: "query",
+        predicate,
+        rules,
+      });
+
+      out.index += match2[0].length;
+
+    } else {
+      console.log("Unterminated media query");
+    }
+  }
+
+  return out;
+}
+
+function parseRules (ruleText) {
+  const re = /^\s*([^{}]+)\s*{([^{}]*)}/;
+  let match;
+  /** @type {{ rules: StyleRule[], index: number }} */
+  const out = { rules: [], index: 0 };
+
+  while(match = re.exec(ruleText)) {
+    /** @type {{ [key: string]: string }} */
     const declarations = {};
     
     match[2].split(";").map(s => s.trim()).filter(s => s).forEach(s => {
@@ -143,10 +230,15 @@ export function parseStyle (styleText) {
 
     if (selectors.length) {
       out.rules.push({
+        type: "rule",
         selectors,
         declarations,
       });
     }
+
+    out.index += match[0].length;
+
+    ruleText = ruleText.substring(match[0].length);
   }
 
   return out;
@@ -154,15 +246,45 @@ export function parseStyle (styleText) {
 
 /**
  * 
- * @param {StyleRule[]} rules 
+ * @param {(StyleRule|MediaQuery)[]} rules 
+ * @param {object} context 
  */
-export function expandRules (rules) {
+export function expandRules (rules, context) {
   const out = [];
   for (const rule of rules) {
-    const { declarations } = rule;
-    for (const selector of rule.selectors) {
-      out.push({ selector, declarations });
+    if (rule.type === "rule") {
+      const { declarations } = rule;
+      for (const selector of rule.selectors) {
+        out.push({ selector, declarations });
+      }
+    } else {
+      if (testPredicate(rule.predicate, context)) {
+        out.push(...expandRules(rule.rules, context));
+      }
     }
   }
   return out;
+}
+
+/**
+ * 
+ * @param {{ left: string, operator: string, right: string }} predicate 
+ * @param {object} context 
+ * @returns {boolean}
+ */
+function testPredicate (predicate, context) {
+  if (predicate.left === "zoom") {
+    return COMPARE[predicate.operator](context.zoom, predicate.right);
+  }
+
+  return false;
+}
+
+const COMPARE = {
+  ":": (a,b) => a == b,
+  "=": (a,b) => a == b,
+  ">": (a,b) => a > b,
+  "<": (a,b) => a < b,
+  ">=": (a,b) => a >= b,
+  "<=": (a,b) => a <= b,
 }

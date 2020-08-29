@@ -20,8 +20,8 @@ export class Overpass {
         // old one then we don't need to clear our cache
         if (!contains(this.bbox, bbox)) {
             this.elements.clear();
-            this.bbox = bbox;
         }
+        this.bbox = bbox;
     }
 
     /**

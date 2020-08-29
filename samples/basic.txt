@@ -4,50 +4,55 @@ map {
 way[natural=coastline] {
     fill: white;
 }
-way[landuse=residential] {
-    fill: #EEEEEE;
+@media (zoom >= 12) {
+    way[landuse=residential] {
+        fill: #EEEEEE;
+    }
+    way[landuse=farmland] {
+        fill: #EEFFDD;
+    }
+    way[natural=wood],
+    way[landuse=forest] {
+        fill: rgba(0,128,0,0.2);
+    }
+    way[natural=grassland],
+    way[landuse=grass],
+    way[landuse=meadow] { 
+        fill: #CCFFCC;
+    }
+    way[leisure=pitch],
+    way[landuse=recreation_ground] {
+        fill: #CCFFCC;
+    }
+    way[landuse=retail],
+    way[landuse=commercial] {
+        fill: #FFEEEE;
+    }
+    way[natural=scrub] {
+        fill: #FFF8DD;
+    }
+    way[landuse=allotments],
+    way[landuse=brownfield] {
+        fill: #c0c090;
+    }
+    way[natural=beach] { 
+        fill: #FFFFCC;
+    }
+    way[barrier=wall],
+    way[barrier=fence],
+    way[barrier=retaining_wall] {
+        stroke: black
+    }
 }
-way[landuse=farmland] {
-    fill: lightgreen;
-}
-way[natural=wood],
-way[landuse=forest] {
-    fill: rgba(0,128,0,0.2);
-}
-way[natural=grassland],
-way[landuse=grass],
-way[landuse=meadow] { 
-    fill: #CCFFCC;
-}
-way[leisure=pitch],
-way[landuse=recreation_ground] {
-    fill: #CCFFCC;
-}
-way[landuse=retail],
-way[landuse=commercial] {
-    fill: #FFEEEE;
-}
-way[natural=scrub] {
-    fill: #FFF8DD;
-}
-way[landuse=allotments],
-way[landuse=brownfield] {
-    fill: #c0c090;
-}
-way[natural=beach] {
-    fill: #FFFFCC;
-}
-way[barrier=wall],
-way[barrier=fence],
-way[barrier=retaining_wall] {
-    stroke: black
-}
-way[building=yes] {
-    fill: pink;
-}
-way[waterway=stream] {
-    stroke: lightblue;
-    stroke-width: 1;
+@media (zoom >= 14) {
+    way[building=yes] {
+        fill: pink;
+    }
+
+    way[waterway=stream] {
+        stroke: lightblue;
+        stroke-width: 1;
+    }
 }
 way[waterway=river] {
     stroke: lightblue; 
@@ -90,51 +95,102 @@ way[highway=secondary] {
     stroke: darkorange;
     stroke-width: 1;
 }
-way[highway=tertiary],
-way[highway=unclassified] {
-    stroke: grey;
-    stroke-width: 0.5;
+@media (zoom >= 11) {
+    way[highway=tertiary],
+    way[highway=unclassified] {
+        stroke: grey;
+        stroke-width: 0.5;
+    }
 }
-way[highway=residential],
-way[highway=service] {
-    stroke: lightgrey;
-    stroke-width: 0.5;
+@media (zoom >= 13) {
+    way[highway=residential],
+    way[highway=service] {
+        stroke: lightgrey;
+        stroke-width: 0.5;
+    }
 }
-way[highway=footway],
-way[highway=path] {
-    stroke: pink;
-    stroke-width: 0.5;
+@media (zoom >= 17) {
+    way[highway=residential],
+    way[highway=service] {
+        stroke: lightgrey;
+        stroke-width: 2;
+    }
+    way[highway=tertiary],
+    way[highway=unclassified] {
+        stroke: grey;
+        stroke-width: 2;
+    }
+    way[highway=secondary] {
+        stroke: darkorange;
+        stroke-width: 3;
+    }
+    way[highway=primary],
+    way[highway=primary_link] {
+        stroke: #D00000;
+        stroke-width: 4;
+    }
+    way[highway=trunk],
+    way[highway=trunk_link] {
+        stroke: darkgreen;
+        stroke-width: 7;
+    }
+    way[highway=trunk],
+    way[highway=trunk_link] {
+        stroke: green;
+        stroke-width: 6;
+    }
+    way[highway=motorway] {
+        stroke: blue;
+        stroke-width: 8;
+    }
+    way[highway=motorway_link] {
+        stroke: blue;
+        stroke-width: 7;
+    }
 }
-way[highway=cycleway] {
-    stroke: darkblue;
-    stroke-width: 0.5;
+@media (zoom >= 16) {
+    way[highway=footway],
+    way[highway=path] {
+        stroke: pink;
+        stroke-width: 0.5;
+    }
+    way[highway=cycleway] {
+        stroke: darkblue;
+        stroke-width: 0.5;
+    }
 }
 way[railway=rail] {
     stroke: black;
     stroke-width: 1;
 }
-way[railway=light_rail] {
-    stroke: black;
-    stroke-width: 0.5;
-} 
-way[railway=disused] {
-    stroke: grey;
-    stroke-width: 0.5;
-} 
-node[amenity=post_box] {
-    fill: red;
-    content: "📮";
-    font-size: 10px;
-    opacity: 0.8;
+@media (zoom >= 13) {
+    way[railway=light_rail] {
+        stroke: black;
+        stroke-width: 0.5;
+    } 
+    way[railway=disused] {
+        stroke: grey;
+        stroke-width: 0.5;
+    } 
 }
-node[amenity=telephone] {
-    fill: black;
-    content: "📞";
-    font-size: 10px;
+@media (zoom > 13) {
+    node[amenity=post_box] {
+        fill: red;
+        content: "📮";
+        font-size: 10px; 
+        opacity: 0.8;
+    }
+    node[amenity=telephone] {
+        fill: black;
+        content: "📞";
+        font-size: 10px;
+    }
 }
-gridlines:vertical(0.01deg),
-gridlines:horizontal(0.01deg) {
-   stroke: rgba(128,64,0,0.2);
+@media (zoom >= 11) {
+    gridlines:vertical(0.01deg),
+    gridlines:horizontal(0.01deg) {
+    stroke: rgba(128,64,0,0.2);
+    }
 }
 gridlines:vertical(0.1deg),
 gridlines:horizontal(0.1deg) {
@@ -149,19 +205,33 @@ node[place=city] {
    font-size: 30px;
    font-weight: bold;
 }
-node[place=town] {
-   fill: black;
-   stroke: rgba(255,255,255,0.8);
-   stroke-width: 5;
-   content: tag(name);
-   font-size: 20px;
-   font-weight: bold;
+@media (zoom >= 10) {
+    node[place=town] {
+        fill: black;
+        stroke: rgba(255,255,255,0.8);
+        stroke-width: 5;
+        content: tag(name);
+        font-size: 20px;
+        font-weight: bold;
+    }
 }
-node[place=village] { 
-   content: tag(name);
-   fill: black;
-   stroke: rgba(255,255,255,0.8);
-   stroke-width: 3;
-   font-size: 15px;
-   font-weight: bold;
+@media (zoom >= 12) {
+    node[place=village] { 
+        content: tag(name);
+        fill: black;
+        stroke: rgba(255,255,255,0.8);
+        stroke-width: 3;
+        font-size: 15px;
+        font-weight: bold;
+    }
+}
+@media (zoom >= 13) {
+    node[place=hamlet] { 
+        content: tag(name);
+        fill: black;
+        stroke: rgba(255,255,255,0.8);
+        stroke-width: 3;
+        font-size: 10px;
+        font-weight: bold;
+    }
 }

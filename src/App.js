@@ -42,7 +42,7 @@ function App() {
       setError("");
 
       try {
-        const rules = expandRules(parsedStyle.rules);
+        const rules = expandRules(parsedStyle.rules, { zoom: scale });
         await overpassRef.current.preLoadElements(rules.map(r => r.selector));
         
         const map = rules.map(rule => {
