@@ -85,6 +85,16 @@ export function renderMap (centre, scale, elements=[], canvasRef, rule) {
         if (rule.declarations["opacity"]) 
             ctx.globalAlpha = +rule.declarations["opacity"];
 
+        // Special rules first
+        if (rule.selector.type === "map") {
+            ctx.beginPath();
+            ctx.rect(0,0,width, height);
+            
+            rule.declarations["fill"] && ctx.fill();
+            rule.declarations["stroke"] && ctx.stroke();
+        }
+
+        // Then iterate all elements
         for (const el of elements) {
             if (el.type !== rule.selector.type) continue;
 

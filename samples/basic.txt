@@ -1,3 +1,12 @@
+map {
+    fill: lightblue;
+}
+way[natural=coastline] {
+    fill: white;
+}
+way[landuse=residential] {
+    fill: #EEEEEE;
+}
 way[landuse=farmland] {
     fill: lightgreen;
 }
@@ -6,11 +15,9 @@ way[landuse=forest] {
     fill: rgba(0,128,0,0.2);
 }
 way[natural=grassland],
+way[landuse=grass],
 way[landuse=meadow] { 
     fill: #CCFFCC;
-}
-way[landuse=residential] {
-    fill: #EEEEEE;
 }
 way[leisure=pitch],
 way[landuse=recreation_ground] {
@@ -23,12 +30,20 @@ way[landuse=commercial] {
 way[natural=scrub] {
     fill: #FFF8DD;
 }
+way[landuse=allotments],
+way[landuse=brownfield] {
+    fill: #c0c090;
+}
+way[natural=beach] {
+    fill: #FFFFCC;
+}
+way[barrier=wall],
+way[barrier=fence],
+way[barrier=retaining_wall] {
+    stroke: black
+}
 way[building=yes] {
     fill: pink;
-}
-way[natural=coastline] {
-    stroke: black;
-    stroke-width: 1;
 }
 way[waterway=stream] {
     stroke: lightblue;
@@ -40,8 +55,13 @@ way[waterway=river] {
 } 
 rel[natural=water],
 way[natural=water],
-way[waterway=riverbank] {
+way[waterway=riverbank],
+way[waterway=dock] {
     fill: lightblue;
+}
+way[natural=coastline] {
+    stroke: black;
+    stroke-width: 1;
 }
 way[highway=motorway] {
     stroke: blue;
@@ -79,13 +99,26 @@ way[highway=residential],
 way[highway=service] {
     stroke: lightgrey;
     stroke-width: 0.5;
-} 
+}
+way[highway=footway],
+way[highway=path] {
+    stroke: pink;
+    stroke-width: 0.5;
+}
+way[highway=cycleway] {
+    stroke: darkblue;
+    stroke-width: 0.5;
+}
 way[railway=rail] {
     stroke: black;
     stroke-width: 1;
 }
 way[railway=light_rail] {
     stroke: black;
+    stroke-width: 0.5;
+} 
+way[railway=disused] {
+    stroke: grey;
     stroke-width: 0.5;
 } 
 node[amenity=post_box] {
