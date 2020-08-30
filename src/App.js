@@ -7,6 +7,7 @@ import { Overpass } from './Overpass';
 import { useDebounce } from './useDebounce';
 import { makeBBox } from './bbox';
 import useGeolocation from './useGeolocation';
+import Textarea from './Textarea';
 
 function App() {
   const [ style, setStyle ] = useSavedState("USER_STYLE", "node[amenity=post_box] {\n\tfill: black;\n\tsize: 2;\n}");
@@ -95,7 +96,7 @@ function App() {
         { current && <button onClick={() => setCentre(`${current.coords.longitude},${current.coords.latitude}`)}>📍</button> }
         <label>Zoom <input type="number" value={scale} onChange={e => setScale(+e.target.value)} /></label>
         <label>Bounding Box <input value={bbox} readOnly /></label>
-        <label>Style <textarea value={style} onChange={e => setStyle(e.target.value)} /></label>
+        <label>Style <Textarea value={style} onChange={setStyle} /></label>
         { fetching && <p>Loading...</p> }
         { error && <p style={{color:"red"}}>{error}</p> }
       </div>
