@@ -56,14 +56,16 @@ function App() {
           }
         });
 
-        clearMap(canvasRef);
+        if (canvasRef.current) {
+          clearMap(canvasRef.current);
 
-        /** @type {[number, number]} */
-        const centrePoint = (debouncedCentre.split(",").map(p => +p));
+          /** @type {[number, number]} */
+          const centrePoint = (debouncedCentre.split(",").map(p => +p));
 
-        for (const item of map) {
-          const elements = await item.promise;
-          renderMap(centrePoint, debouncedScale, elements, canvasRef, item.rule, context);
+          for (const item of map) {
+            const elements = await item.promise;
+            renderMap(centrePoint, debouncedScale, elements, canvasRef.current, item.rule, context);
+          }
         }
       } catch (e) {
         setError("Error Fetching");
