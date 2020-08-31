@@ -143,5 +143,5 @@ export default class IDBElementDatabase {
 
 function makeKey (bbox, selector) {
     const bkey = bbox.split(",").map(p => (+p).toFixed(3)).join(",");
-    return `${bkey}#${selector}`;
+    return `${selector}/${bkey}`;
 }

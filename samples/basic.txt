@@ -41,7 +41,10 @@ way[natural=coastline] {
     }
 }
 @match (zoom >= 14) {
-    way[building=yes] {
+    way[building=yes]:is(concave) {
+        fill: lightblue;
+    }
+    way[building=yes]:is(convex) {
         fill: pink;
     }
     way[waterway=stream] {

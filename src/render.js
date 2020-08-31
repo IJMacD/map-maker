@@ -1,4 +1,5 @@
 import { makeBBox } from "./bbox";
+import { rectToPoints, isConvex, isSelfClosing } from "./geometry";
 
 /**
  * @param {HTMLCanvasElement} canvas
@@ -12,9 +13,6 @@ export function clearMap (canvas) {
     canvas.width = width;
     canvas.height = height;
 }
-
-const debugBox = false;
-const debugLines = false;
 
 /** @typedef {import("./Style").StyleRule} StyleRule */
 /** @typedef {import("./Overpass").OverpassElement} OverpassElement */
@@ -86,6 +84,14 @@ export function renderMap (centre, scale, elements=[], canvas, rule, context) {
                 /** @type {import("./Overpass").OverpassNodeElement[]} */
                 const nodes = el.nodes.map(id => nodeMap[id]);
                 const points = nodes.map(n => projection(n.lon, n.lat));
+
+                // Check if pseudo-classes match
+                if (rule.selector.pseudoClasses.some(c => c.name === "is" && c.params[0] === "convex")) {
+                    if (!isConvex(points)) continue;
+                }
+                else if (rule.selector.pseudoClasses.some(c => c.name === "is" && c.params[0] === "concave")) {
+                    if (isConvex(points)) continue;
+                }
 
                 if (rule.selector.pseudoElement === "centre" || rule.selector.pseudoElement === "center") {
                     // Centre of bounding box
@@ -274,7 +280,8 @@ function renderLine(ctx, rule, points, element=null) {
  */
 function renderArea(ctx, rule, points, element=null) {
     if (points.length === 0) return;
-    renderLine(ctx, rule, [...points, points[0]], element);
+    const p = isSelfClosing(points) ? points : [...points, points[0]];
+    renderLine(ctx, rule, p, element);
 }
 
 /**
@@ -442,23 +449,5 @@ function getBoundingBox (points) {
         minMax[1],
         minMax[2] - minMax[0],
         minMax[3] - minMax[1],
-    ];
-}
-
-/**
- * 
- * @param {number} x 
- * @param {number} y 
- * @param {number} width 
- * @param {number} height 
- * @returns {[number, number][]}
- */
-function rectToPoints(x, y, width, height) {
-    /** @type {[number, number][]} */
-    return [
-        [x, y],
-        [x, y + height],
-        [x + width, y + height],
-        [x + width, y],
     ];
 }
