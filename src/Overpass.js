@@ -120,7 +120,18 @@ export class Overpass {
         const sMap = selectors.map(s => recurRe.test(s.type) ? `\n\t${s};\n\t>;` : s.toString() + ";");
         const query = `[out:json][bbox];\n(${sMap.join("")}\n);\nout;`
         const url = `${API_ROOT}?data=${query.replace(/\s/,"")}&bbox=${this.bbox}`;
-        return fetch(url.toString()).then(r => r.ok ? r.json() : Promise.reject(r.status));
+
+        if (this.currentFetch && this.currentFetch.url === url) return this.currentFetch.promise;
+
+        this.currentFetch = {
+            url,
+            promise: fetch(url.toString()).then(r => r.ok ? r.json() : () => {
+                this.currentFetch = null;
+                return Promise.reject(r.status);
+            }),
+        };
+
+        return this.currentFetch.promise;
     }
 
     tryElements (selector, tries=10) {
