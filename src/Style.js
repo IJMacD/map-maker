@@ -15,16 +15,16 @@
 
 /**
  * @typedef Predicate
- * @property {string|Predicate} left
+ * @property {string|number|Predicate} left
  * @property {string} operator
- * @property {string|Predicate} right
+ * @property {string|number|Predicate} right
  */
 
 export class StyleSelector {
     /**
      * @param {string} type
      * @param {{ [key: string]: string }} tags
-     * @param {{ name: string, params: string[] }[]} pseudoClasses
+     * @param {{ name: string, params: (string|Predicate)[] }[]} pseudoClasses
      * @param {string} [pseudoElement]
      */
     constructor (type, tags, pseudoClasses=[], pseudoElement=null) {
@@ -71,7 +71,7 @@ function (text) {
       tagText = tagText.substring(m2[0].length);
     }
 
-    /** @type {{ name: string, params: string[] }[]} */
+    /** @type {{ name: string, params: (string|Predicate)[] }[]} */
     const pseudoClasses = [];
   
     const re3 = /^:([a-z-]+)(?:\(([^)]+)\))?/;
@@ -81,7 +81,19 @@ function (text) {
 
       if (!m3) break;
 
-      pseudoClasses.push({ name: m3[1], params: m3[2] ? m3[2].split(",") : [] });
+      const params = m3[2] ? m3[2].split(",").map(s => {
+        const re = /^\s*([^\s)]+)\s*(:|=|<=|>=|<|>)\s*([^\s)]+)/;
+        if (re.test(s)) {
+          const m = re.exec(s);
+          return {
+            left: m[1],
+            operator: m[2],
+            right: m[3],
+          };
+        }
+        return s;
+      }) : [];
+      pseudoClasses.push({ name: m3[1], params });
 
       tagText = tagText.substring(m3[0].length);
     }
@@ -304,12 +316,14 @@ export function expandRules (rules, context) {
 /**
  * 
  * @param {Predicate} predicate 
- * @param {object} context 
+ * @param {object} [context] 
  * @returns {boolean}
  */
-function testPredicate (predicate, context) {
-  let left = typeof predicate.left === "string" ? predicate.left : testPredicate(predicate.left, context);
-  let right = typeof predicate.right === "string" ? predicate.right : testPredicate(predicate.right, context);
+export function testPredicate (predicate, context={}) {
+  let left = typeof predicate.left === "string" || typeof predicate.left === "number" ? 
+    predicate.left : testPredicate(predicate.left, context);
+  let right = typeof predicate.right === "string" || typeof predicate.right === "number"  ? 
+    predicate.right : testPredicate(predicate.right, context);
 
   if (typeof left === "string" && left in context) left = context[left];
   if (typeof right === "string" && right in context) right = context[right];

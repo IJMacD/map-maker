@@ -1,5 +1,6 @@
 import { makeBBox } from "./bbox";
-import { rectToPoints, isConvex, isSelfClosing, isAntiClockwise } from "./geometry";
+import { getArea, rectToPoints, isConvex, isSelfClosing, isAntiClockwise, getLength } from "./geometry";
+import { testPredicate } from "./Style";
 
 /**
  * @param {HTMLCanvasElement} canvas
@@ -92,12 +93,37 @@ export function renderMap (centre, scale, elements=[], canvas, rule, context) {
                 else if (rule.selector.pseudoClasses.some(c => c.name === "is" && c.params[0] === "concave")) {
                     if (isConvex(points)) continue;
                 }
-                else if (rule.selector.pseudoClasses.some(c => c.name === "is" && c.params[0] === "clockwise")) {
+                
+                if (rule.selector.pseudoClasses.some(c => c.name === "is" && c.params[0] === "clockwise")) {
                     if (isAntiClockwise(points)) continue;
                 }
                 else if (rule.selector.pseudoClasses.some(c => c.name === "is" && c.params[0] === "anti-clockwise")) {
                     if (!isAntiClockwise(points)) continue;
                 }
+                
+                const hasPseudoClasses = rule.selector.pseudoClasses.filter(c => c.name === "has")
+                let match = true;
+                for (const pc of hasPseudoClasses) {
+                    if (typeof pc.params[0] === "string") continue;
+
+                    const predicate = pc.params[0];
+
+                    const context = {};
+
+                    if (predicate.left === "area") {
+                        context["area"] = getArea(points);
+                    }
+                    else if (predicate.left === "length") {
+                        context["length"] = getLength(points);
+                    }
+
+                    match = testPredicate(predicate, context);
+                    
+                    // Break from other pseudo classes
+                    if (!match) break;
+                }
+                // Continue to other elements
+                if (!match) continue;
 
                 if (rule.selector.pseudoElement === "centre" || rule.selector.pseudoElement === "center") {
                     // Centre of bounding box
@@ -230,7 +256,6 @@ function renderGridlines(ctx, rule, centre, scale, width, height, projection) {
  * @param {OverpassElement} element
  */
 function renderPoint(ctx, rule, [x, y], element=null) {
-    
     ctx.fillStyle = rule.declarations["fill"];
     ctx.strokeStyle = rule.declarations["stroke"];
     ctx.lineWidth = +rule.declarations["stroke-width"] * devicePixelRatio;
@@ -297,7 +322,6 @@ function renderArea(ctx, rule, points, element=null) {
  * @param {OverpassElement} [element]
  */
 function renderText(ctx, rule, [x, y], element=null) {
-    
     ctx.fillStyle = rule.declarations["fill"];
     ctx.strokeStyle = rule.declarations["stroke"];
     ctx.lineWidth = +rule.declarations["stroke-width"] * devicePixelRatio;
