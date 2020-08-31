@@ -8,6 +8,7 @@ import { useDebounce } from './useDebounce';
 import { makeBBox } from './bbox';
 import useGeolocation from './useGeolocation';
 import Textarea from './Textarea';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 
 function App() {
   const [ style, setStyle ] = useSavedState("USER_STYLE", "node[amenity=post_box] {\n\tfill: black;\n\tsize: 2;\n}");
@@ -39,7 +40,7 @@ function App() {
   React.useEffect(() => overpassRef.current.setBBox(bbox), [bbox]);
   
   // Refetch/Render map when bbox, or style change
-  React.useEffect(() => {
+  useDeepCompareEffect(() => {
     async function run () {
       setFetching(true);
       setError("");
