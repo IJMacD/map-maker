@@ -1,5 +1,5 @@
 import { makeBBox } from "./bbox";
-import { rectToPoints, isConvex, isSelfClosing } from "./geometry";
+import { rectToPoints, isConvex, isSelfClosing, isAntiClockwise } from "./geometry";
 
 /**
  * @param {HTMLCanvasElement} canvas
@@ -91,6 +91,12 @@ export function renderMap (centre, scale, elements=[], canvas, rule, context) {
                 }
                 else if (rule.selector.pseudoClasses.some(c => c.name === "is" && c.params[0] === "concave")) {
                     if (isConvex(points)) continue;
+                }
+                else if (rule.selector.pseudoClasses.some(c => c.name === "is" && c.params[0] === "clockwise")) {
+                    if (isAntiClockwise(points)) continue;
+                }
+                else if (rule.selector.pseudoClasses.some(c => c.name === "is" && c.params[0] === "anti-clockwise")) {
+                    if (!isAntiClockwise(points)) continue;
                 }
 
                 if (rule.selector.pseudoElement === "centre" || rule.selector.pseudoElement === "center") {
