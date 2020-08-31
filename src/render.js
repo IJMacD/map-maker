@@ -46,43 +46,9 @@ export function renderMap (centre, scale, elements=[], canvas, rule, context) {
     /** @type {(lon: number, lat: number) => [number, number]} */
     const projection = mercatorProjection(centre, scale, width, height);
 
-    if (debugBox) {
-        const bbox = makeBBox(centre, scale, [width, height]);
-        const parts = bbox.split(",");
-        const [ x1, y1 ] = projection(+parts[0], +parts[1]);
-        const [ x2, y2 ] = projection(+parts[2], +parts[3]);
-        ctx.beginPath();
-        ctx.rect(x1, y1, x2 - x1, y2 - y1);
-        ctx.strokeStyle = "black";
-        ctx.stroke();
-    }
-
-    if (debugLines) {
-        const xmin = 6.5;
-        const xmax = 7.5;
-        const xstep = 0.1;
-        const ymin = 50;
-        const ymax = 51;
-        const ystep = 0.1;
-        ctx.beginPath();
-        for (let i = xmin; i < xmax; i += xstep) {
-            ctx.moveTo(...projection(i, ymin));
-            for (let j = ymin; j < ymax; j += ystep) {
-                ctx.lineTo(...projection(i, j));
-            }
-        }
-        for (let j = ymin; j < ymax; j += ystep) {
-            ctx.moveTo(...projection(xmin, j));
-            for (let i = ymin; i < ymax; i += ystep) {
-                ctx.lineTo(...projection(i, j));
-            }
-        }
-        ctx.strokeStyle = "black";
-        ctx.stroke();
-    }
-
     ctx.save();
     
+    // Set up global context options 
     if (rule.declarations["opacity"]) 
         ctx.globalAlpha = +rule.declarations["opacity"];
 
@@ -95,129 +61,154 @@ export function renderMap (centre, scale, elements=[], canvas, rule, context) {
 
     // Special rules first
     if (rule.selector.type === "map") {
-        renderRect(ctx, [0, 0, width, height], rule);
+        const points = rectToPoints(0, 0, width, height);
+        renderArea(ctx, rule, points);
     }
     else if (rule.selector.type === "current") {
         if (context.current) {
             const { coords } = context.current;
             renderPoint(ctx, rule, projection(coords.longitude, coords.latitude));
         }
-    }
+    } else if (rule.selector.type === "gridlines") {
+        renderGridlines(ctx, rule, centre, scale, width, height, projection);
+    } else {
 
-    // Then iterate all elements
-    for (const el of elements) {
-        if (el.type !== rule.selector.type) continue;
+        // Then iterate all elements
+        for (const el of elements) {
+            if (el.type !== rule.selector.type) continue;
 
-        if (el.type === "node") {
-            renderPoint(ctx, rule, projection(el.lon, el.lat), el);
-        }
-        else if (el.type === "way") {
-            if (!el.nodes) continue;
+            if (el.type === "node") {
+                renderPoint(ctx, rule, projection(el.lon, el.lat), el);
+            }
+            else if (el.type === "way") {
+                if (!el.nodes) continue;
 
-            /** @type {import("./Overpass").OverpassNodeElement[]} */
-            const nodes = el.nodes.map(id => nodeMap[id]);
-            const points = nodes.map(n => projection(n.lon, n.lat));
-            
-            renderLine(ctx, rule, points, el);
-        }
-        else if (el.type === "area") {
-            if (!el.nodes) continue;
+                /** @type {import("./Overpass").OverpassNodeElement[]} */
+                const nodes = el.nodes.map(id => nodeMap[id]);
+                const points = nodes.map(n => projection(n.lon, n.lat));
 
-            /** @type {import("./Overpass").OverpassNodeElement[]} */
-            const nodes = el.nodes.map(id => nodeMap[id]);
-            const points = nodes.map(n => projection(n.lon, n.lat));
+                if (rule.selector.pseudoElement === "centre" || rule.selector.pseudoElement === "center") {
+                    // Centre of bounding box
+                    const midPoint = getMidPoint(points);
+                    renderPoint(ctx, rule, midPoint, el);
+                }
+                else if (rule.selector.pseudoElement === "average-point") {
+                    // Average of all points
+                    const avgPoint = getAveragePoint(points);
+                    renderPoint(ctx, rule, avgPoint, el);
+                } 
+                else if (rule.selector.pseudoElement === "centre-of-mass") {
+                    // TODO: calculate centre-of-mass
+                    // const avgPoint = getCOMPoint(points);
+                    // renderPoint(ctx, rule, avgPoint, el);
+                }
+                else if (rule.selector.pseudoElement === "bounding-box") {
+                    const bounding = getBoundingBox(points);
 
-            // Close path back to start
-            points.push(points[0]);
-            
-            renderLine(ctx, rule, points, el);
-        }
-        else if (el.type === "relation") {
-            if (!el.members) continue;
+                    const boundingPoints = rectToPoints(...bounding);
 
-            ctx.fillStyle = rule.declarations["fill"];
-            ctx.strokeStyle = rule.declarations["stroke"];
-            ctx.lineWidth = +rule.declarations["stroke-width"] * devicePixelRatio;
-
-            // As long as outer ways go anti-clockwise and inner rings go clockwise
-            // (or possibly vice-versa) then the CanvasRenderingContext2D can handle
-            // rending "holes".
-
-            ctx.beginPath();
-
-            const ways = el.members.filter(m => m.type === "way").map(m => wayMap[m.ref]);
-
-            for (const way of ways) {
-                const nodes = way.nodes.map(id => nodeMap[id]);
-
-                ctx.moveTo(...projection(nodes[0].lon, nodes[0].lat));
-                for (let i = 1; i < nodes.length; i++) {
-                    ctx.lineTo(...projection(nodes[i].lon, nodes[i].lat));
+                    renderArea(ctx, rule, boundingPoints, el);
+                } 
+                else {
+                    renderLine(ctx, rule, points, el);
                 }
             }
-            ctx.closePath();
+            else if (el.type === "area") {
+                if (!el.nodes) continue;
 
-            rule.declarations["fill"] && ctx.fill();
-            rule.declarations["stroke"] && ctx.stroke();
-        }
-    }
-
-    if (rule.selector.type === "gridlines") {
-        ctx.fillStyle = rule.declarations["fill"];
-        ctx.strokeStyle = rule.declarations["stroke"];
-        ctx.lineWidth = +rule.declarations["stroke-width"] * devicePixelRatio;
-
-        const vertical = rule.selector.pseudoClasses.find(p => p.name === "vertical");
-        const horizontal = rule.selector.pseudoClasses.find(p => p.name === "horizontal");
-        
-        if (vertical) {
-            const bbox = makeBBox(centre, scale, [width, height]);
-            const parts = bbox.split(",");
-
-            const step = parseFloat(vertical.params[0]);
-
-            const round = 1 / step;
-
-            const xmin = Math.floor(+parts[0]*round)/round;
-            const xmax = Math.ceil(+parts[2]*round)/round;
-            const ymin = Math.floor(+parts[1]*round)/round;
-            const ymax = Math.ceil(+parts[3]*round)/round;
-
-            ctx.beginPath();
-            for (let i = xmin; i <= xmax; i += step) {
-                ctx.moveTo(...projection(i, ymin));
-                for (let j = ymin; j <= ymax; j += step) {
-                    ctx.lineTo(...projection(i, j));
-                }
+                /** @type {import("./Overpass").OverpassNodeElement[]} */
+                const nodes = el.nodes.map(id => nodeMap[id]);
+                const points = nodes.map(n => projection(n.lon, n.lat));
+                
+                renderArea(ctx, rule, points, el);
             }
-            rule.declarations["stroke"] && ctx.stroke();
-        }
-        
-        if (horizontal) {
-            const bbox = makeBBox(centre, scale, [width, height]);
-            const parts = bbox.split(",");
+            else if (el.type === "relation") {
+                if (!el.members) continue;
 
-            const step = parseFloat(horizontal.params[0]);
+                ctx.fillStyle = rule.declarations["fill"];
+                ctx.strokeStyle = rule.declarations["stroke"];
+                ctx.lineWidth = +rule.declarations["stroke-width"] * devicePixelRatio;
 
-            const round = 1 / step;
+                // As long as outer ways go anti-clockwise and inner rings go clockwise
+                // (or possibly vice-versa) then the CanvasRenderingContext2D can handle
+                // rending "holes".
 
-            const xmin = Math.floor(+parts[0]*round)/round;
-            const xmax = Math.ceil(+parts[2]*round)/round;
-            const ymin = Math.floor(+parts[1]*round)/round;
-            const ymax = Math.ceil(+parts[3]*round)/round;
+                ctx.beginPath();
 
-            ctx.beginPath();
-            for (let j = ymin; j <= ymax; j += step) {
-                ctx.moveTo(...projection(xmin, j));
-                for (let i = xmin; i <= xmax; i += step) {
-                    ctx.lineTo(...projection(i, j));
+                const ways = el.members.filter(m => m.type === "way").map(m => wayMap[m.ref]);
+
+                for (const way of ways) {
+                    const nodes = way.nodes.map(id => nodeMap[id]);
+
+                    ctx.moveTo(...projection(nodes[0].lon, nodes[0].lat));
+                    for (let i = 1; i < nodes.length; i++) {
+                        ctx.lineTo(...projection(nodes[i].lon, nodes[i].lat));
+                    }
                 }
+                ctx.closePath();
+
+                rule.declarations["fill"] && ctx.fill();
+                rule.declarations["stroke"] && ctx.stroke();
             }
-            rule.declarations["stroke"] && ctx.stroke();
         }
     }
 
     ctx.restore();
+}
+
+function renderGridlines(ctx, rule, centre, scale, width, height, projection) {
+    ctx.fillStyle = rule.declarations["fill"];
+    ctx.strokeStyle = rule.declarations["stroke"];
+    ctx.lineWidth = +rule.declarations["stroke-width"] * devicePixelRatio;
+
+    const vertical = rule.selector.pseudoClasses.find(p => p.name === "vertical");
+    const horizontal = rule.selector.pseudoClasses.find(p => p.name === "horizontal");
+
+    if (vertical) {
+        const bbox = makeBBox(centre, scale, [width, height]);
+        const parts = bbox.split(",");
+
+        const step = parseFloat(vertical.params[0]);
+
+        const round = 1 / step;
+
+        const xmin = Math.floor(+parts[0] * round) / round;
+        const xmax = Math.ceil(+parts[2] * round) / round;
+        const ymin = Math.floor(+parts[1] * round) / round;
+        const ymax = Math.ceil(+parts[3] * round) / round;
+
+        ctx.beginPath();
+        for (let i = xmin; i <= xmax; i += step) {
+            ctx.moveTo(...projection(i, ymin));
+            for (let j = ymin; j <= ymax; j += step) {
+                ctx.lineTo(...projection(i, j));
+            }
+        }
+        rule.declarations["stroke"] && ctx.stroke();
+    }
+
+    if (horizontal) {
+        const bbox = makeBBox(centre, scale, [width, height]);
+        const parts = bbox.split(",");
+
+        const step = parseFloat(horizontal.params[0]);
+
+        const round = 1 / step;
+
+        const xmin = Math.floor(+parts[0] * round) / round;
+        const xmax = Math.ceil(+parts[2] * round) / round;
+        const ymin = Math.floor(+parts[1] * round) / round;
+        const ymax = Math.ceil(+parts[3] * round) / round;
+
+        ctx.beginPath();
+        for (let j = ymin; j <= ymax; j += step) {
+            ctx.moveTo(...projection(xmin, j));
+            for (let i = xmin; i <= xmax; i += step) {
+                ctx.lineTo(...projection(i, j));
+            }
+        }
+        rule.declarations["stroke"] && ctx.stroke();
+    }
 }
 
 /**
@@ -270,32 +261,20 @@ function renderLine(ctx, rule, points, element=null) {
     // Text Handling 
     if (rule.declarations["content"]) {
         // find mid-point (and average gradient?)
-        const point = midPoint(points);
+        const point = getMidPoint(points);
         renderText(ctx, rule, point, element);
     }
 }
 
 /**
  * @param {CanvasRenderingContext2D} ctx
- * @param {[number, number, number, number]} coordinates (x, y, width, height)
  * @param {StyleRule} rule
+ * @param {[number, number][]} points
  * @param {OverpassElement} element
  */
-function renderRect(ctx, [x, y, width, height], rule, element=null) {
-    
-    ctx.fillStyle = rule.declarations["fill"];
-    ctx.strokeStyle = rule.declarations["stroke"];
-    ctx.lineWidth = +rule.declarations["stroke-width"] * devicePixelRatio;
-
-    ctx.beginPath();
-    ctx.rect(x, y, width, height);
-
-    rule.declarations["fill"] && ctx.fill();
-    rule.declarations["stroke"] && ctx.stroke();
-
-    if (rule.declarations["content"]) {
-        renderText(ctx, rule, [x + width/2, y + height/2], element);
-    }
+function renderArea(ctx, rule, points, element=null) {
+    if (points.length === 0) return;
+    renderLine(ctx, rule, [...points, points[0]], element);
 }
 
 /**
@@ -423,7 +402,7 @@ function mercatorProjection (centre, scale, width, height) {
  * 
  * @param {[number, number][]} points 
  */
-function averagePoint (points) {
+function getAveragePoint (points) {
     const sum = points.reduce((sum, p) => [sum[0] + p[0], sum[1] + p[1]], [0, 0]);
     /** @type {[number, number]} */
     const avg = (sum.map(x => x / points.length));
@@ -435,7 +414,7 @@ function averagePoint (points) {
  * @param {[number, number][]} points 
  * @returns {[number, number]}
  */
-function midPoint (points) {
+function getMidPoint (points) {
     const boundingBox = getBoundingBox(points);
 
     return [
@@ -463,5 +442,23 @@ function getBoundingBox (points) {
         minMax[1],
         minMax[2] - minMax[0],
         minMax[3] - minMax[1],
+    ];
+}
+
+/**
+ * 
+ * @param {number} x 
+ * @param {number} y 
+ * @param {number} width 
+ * @param {number} height 
+ * @returns {[number, number][]}
+ */
+function rectToPoints(x, y, width, height) {
+    /** @type {[number, number][]} */
+    return [
+        [x, y],
+        [x, y + height],
+        [x + width, y + height],
+        [x + width, y],
     ];
 }

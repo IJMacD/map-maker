@@ -25,11 +25,13 @@ export class StyleSelector {
      * @param {string} type
      * @param {{ [key: string]: string }} tags
      * @param {{ name: string, params: string[] }[]} pseudoClasses
+     * @param {string} [pseudoElement]
      */
-    constructor (type, tags, pseudoClasses=[]) {
+    constructor (type, tags, pseudoClasses=[], pseudoElement=null) {
       this.type = type;
       this.tags = tags;
       this.pseudoClasses = pseudoClasses;
+      this.pseudoElement = pseudoElement;
     }
   
     toString () {
@@ -72,7 +74,7 @@ function (text) {
     /** @type {{ name: string, params: string[] }[]} */
     const pseudoClasses = [];
   
-    const re3 = /^:([a-z]+)(?:\(([^)]+)\))?/;
+    const re3 = /^:([a-z-]+)(?:\(([^)]+)\))?/;
 
     while (true) {
       const m3 = re3.exec(tagText);
@@ -84,12 +86,24 @@ function (text) {
       tagText = tagText.substring(m3[0].length);
     }
 
+    let pseudoElement = null;
+  
+    const re4 = /^::([a-z-]+)?/;
+
+    if (re4.test(tagText)) {
+      const m4 = re4.exec(tagText);
+
+      pseudoElement = m4[1];
+
+      tagText = tagText.substring(m4[0].length);
+    }
+
     if (tagText.length) {
       console.log(`Invalid selector: ${text} unexpected part: '${tagText}'`);
       return null;
     }
   
-    return new StyleSelector(type, tags, pseudoClasses);
+    return new StyleSelector(type, tags, pseudoClasses, pseudoElement);
 };
   
 /**
