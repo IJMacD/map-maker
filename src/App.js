@@ -89,17 +89,18 @@ function App() {
   return (
     <div className="App">
       <div className="sidebar">
+        <div className="controls">
+          <button onClick={() => move(-1,0)}>⏴</button>
+          <button onClick={() => move(1,0)}>⏵</button>
+          <button onClick={() => move(0,1)}>⏶</button>
+          <button onClick={() => move(0,-1)}>⏷</button>
+          <button onClick={() => setScale(scale + 1)}>➕</button>
+          <button onClick={() => setScale(scale - 1)}>➖</button>
+          { current && <button onClick={() => setCentre(`${current.coords.longitude},${current.coords.latitude}`)}>📍</button> }
+        </div>
         <label>Centre <input value={centre} onChange={e => setCentre(e.target.value)} /></label>
-        <button onClick={() => move(-1,0)}>⏴</button>
-        <button onClick={() => move(1,0)}>⏵</button>
-        <button onClick={() => move(0,1)}>⏶</button>
-        <button onClick={() => move(0,-1)}>⏷</button>
-        <button onClick={() => setScale(scale + 1)}>➕</button>
-        <button onClick={() => setScale(scale - 1)}>➖</button>
-        { current && <button onClick={() => setCentre(`${current.coords.longitude},${current.coords.latitude}`)}>📍</button> }
         <label>Zoom <input type="number" value={scale} onChange={e => setScale(+e.target.value)} /></label>
-        <label>Bounding Box <input value={bbox} readOnly /></label>
-        <label>Style <Textarea value={style} onChange={setStyle} /></label>
+        <Textarea value={style} onChange={setStyle} style={{flex:1}} />
         { fetching && <p>Loading...</p> }
         { error && <p style={{color:"red"}}>{error}</p> }
       </div>

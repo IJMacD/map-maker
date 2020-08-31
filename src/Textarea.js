@@ -2,9 +2,9 @@ import React from 'react';
 
 /**
  * 
- * @param {{ value: string, onChange: (event) => void}} param0 
+ * @param {{ value: string, onChange: (event) => void, style?: React.CSSProperties}} param0 
  */
-export default function Textarea ({ value, onChange }) {
+export default function Textarea ({ value, onChange, style={} }) {
     /**
      * @param {React.KeyboardEvent<HTMLTextAreaElement>} event
      */
@@ -41,5 +41,5 @@ export default function Textarea ({ value, onChange }) {
         }
     }
 
-    return <textarea value={value} onChange={e => onChange(e.target.value)} onKeyDown={handleKeyDown} />;
+    return <textarea value={value} onChange={e => onChange(e.target.value)} onKeyDown={handleKeyDown} style={style} />;
 }
