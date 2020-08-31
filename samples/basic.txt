@@ -1,7 +1,7 @@
 map {
     fill: lightblue;
 }
-way[natural=coastline] { 
+way[natural=coastline] {
     fill: white;
 }
 @match (zoom >= 12) {
@@ -49,42 +49,64 @@ way[natural=coastline] {
         stroke-width: 1;
     }
 }
-way[waterway=river] {
-    stroke: lightblue; 
-    stroke-width: 1.5;
-} 
-rel[natural=water],
-way[natural=water],
-way[waterway=riverbank],
-way[waterway=dock] {
-    fill: lightblue;
+@match (zoom >= 19) {
+    way[building=yes] {
+        stroke: maroon;
+        content: tag(name);
+        text-color: black;
+        text-align: centre;
+    }
+}
+@match (zoom >= 9) {
+    way[waterway=river] {
+        stroke: lightblue; 
+        stroke-width: 1.5;
+    } 
+    rel[natural=water],
+    way[natural=water],
+    way[waterway=riverbank],
+    way[waterway=dock] {
+        fill: lightblue;
+    }
 }
 way[natural=coastline] {
     stroke: black;
     stroke-width: 1;
 }
-way[highway=motorway] {
-    stroke: blue;
-    stroke-width: 2.5;
+@match (zoom < 8) {
+    way[highway=motorway] {
+        stroke: blue;
+        stroke-width: 1;
+    }
 }
-way[highway=motorway_link] {
-    stroke: blue;
-    stroke-width: 2;
+@match (zoom >= 8) {
+    way[highway=motorway] {
+        stroke: blue;
+        stroke-width: 2.5;
+    }
+    way[highway=motorway_link] {
+        stroke: blue;
+        stroke-width: 2;
+    }
 }
-way[highway=trunk],
-way[highway=trunk_link] {
-    stroke: darkgreen;
-    stroke-width: 2;
+@match (zoom >= 8) {
+    way[highway=trunk],
+    way[highway=trunk_link] {
+        stroke: darkgreen;
+        stroke-width: 2;
+    }
+    way[highway=trunk],
+    way[highway=trunk_link] {
+        stroke: green;
+        stroke-width: 1;
+    }
 }
-way[highway=trunk],
-way[highway=trunk_link] {
-    stroke: green;
-    stroke-width: 1;
-}
-way[highway=primary],
-way[highway=primary_link] {
-    stroke: #D00000;
-    stroke-width: 1.5;
+@match (zoom >= 9) {
+    way[highway=primary],
+    way[highway=primary_link] {
+        stroke: #D00000;
+        stroke-width: 1.5;
+    }
 }
 @match (zoom >= 10) {
     way[highway=secondary] {
@@ -196,20 +218,38 @@ way[railway=rail] {
         stroke: rgba(128,64,0,0.2);
     }
 }
-gridlines:vertical(0.1deg),
-gridlines:horizontal(0.1deg) {
-   stroke: rgba(128,64,0,0.2);
-   stroke-width: 1.25;
+@match (zoom >= 9) {
+    gridlines:vertical(0.1deg),
+    gridlines:horizontal(0.1deg) {
+    stroke: rgba(128,64,0,0.2);
+    stroke-width: 1.25;
+    } 
 }
-node[place=city] {
-   fill: black;
-   stroke: rgba(255,255,255,0.8);
-   stroke-width: 5;
-   content: tag(name);
-   font-size: 30px;
-   font-weight: bold;
+@match (zoom < 9) {
+    gridlines:vertical(1deg),
+    gridlines:horizontal(1deg) {
+    stroke: rgba(128,64,0,0.2);
+    stroke-width: 1;
+    }
 }
-@match (zoom >= 10) {
+@match (zoom >= 9) {
+    gridlines:vertical(1deg),
+    gridlines:horizontal(1deg) {
+    stroke: rgba(128,64,0,0.2);
+    stroke-width: 2;
+    }
+}
+@match (zoom >= 9){
+    node[place=city] {
+    fill: black;
+    stroke: rgba(255,255,255,0.8);
+    stroke-width: 5;
+    content: tag(name);
+    font-size: 30px;
+    font-weight: bold;
+    }
+}
+@match (zoom >= 11) {
     node[place=town] {
         fill: black;
         stroke: rgba(255,255,255,0.8);
@@ -233,13 +273,20 @@ node[place=city] {
     node[place=hamlet] { 
         content: tag(name);
         fill: black;
-        stroke: rgba(255,255,255,0.8);
+       stroke: rgba(255,255,255,0.8);
         stroke-width: 3;
         font-size: 10px;
         font-weight: bold;
     }
+} 
+current {
+    size: 4;
+    fill: black;
 }
 current {
-    content: "🔵";
-    fill: black;
+    content: "📌";
+    font-size: 30px;
+    position: relative;
+    top: -5px;
+    left: -5px;
 }

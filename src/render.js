@@ -270,10 +270,8 @@ function renderLine(ctx, rule, points, element=null) {
     // Text Handling 
     if (rule.declarations["content"]) {
         // find mid-point (and average gradient?)
-        const sum = points.reduce((sum,p) => [sum[0] + p[0], sum[1] + p[1]], [0,0]);
-        /** @type {[number, number]} */
-        const avg = (sum.map(x => x / points.length));
-        renderText(ctx, rule, avg, element);
+        const point = midPoint(points);
+        renderText(ctx, rule, point, element);
     }
 }
 
@@ -419,4 +417,51 @@ function mercatorProjection (centre, scale, width, height) {
 
         return [cX + dX, cY - dY];
     }
+}
+
+/**
+ * 
+ * @param {[number, number][]} points 
+ */
+function averagePoint (points) {
+    const sum = points.reduce((sum, p) => [sum[0] + p[0], sum[1] + p[1]], [0, 0]);
+    /** @type {[number, number]} */
+    const avg = (sum.map(x => x / points.length));
+    return avg;
+}
+
+/**
+ * 
+ * @param {[number, number][]} points 
+ * @returns {[number, number]}
+ */
+function midPoint (points) {
+    const boundingBox = getBoundingBox(points);
+
+    return [
+        boundingBox[0] + boundingBox[2] / 2,
+        boundingBox[1] + boundingBox[3] / 2,
+    ];
+}
+
+/**
+ * @param {[number, number][]} points
+ * @returns {[number, number, number, number]} (x, y, width, height)
+ */
+function getBoundingBox (points) {
+    const minMax = points.reduce((minMax, point) => {
+        return [
+            Math.min(minMax[0], point[0]),
+            Math.min(minMax[1], point[1]),
+            Math.max(minMax[2], point[0]),
+            Math.max(minMax[3], point[1]),
+        ]
+    }, [Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY]);
+
+    return [
+        minMax[0],
+        minMax[1],
+        minMax[2] - minMax[0],
+        minMax[3] - minMax[1],
+    ];
 }
