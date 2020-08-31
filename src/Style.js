@@ -81,18 +81,8 @@ function (text) {
 
       if (!m3) break;
 
-      const params = m3[2] ? m3[2].split(",").map(s => {
-        const re = /^\s*([^\s)]+)\s*(:|=|<=|>=|<|>)\s*([^\s)]+)/;
-        if (re.test(s)) {
-          const m = re.exec(s);
-          return {
-            left: m[1],
-            operator: m[2],
-            right: m[3],
-          };
-        }
-        return s;
-      }) : [];
+      const re = /^\s*([^\s)]+)\s*(:|=|<=|>=|<|>|and|or)\s*([^\s)]+)(?:\s*(=|<=|>=|<|>)\s*([^\s)]+))?/;
+      const params = m3[2] ? m3[2].split(",").map(s => re.test(s) ? makePredicate(re.exec(s)) : s) : [];
       pseudoClasses.push({ name: m3[1], params });
 
       tagText = tagText.substring(m3[0].length);
@@ -204,27 +194,7 @@ function parseMedia (mediaText) {
   let match2;
 
   while (match = re.exec(mediaText)) {
-    let predicate;
-
-    if (match[4]) {
-      // MediaQueries4 syntax:
-      //  @match (10 < zoom <= 14)
-      predicate = {
-        left: { left: match[1], operator: match[2], right: match[3] },
-        operator: "and",
-        right: { left: match[3], operator: match[4], right: match[5] },
-      };
-    } else {
-      // MediaQueries4 syntax:
-      //  @match (zoom <= 14)
-      // MediaQueries3 syntax:
-      //  @match (max-zoom: 14) [TODO - it's parsed just not handled correctly]
-      predicate = {
-        left: match[1],
-        operator: match[2],
-        right: match[3],
-      };
-    }
+    const predicate = makePredicate(match);
 
     out.index += match[0].length;
 
@@ -313,6 +283,32 @@ export function expandRules (rules, context) {
   return out;
 }
 
+function makePredicate(match) {
+  let predicate;
+
+  if (match[4]) {
+    // MediaQueries4 syntax:
+    //  @match (10 < zoom <= 14)
+    predicate = {
+      left: { left: match[1], operator: match[2], right: match[3] },
+      operator: "and",
+      right: { left: match[3], operator: match[4], right: match[5] },
+    };
+  }
+  else {
+    // MediaQueries4 syntax:
+    //  @match (zoom <= 14)
+    // MediaQueries3 syntax:
+    //  @match (max-zoom: 14) [TODO - it's parsed just not handled correctly]
+    predicate = {
+      left: match[1],
+      operator: match[2],
+      right: match[3],
+    };
+  }
+  return predicate;
+}
+
 /**
  * 
  * @param {Predicate} predicate 
@@ -325,8 +321,21 @@ export function testPredicate (predicate, context={}) {
   let right = typeof predicate.right === "string" || typeof predicate.right === "number"  ? 
     predicate.right : testPredicate(predicate.right, context);
 
-  if (typeof left === "string" && left in context) left = context[left];
-  if (typeof right === "string" && right in context) right = context[right];
+  if (typeof left === "string" && left in context) {
+    // Lazily evaluate and replace context value
+    if (context[left] instanceof Function)
+      context[left] = context[left]();
+
+    left = context[left];
+  }
+
+  if (typeof right === "string" && right in context) {
+    // Lazily evaluate and replace context value
+    if (context[right] instanceof Function)
+      context[right] = context[right]();
+
+    right = context[right];
+  }
     
   const op = COMPARE[predicate.operator];
 

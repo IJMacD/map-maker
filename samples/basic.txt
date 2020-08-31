@@ -20,7 +20,7 @@ way[natural=coastline] {
     way[landuse=meadow] { 
         fill: #CCFFCC;
     }
-    way[leisure=park],
+    way[leisure=park]:has(384 < height < 998),
     way[leisure=pitch],
     way[landuse=recreation_ground] {
         fill: #CCFFCC;
@@ -44,7 +44,7 @@ way[natural=coastline] {
     way[building=yes] {
         fill: pink;
     }
-    way[building=yes]:is(anti-clockwise) {
+    way[building=yes]:has(area > 10000) {
         stroke: blue;
         stroke-width: 5;
     }

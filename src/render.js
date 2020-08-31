@@ -108,14 +108,13 @@ export function renderMap (centre, scale, elements=[], canvas, rule, context) {
 
                     const predicate = pc.params[0];
 
-                    const context = {};
-
-                    if (predicate.left === "area") {
-                        context["area"] = getArea(points);
-                    }
-                    else if (predicate.left === "length") {
-                        context["length"] = getLength(points);
-                    }
+                    // Functions for lazy evaluation
+                    const context = {
+                        area: () => getArea(points),
+                        length: () => getLength(points),
+                        width: () => getBoundingBox(points)[2],
+                        height: () => getBoundingBox(points)[3],
+                    };
 
                     match = testPredicate(predicate, context);
                     
