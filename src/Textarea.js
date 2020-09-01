@@ -2,27 +2,37 @@ import React from 'react';
 
 /**
  * 
- * @param {{ value: string, onChange: (event) => void, style?: React.CSSProperties}} param0 
+ * @param {{ value: string, onChange: (event) => void, [key: string]: any }} param0 
  */
-export default function Textarea ({ value, onChange, style={} }) {
+export default function Textarea ({ value, onChange, ...otherProps }) {
     /**
      * @param {React.KeyboardEvent<HTMLTextAreaElement>} event
      */
     function handleKeyDown (event) {
-        const { key, currentTarget } = event;
+        const { key, currentTarget, shiftKey } = event;
     
         if (key === "Tab") {
             event.preventDefault();
     
             const i = currentTarget.selectionStart;
             const lineStart = value.lastIndexOf("\n", i-1) + 1;
-            const linePos = i - lineStart;
-            const x = 4 - linePos % 4;
 
-            const newValue = value.substring(0,i) + "    ".substring(0,x) + value.substring(i);
-            onChange(newValue);
+            if (shiftKey) {
+                if (value.substr(lineStart, 4) === "    ") {
+                    const newValue = value.substring(0,lineStart) + value.substring(lineStart + 4);
+                    onChange(newValue);
+                    
+                    setTimeout(() => currentTarget.setSelectionRange(i - 4, i - 4), 10);
+                }
+            } else {
+                const linePos = i - lineStart;
+                const x = 4 - linePos % 4;
 
-            setTimeout(() => currentTarget.setSelectionRange(i + x, i + x), 10);
+                const newValue = value.substring(0,i) + "    ".substring(0,x) + value.substring(i);
+                onChange(newValue);
+                
+                setTimeout(() => currentTarget.setSelectionRange(i + x, i + x), 10);
+            }
         }
     
         else if (key === "Enter") {
@@ -41,5 +51,5 @@ export default function Textarea ({ value, onChange, style={} }) {
         }
     }
 
-    return <textarea value={value} onChange={e => onChange(e.target.value)} onKeyDown={handleKeyDown} style={style} />;
+    return <textarea value={value} onChange={e => onChange(e.target.value)} onKeyDown={handleKeyDown} {...otherProps} />;
 }

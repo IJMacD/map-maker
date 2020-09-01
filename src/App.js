@@ -100,7 +100,7 @@ function App() {
         </div>
         <label>Centre <input value={centre} onChange={e => setCentre(e.target.value)} /></label>
         <label>Zoom <input type="number" value={scale} onChange={e => setScale(+e.target.value)} /></label>
-        <Textarea value={style} onChange={setStyle} style={{flex:1}} />
+        <Textarea value={style} onChange={setStyle} style={{flex:1}} spellCheck={false} />
         { fetching && <p>Loading...</p> }
         { error && <p style={{color:"red"}}>{error}</p> }
       </div>
