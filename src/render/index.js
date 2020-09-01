@@ -70,7 +70,10 @@ export function renderMap (centre, scale, elements=[], canvas, rule, context) {
     switch (type) {
         case "map": {
             const points = rectToPoints(0, 0, width, height);
-            renderArea(ctx, rule, points);
+            if (rule.selector.pseudoElement)
+                renderPsuedoElement(ctx, rule, null, null, points);
+            else
+                renderArea(ctx, rule, points);
             break;
         }
         case "current": {
