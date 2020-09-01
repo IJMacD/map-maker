@@ -11,33 +11,35 @@ import { getBoundingBox } from "./util";
  * @param {import("../Overpass").OverpassElement} element
  */
 export function matchPsuedoClasses(rule, element, nodes = null, points = null) {
+    const { selector } = rule;
 
-    if (rule.selector.pseudoClasses.some(c => c.name === "is" && c.params[0] === "convex")) {
+    if (includesPseudoClass(selector, "is", "convex")) {
         if (!isConvex(points))
             return false;
     }
-    else if (rule.selector.pseudoClasses.some(c => c.name === "is" && c.params[0] === "concave")) {
+
+    if (includesPseudoClass(selector, "is", "concave")) {
         if (isConvex(points))
             return false;
     }
 
-    if (rule.selector.pseudoClasses.some(c => c.name === "is" && c.params[0] === "clockwise")) {
+    if (includesPseudoClass(selector, "is", "clockwise")) {
         if (isAntiClockwise(points))
             return false;
     }
-    else if (rule.selector.pseudoClasses.some(c => c.name === "is" && c.params[0] === "anti-clockwise")) {
+
+    if (includesPseudoClass(selector, "is", "anti-clockwise")) {
         if (!isAntiClockwise(points))
             return false;
     }
 
-    if (rule.selector.pseudoClasses.some(c => c.name === "is" && c.params[0] === "self-closing")) {
+    if (includesPseudoClass(selector, "is", "self-closing")) {
         if (nodes[0] !== nodes[points.length - 1])
             return false;
     }
 
-    const hasPseudoClasses = rule.selector.pseudoClasses.filter(c => c.name === "has");
+    const hasPseudoClasses = selector.pseudoClasses.filter(c => c.name === "has");
 
-    let match = true;
     for (const pc of hasPseudoClasses) {
         if (typeof pc.params[0] === "string")
             return false;
@@ -52,12 +54,20 @@ export function matchPsuedoClasses(rule, element, nodes = null, points = null) {
             height: () => getBoundingBox(points)[3],
         };
 
-        match = testPredicate(predicate, context);
+        const match = testPredicate(predicate, context);
 
-        // Break from other pseudo classes
-        if (!match)
-            break;
+        if (!match) return false;
     }
 
-    return match;
+    return true;
+}
+
+/**
+ * @todo Add support for more than one paramater
+ * @param {import("../Overpass").StyleSelector} selector
+ * @param {string} name
+ * @param  {...string} params
+ */
+function includesPseudoClass (selector, name, ...params) {
+    return selector.pseudoClasses.some(c => c.name === name && c.params[0] === params[0]);
 }
