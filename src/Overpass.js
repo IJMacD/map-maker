@@ -36,7 +36,7 @@ export class Overpass {
         // Create set of selectors
         /** @type {{ [key: string]: StyleSelector }} */
         const set = {};
-        selectors.forEach(s => set[s.toString()] = s);
+        selectors.forEach(s => set[mapSelector(s)] = s);
 
         console.debug(`Preloading Elements: ${selectors.length} requested (${Object.keys(set).length} unique)`);
 
@@ -46,13 +46,13 @@ export class Overpass {
         }
         console.debug(`Preloading Elements: ${Object.keys(set).length} are Overpass Elements`); 
 
-        // Remove selectors in local hash map cache
+        // Remove selectors found in local hash map cache
         for (const key of Object.keys(set)) {
             if (this.elements.has(key)) delete set[key];
         }
         console.debug(`Preloading Elements: ${Object.keys(set).length} not in HashMap`); 
         
-        // Remove selectors in database
+        // Remove selectors which were found in database
         await Promise.all(Object.keys(set).map(s => {
             return this.database.searchElements(bbox, s)
                 .then(els => {
@@ -97,7 +97,7 @@ export class Overpass {
                     out.push(...way.nodes.map(id => nodeMap[id]));
                 }
 
-            } else if (selector.type === "way") {
+            } else if (selector.type === "way" || selector.type === "area") {
                 /** @type {OverpassWayElement[]} */
                 const ways = (out.slice());
 
@@ -106,8 +106,8 @@ export class Overpass {
                 }
             }
 
-            this.elements.set(selector.toString(), Promise.resolve(out));
-            return this.database.saveElements(bbox, selector.toString(), { elements: out, cached: Date.now() });
+            this.elements.set(mapSelector(selector), Promise.resolve(out));
+            return this.database.saveElements(bbox, mapSelector(selector), { elements: out, cached: Date.now() });
         }));
         }
 
@@ -117,7 +117,7 @@ export class Overpass {
      * @returns {Promise<{ elements: OverpassElement[] }>}
      */
     query (selectors) {
-        const sMap = selectors.map(s => recurRe.test(s.type) ? `\n\t${s};\n\t>;` : s.toString() + ";");
+        const sMap = selectors.map(mapSelectorForQuery);
         const query = `[out:json][bbox];\n(${sMap.join("")}\n);\nout;`
         const url = `${API_ROOT}?data=${query.replace(/\s/,"")}&bbox=${this.bbox}`;
 
@@ -157,10 +157,10 @@ export class Overpass {
     async getElements (selector) {
         if (!overpassRe.test(selector.type)) return;
 
-        const s = selector.toString();
+        const s = mapSelector(selector);
         if (this.elements.has(s)) return this.elements.get(s);
 
-        const dbResult = await this.database.getElements(this.bbox, selector.toString());
+        const dbResult = await this.database.getElements(this.bbox, s);
 
         if (dbResult) {
             const { elements } = dbResult;
@@ -168,7 +168,7 @@ export class Overpass {
             return elements;
         }
 
-        const dbSearchResult = await this.database.searchElements(this.bbox, selector.toString());
+        const dbSearchResult = await this.database.searchElements(this.bbox, s);
 
         if (dbSearchResult) {
             const elements = this.database.getElementsByKey(dbSearchResult).then(r => r.elements);
@@ -183,11 +183,24 @@ export class Overpass {
         p.catch(() => this.elements.delete(s));
 
         p.then(elements => {
-            this.database.saveElements(this.bbox, selector.toString(), { elements, cached: Date.now() });
+            this.database.saveElements(this.bbox, s, { elements, cached: Date.now() });
         });
 
         return p;
     }
+}
+
+/** @param {StyleSelector} selector */
+function mapSelectorForQuery (selector) {
+    const recur = recurRe.test(selector.type) ? ">;" : "";
+    return `${mapSelector(selector)};${recur}`;
+}
+
+/** @param {StyleSelector} selector */
+function mapSelector (selector) {
+    const type = selector.type === "area" ? "way" : selector.type;
+    const tags = Object.entries(selector.tags).map(([k,v]) => `[${k}=${v}]`);
+    return `${type}${tags.join("")}`;
 }
 
 /** @typedef {import('./Style.js').StyleRule} StyleRule */

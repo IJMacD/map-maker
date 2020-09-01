@@ -17,7 +17,7 @@ way[natural=coastline] {
     }
     way[natural=grassland],
     way[landuse=grass],
-    way[landuse=meadow] { 
+    way[landuse=meadow] {
         fill: #CCFFCC;
     }
     way[leisure=park]:has(384 < height < 998),
@@ -36,7 +36,7 @@ way[natural=coastline] {
     way[landuse=brownfield] {
         fill: #c0c090;
     }
-    way[natural=beach] { 
+    way[natural=beach] {
         fill: #FFFFCC;
     }
 }
@@ -58,7 +58,7 @@ way[natural=coastline] {
     }
 }
 @match (zoom >= 19) {
-    way[building=yes] {
+    area[building=yes] {
         stroke: maroon;
         content: tag(name);
         text-color: black;
@@ -67,9 +67,9 @@ way[natural=coastline] {
 }
 @match (zoom >= 9) {
     way[waterway=river] {
-        stroke: lightblue; 
+        stroke: lightblue;
         stroke-width: 1.5;
-    } 
+    }
     rel[natural=water],
     way[natural=water],
     way[waterway=riverbank],
@@ -194,11 +194,11 @@ way[railway=rail] {
     way[railway=light_rail] {
         stroke: black;
         stroke-width: 0.5;
-    } 
+    }
     way[railway=disused] {
         stroke: grey;
         stroke-width: 0.5;
-    } 
+    }
 }
 @match (zoom >= 12) {
     way[barrier=wall],
@@ -211,7 +211,7 @@ way[railway=rail] {
     node[amenity=post_box] {
         fill: red;
         content: "📮";
-        font-size: 10px; 
+        font-size: 10px;
         opacity: 0.8;
     }
     node[amenity=telephone] {
@@ -231,7 +231,7 @@ way[railway=rail] {
     gridlines:horizontal(0.1deg) {
     stroke: rgba(128,64,0,0.2);
     stroke-width: 1.25;
-    } 
+    }
 }
 @match (zoom < 9) {
     gridlines:vertical(1deg),
@@ -268,7 +268,7 @@ way[railway=rail] {
     }
 }
 @match (zoom >= 12) {
-    node[place=village] { 
+    node[place=village] {
         content: tag(name);
         fill: black;
         stroke: rgba(255,255,255,0.8);
@@ -278,7 +278,7 @@ way[railway=rail] {
     }
 }
 @match (zoom >= 13) {
-    node[place=hamlet] { 
+    node[place=hamlet] {
         content: tag(name);
         fill: black;
        stroke: rgba(255,255,255,0.8);
@@ -286,7 +286,7 @@ way[railway=rail] {
         font-size: 10px;
         font-weight: bold;
     }
-} 
+}
 current {
     size: 4;
     fill: black;

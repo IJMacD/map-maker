@@ -71,16 +71,19 @@ export function renderMap (centre, scale, elements=[], canvas, rule, context) {
     } else if (rule.selector.type === "gridlines") {
         renderGridlines(ctx, rule, centre, scale, width, height, projection);
     } else {
+        const { type } = rule.selector;
 
         // Then iterate all elements
         for (const el of elements) {
-            if (el.type !== rule.selector.type) continue;
+            if (el.type !== type && !(el.type === "way" && type === "area")) continue;
 
-            if (el.type === "node") {
+            if (type === "node") {
+                if (el.type !== "node") continue;
+
                 renderPoint(ctx, rule, projection(el.lon, el.lat), el);
             }
-            else if (el.type === "way") {
-                if (!el.nodes) continue;
+            else if (type === "way" || type === "area") {
+                if (el.type !== "way") continue;
 
                 /** @type {import("./Overpass").OverpassNodeElement[]} */
                 const nodes = el.nodes.map(id => nodeMap[id]);
@@ -99,6 +102,10 @@ export function renderMap (centre, scale, elements=[], canvas, rule, context) {
                 }
                 else if (rule.selector.pseudoClasses.some(c => c.name === "is" && c.params[0] === "anti-clockwise")) {
                     if (!isAntiClockwise(points)) continue;
+                }
+                
+                if (rule.selector.pseudoClasses.some(c => c.name === "is" && c.params[0] === "self-closing")) {
+                    if (nodes[0] !== nodes[points.length - 1]) continue;
                 }
                 
                 const hasPseudoClasses = rule.selector.pseudoClasses.filter(c => c.name === "has")
@@ -126,6 +133,11 @@ export function renderMap (centre, scale, elements=[], canvas, rule, context) {
 
                 if (rule.selector.pseudoElement === "centre" || rule.selector.pseudoElement === "center") {
                     // Centre of bounding box
+                    const centrePoint = getCentrePoint(points);
+                    renderPoint(ctx, rule, centrePoint, el);
+                }
+                else if (rule.selector.pseudoElement === "mid-point") {
+                    // N/2th point (median point)
                     const midPoint = getMidPoint(points);
                     renderPoint(ctx, rule, midPoint, el);
                 }
@@ -133,6 +145,14 @@ export function renderMap (centre, scale, elements=[], canvas, rule, context) {
                     // Average of all points
                     const avgPoint = getAveragePoint(points);
                     renderPoint(ctx, rule, avgPoint, el);
+                } 
+                else if (rule.selector.pseudoElement === "start") {
+                    // First point
+                    renderPoint(ctx, rule, points[0], el);
+                } 
+                else if (rule.selector.pseudoElement === "end") {
+                    // Last point
+                    renderPoint(ctx, rule, points[points.length - 1], el);
                 } 
                 else if (rule.selector.pseudoElement === "centre-of-mass") {
                     // TODO: calculate centre-of-mass
@@ -146,21 +166,26 @@ export function renderMap (centre, scale, elements=[], canvas, rule, context) {
 
                     renderArea(ctx, rule, boundingPoints, el);
                 } 
+                else if (rule.selector.pseudoElement) {
+                    // Unknown Pseudo Element
+                    continue;
+                }
                 else {
-                    renderLine(ctx, rule, points, el);
+                    // Render actual way/area
+                    const rfn = type === "area" ? renderArea : renderLine;
+
+                    rfn(ctx, rule, points, el);
+
+                    // Text Handling 
+                    if (rule.declarations["content"]) {
+                        // find mid-point (and average gradient?)
+                        const point = type === "area" ? getCentrePoint(points) : getMidPoint(points);
+                        renderText(ctx, rule, point, el);
+                    }
                 }
             }
-            else if (el.type === "area") {
-                if (!el.nodes) continue;
-
-                /** @type {import("./Overpass").OverpassNodeElement[]} */
-                const nodes = el.nodes.map(id => nodeMap[id]);
-                const points = nodes.map(n => projection(n.lon, n.lat));
-                
-                renderArea(ctx, rule, points, el);
-            }
-            else if (el.type === "relation") {
-                if (!el.members) continue;
+            else if (type === "relation") {
+                if (el.type !== "relation") continue;
 
                 ctx.fillStyle = rule.declarations["fill"];
                 ctx.strokeStyle = rule.declarations["stroke"];
@@ -280,7 +305,6 @@ function renderPoint(ctx, rule, [x, y], element=null) {
  * @param {OverpassElement} element
  */
 function renderLine(ctx, rule, points, element=null) {
-    
     ctx.fillStyle = rule.declarations["fill"];
     ctx.strokeStyle = rule.declarations["stroke"];
     ctx.lineWidth = +rule.declarations["stroke-width"] * devicePixelRatio;
@@ -293,13 +317,6 @@ function renderLine(ctx, rule, points, element=null) {
 
     rule.declarations["fill"] && ctx.fill();
     rule.declarations["stroke"] && ctx.stroke();
-
-    // Text Handling 
-    if (rule.declarations["content"]) {
-        // find mid-point (and average gradient?)
-        const point = getMidPoint(points);
-        renderText(ctx, rule, point, element);
-    }
 }
 
 /**
@@ -450,13 +467,22 @@ function getAveragePoint (points) {
  * @param {[number, number][]} points 
  * @returns {[number, number]}
  */
-function getMidPoint (points) {
+function getCentrePoint (points) {
     const boundingBox = getBoundingBox(points);
 
     return [
         boundingBox[0] + boundingBox[2] / 2,
         boundingBox[1] + boundingBox[3] / 2,
     ];
+}
+
+/**
+ * 
+ * @param {[number, number][]} points 
+ * @returns {[number, number]}
+ */
+function getMidPoint (points) {
+    return points[Math.floor(points.length / 2)];
 }
 
 /**

@@ -135,7 +135,7 @@ export function matchRule (style, element) {
  * @param {import("./Overpass").OverpassElement} element
  */
 export function matchSelector (selector, element) {
-  if (element.type !== selector.type) return false;
+  if (element.type !== selector.type && !(selector.type === "area" && element.type === "way")) return false;
 
   let match = true;
 
