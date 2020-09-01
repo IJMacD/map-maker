@@ -13,6 +13,10 @@
   text-align: center;
 }
 
+.controls button {
+  padding: 12px;
+}
+
 canvas {
   flex: 4;
   height: 100vh;

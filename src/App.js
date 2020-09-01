@@ -70,6 +70,7 @@ function App() {
         }
       } catch (e) {
         setError("Error Fetching");
+        console.log(e);
       } finally {
         setFetching(false);
       }

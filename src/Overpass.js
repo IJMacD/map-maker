@@ -1,6 +1,7 @@
 import IDBElementDatabase from "./database.idb";
 import { contains } from "./bbox";
 import { matchSelector } from "./Style";
+import { timeout } from './util';
 
 /** @typedef {import("./Style").StyleSelector} StyleSelector */
 
@@ -15,6 +16,8 @@ export class Overpass {
         this.elements = new Map();
         this.bbox = bbox;
         this.database = new IDBElementDatabase();
+        /** @type {{ [url: string]: Promise<OverpassElement[]> }} */
+        this.fetchMap = {};
     }
 
     setBBox (bbox) {
@@ -63,7 +66,7 @@ export class Overpass {
 
         if (Object.keys(set).length === 0) return;
 
-        const { elements } = await this.query(Object.values(set));
+        const elements = await this.tryQuery(Object.values(set));
 
         console.log(`Preloading Elements: Fetched ${elements.length} elements from Server`);
 
@@ -114,39 +117,37 @@ export class Overpass {
     /**
      * 
      * @param {StyleSelector[]} selectors 
-     * @returns {Promise<{ elements: OverpassElement[] }>}
+     * @returns {Promise<OverpassElement[]>}
      */
     query (selectors) {
         const sMap = selectors.map(mapSelectorForQuery);
         const query = `[out:json][bbox];\n(${sMap.join("")}\n);\nout;`
         const url = `${API_ROOT}?data=${query.replace(/\s/,"")}&bbox=${this.bbox}`;
 
-        if (this.currentFetch && this.currentFetch.url === url) return this.currentFetch.promise;
+        if (!this.fetchMap[url]) {;
+            this.fetchMap[url] = fetch(url.toString()).then(r => r.ok ? r.json() : Promise.reject(r.status)).then(r => r.elements);
 
-        this.currentFetch = {
-            url,
-            promise: fetch(url.toString()).then(r => r.ok ? r.json() : () => {
-                this.currentFetch = null;
-                return Promise.reject(r.status);
-            }),
-        };
+            this.fetchMap[url].finally(() => delete this.fetchMap[url]);
+        }
 
-        return this.currentFetch.promise;
+        return this.fetchMap[url];
     }
 
-    tryElements (selector, tries=10) {
-        return new Promise ((resolve, reject) => {
-            this.query([selector]).then(d => {
-                resolve(d.elements);
-            }, e => {
-                if (e !== 429) reject("Bad Response");
-                else if (tries > 0) {
-                    setTimeout(() => {
-                        this.tryElements(selector, tries - 1).then(resolve, reject);
-                    }, 10000);
-                }
-                else reject(e);
-            });
+    /**
+     * 
+     * @param {StyleSelector[]} selectors 
+     * @param {number} tries 
+     * @returns {Promise<OverpassElement[]>}
+     */
+    tryQuery (selectors, tries=10) {
+        return this.query(selectors).catch(e => {
+            if (e !== 429) throw Error("Bad Response");
+
+            if (tries > 0) {
+                return timeout(10000).then(() => this.tryQuery(selectors, tries - 1))
+            }
+
+            throw Error("Too many retries fetching data");
         });
     }
 
@@ -176,7 +177,7 @@ export class Overpass {
             return elements;
         }
 
-        const p = this.tryElements(selector);
+        const p = this.tryQuery([selector]);
         
         this.elements.set(s, p);
         
