@@ -41,7 +41,7 @@ export function renderMap (centre, scale, elements=[], canvas, rule, context) {
     /** @type {{ [id: number]: import("../Overpass").OverpassWayElement }} */
     const wayMap = {};
     elements.forEach(n => n.type === "way" && (wayMap[n.id] = n));
-    
+
     const ctx = canvas.getContext("2d");
     const { clientWidth, clientHeight } = canvas;
 
@@ -52,9 +52,9 @@ export function renderMap (centre, scale, elements=[], canvas, rule, context) {
     const projection = mercatorProjection(centre, scale, width, height);
 
     ctx.save();
-    
-    // Set up global context options 
-    if (rule.declarations["opacity"]) 
+
+    // Set up global context options
+    if (rule.declarations["opacity"])
         ctx.globalAlpha = +rule.declarations["opacity"];
 
     if (rule.declarations["position"] === "relative") {
@@ -82,7 +82,7 @@ export function renderMap (centre, scale, elements=[], canvas, rule, context) {
                 renderPoint(ctx, rule, projection(coords.longitude, coords.latitude));
             }
             break;
-        } 
+        }
         case "gridlines": {
             renderGridlines(ctx, rule, centre, scale, width, height, projection);
             break;
@@ -118,16 +118,10 @@ export function renderMap (centre, scale, elements=[], canvas, rule, context) {
                         }
                         else {
                             // Render actual way/area
-                            const rfn = type === "area" ? renderArea : renderLine;
-
-                            rfn(ctx, rule, points, el);
-
-                            // Text Handling 
-                            if (rule.declarations["content"]) {
-                                // for area use centre point
-                                // for way find mid-point (TODO: and average gradient?)
-                                const point = type === "area" ? getCentrePoint(points) : getMidPoint(points);
-                                renderText(ctx, rule, point, el);
+                            if (type === "area") {
+                                renderArea(ctx, rule, points, el);
+                            } else {
+                                renderLine(ctx, rule, points, el);
                             }
                         }
                         break;

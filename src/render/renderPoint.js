@@ -14,6 +14,11 @@ export function renderPoint(ctx, rule, [x, y], element = null) {
     ctx.strokeStyle = rule.declarations["stroke"];
     ctx.lineWidth = +rule.declarations["stroke-width"] * devicePixelRatio;
 
+    if (rule.declarations["position"] === "absolute") {
+        x = (parseFloat(rule.declarations["top"]) || 0) * devicePixelRatio;
+        y = (parseFloat(rule.declarations["left"]) || 0) * devicePixelRatio;
+    }
+
     if (rule.declarations["size"]) {
         ctx.beginPath();
 
@@ -51,16 +56,26 @@ export function renderPoint(ctx, rule, [x, y], element = null) {
         img.src = url;
         const w = parseFloat(m[2]);
         const h = parseFloat(m[3]);
+
+        // Because the image is drawn in a callback the render context state is lost
+        // We need to readjust realitve moves ourselves here
+        let offsetLeft = 0;
+        let offsetTop = 0;
+        if (rule.declarations["position"] === "relative") {
+            offsetTop = (parseFloat(rule.declarations["top"]) || 0) * devicePixelRatio;
+            offsetLeft = (parseFloat(rule.declarations["left"]) || 0) * devicePixelRatio;
+        }
+
         img.addEventListener("load", () => {
             const dpr = devicePixelRatio;
             if (h) {
-                ctx.drawImage(img, x, y, w * dpr, h * dpr);
+                ctx.drawImage(img, x + offsetLeft, y + offsetTop, w * dpr, h * dpr);
             } else if (w) {
                 const h2 = img.height * (w / img.width);
-                ctx.drawImage(img, x, y, w * dpr, h2 * dpr);
+                ctx.drawImage(img, x + offsetLeft, y + offsetTop, w * dpr, h2 * dpr);
             }
             else {
-                ctx.drawImage(img, x, y);
+                ctx.drawImage(img, x + offsetLeft, y + offsetTop);
             }
         });
     }
