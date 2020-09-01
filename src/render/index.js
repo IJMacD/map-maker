@@ -58,10 +58,10 @@ export function renderMap (centre, scale, elements=[], canvas, rule, context) {
         ctx.globalAlpha = +rule.declarations["opacity"];
 
     if (rule.declarations["position"] === "relative") {
-        const top = parseFloat(rule.declarations["top"]) || 0;
-        const left = parseFloat(rule.declarations["left"]) || 0;
+        const top = (parseFloat(rule.declarations["top"]) || 0) * devicePixelRatio;
+        const left = (parseFloat(rule.declarations["left"]) || 0) * devicePixelRatio;
 
-        ctx.translate(left * devicePixelRatio, top * devicePixelRatio);
+        ctx.translate(left, top);
     }
 
     const { type } = rule.selector;
@@ -82,6 +82,12 @@ export function renderMap (centre, scale, elements=[], canvas, rule, context) {
         } 
         case "gridlines": {
             renderGridlines(ctx, rule, centre, scale, width, height, projection);
+            break;
+        }
+        case "dummy": {
+            const top = (parseFloat(rule.declarations["top"]) || 0) * devicePixelRatio;
+            const left = (parseFloat(rule.declarations["left"]) || 0) * devicePixelRatio;
+            renderPoint(ctx, rule, [left, top]);
             break;
         }
         default:

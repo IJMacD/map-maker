@@ -1,0 +1,30 @@
+dummy {
+    top: 200;
+    left: 200;
+    content: "Hi";
+    font-size: 30px;
+}
+dummy {
+    top: 200;
+    left: 400;
+    size: 5;
+    fill: red;
+}
+dummy {
+    top: 400;
+    left: 200;
+    path: M 0 -20 L 0 20 M -20 0 L 20 0;
+    stroke: blue;
+    stroke-width: 3;
+}
+dummy {
+    top: 400;
+    left: 400;
+    icon: url(https://ijmacd.github.io/map-maker/logo192.png) 96px;
+}
+dummy {
+    top: 400;
+    left: 400;
+    path: M0 0 L 100 0 L100 100L0 100L0 0;
+    stroke: red;
+}
