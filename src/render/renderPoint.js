@@ -75,14 +75,79 @@ export function renderPoint(ctx, rule, [x, y], element = null) {
  * @param {string} pathSpec
  */
 function drawPath (ctx, pathSpec) {
-    const segs = /([ML])\s*(-?\d+(?:\.\d+)?)\s+(-?\d+(?:\.\d+)?)/g;
+    const segs = /([MLQCVHZ])\s*(-?\d+(?:\.\d+)?)?\s*(-?\d+(?:\.\d+)?)?\s*(-?\d+(?:\.\d+)?)?\s*(-?\d+(?:\.\d+)?)?\s*(-?\d+(?:\.\d+)?)?\s*(-?\d+(?:\.\d+)?)?/ig;
     let match;
+    /** @type {[number, number]} */
+    let first;
+    /** @type {[number, number]} */
+    let prev;
 
     while (match = segs.exec(pathSpec)) {
         const x = parseFloat(match[2]) * devicePixelRatio;
         const y = parseFloat(match[3]) * devicePixelRatio;
+        const x2 = parseFloat(match[4]) * devicePixelRatio;
+        const y2 = parseFloat(match[5]) * devicePixelRatio;
+        const x3 = parseFloat(match[6]) * devicePixelRatio;
+        const y3 = parseFloat(match[7]) * devicePixelRatio;
 
-        if (match[1] === "M") ctx.moveTo(x, y);
-        else if (match[1] === "L") ctx.lineTo(x, y);
+        if (!first) first = [x,y];
+
+        if (match[1] === "M") {
+            prev = [x,y];
+            ctx.moveTo(x, y);
+        }
+        else if (match[1] === "L") {
+            prev = [x,y];
+            ctx.lineTo(x, y);
+        }
+        else if (match[1] === "Q") {
+            prev = [x2,y2];
+            ctx.quadraticCurveTo(x, y, x2, y2);
+        }
+        else if (match[1] === "C") {
+            prev = [x3,y3];
+            ctx.bezierCurveTo(x, y, x2, y2, x3, y3);
+        }
+        else if (match[1] === "Z") {
+            prev = first;
+            ctx.lineTo(...prev);
+        }
+        else if (match[1] === "V") {
+            prev = [prev[0], x];
+            ctx.lineTo(...prev);
+        }
+        else if (match[1] === "H") {
+            prev = [x, prev[1]];
+            ctx.lineTo(...prev);
+        }
+        else if (match[1] === "m") {
+            prev = [prev[0] + x, prev[1] + y];
+            ctx.moveTo(...prev);
+        }
+        else if (match[1] === "l") {
+            prev = [prev[0] + x, prev[1] + y];
+            ctx.lineTo(...prev);
+        }
+        else if (match[1] === "q") {
+            ctx.quadraticCurveTo(prev[0] + x, prev[1] + y, prev[0] + x2, prev[1] + y2);
+            prev = [prev[0] + x2, prev[1] + y2];
+        }
+        else if (match[1] === "c") {
+            prev = [x3,y3];
+            ctx.bezierCurveTo(prev[0] + x, prev[1] + y, prev[0] + x2, prev[1] + y2, prev[0] + x3, prev[1] + y3);
+            prev = [prev[0] + x3, prev[1] + y3];
+        }
+        else if (match[1] === "z") {
+            prev = first;
+            ctx.lineTo(...first);
+        }
+        else if (match[1] === "v") {
+            prev = [prev[0], prev[1] + x];
+            ctx.lineTo(...prev);
+        }
+        else if (match[1] === "h") {
+            prev = [prev[0] + x, prev[1]];
+            ctx.lineTo(...prev);
+        }
     }
 }
