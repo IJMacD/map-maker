@@ -1,0 +1,38 @@
+area[building=yes]::bounding-box {
+    fill: lightblue;
+}
+area[building=yes]:is(self-closing) {
+    fill: pink;
+}
+area[building=yes] {
+    content: tag(name);
+    text-color: black;
+    text-align: centre;
+}
+area[building=yes]::mid-point {
+    size: 4;
+    fill: black;
+    content: "median";
+    text-align: centre;
+}
+area[building=yes]::centre {
+    size: 4;
+    fill: red;
+    content: "centre";
+}
+area[building=yes]::average-point {
+    size: 4;
+    fill: blue;
+    content: "avg";
+}
+area[building=yes]::start {
+    size: 2;
+    fill: green;
+    content: "start";
+    text-align: right;
+}
+area[building=yes]::end {
+    size: 2;
+    fill: orange;
+    content: "end";
+}
