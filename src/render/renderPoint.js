@@ -19,8 +19,8 @@ export function renderPoint(ctx, rule, [x, y], element = null) {
     ctx.lineWidth = +rule.declarations["stroke-width"] * devicePixelRatio;
 
     if (rule.declarations["position"] === "absolute") {
-        x = (parseFloat(rule.declarations["top"]) || 0) * devicePixelRatio;
-        y = (parseFloat(rule.declarations["left"]) || 0) * devicePixelRatio;
+        x = (parseFloat(rule.declarations["left"]) || 0) * devicePixelRatio;
+        y = (parseFloat(rule.declarations["top"]) || 0) * devicePixelRatio;
     }
     ctx.translate(x, y);
 
