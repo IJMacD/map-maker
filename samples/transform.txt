@@ -1,0 +1,49 @@
+dummy {
+    position: absolute;
+    top: 100;
+    left: 100;
+    fill: black;
+    size: 5;
+}
+dummy {
+    position: absolute;
+    top: 100;
+    left: 100;
+    content: "📞";
+    font-size: 10px;
+    transform: matrix(0,4,-4,0,0,0);
+}
+dummy {
+    position: relative;
+    top: 200;
+    left: 200;
+    icon: url(http://ijmacd.github.io/map-maker/logo192.png);
+    transform: matrix(0,2.5,-2.5,0,0,0);
+}
+dummy {
+    path: M 0 10 L 10 0 L 0 -10 L -10 0 Z;
+    stroke: blue;
+    position: absolute;
+    top: 100;
+    left: 100;
+    transform: matrix(2,1.07,-1.07,2,0,0);
+}
+area[building=yes] {
+    fill: pink;
+    stroke: red;
+    content: "🏠";
+    position: relative;
+    top: 25;
+    transform: matrix(1,0.75,-0.75,1,10,100);
+    path: M -5 5 L 5 5 L 5 -5 L -5 -5 Z;
+}
+way[highway=primary],
+way[highway=secondary],
+way[highway=tertiary],
+way[highway=residential] {
+    stroke: black;
+    position: relative;
+    left: 90;
+    content: "Road";
+    stransform: matrix(1.5,0,0,1.5,0,0);
+}

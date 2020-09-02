@@ -54,15 +54,7 @@ export function renderMap (centre, scale, elements=[], canvas, rule, context) {
     ctx.save();
 
     // Set up global context options
-    if (rule.declarations["opacity"])
-        ctx.globalAlpha = +rule.declarations["opacity"];
-
-    if (rule.declarations["position"] === "relative") {
-        const top = (parseFloat(rule.declarations["top"]) || 0) * devicePixelRatio;
-        const left = (parseFloat(rule.declarations["left"]) || 0) * devicePixelRatio;
-
-        ctx.translate(left, top);
-    }
+    globalSetup(ctx, rule);
 
     const { type } = rule.selector;
 
@@ -88,9 +80,7 @@ export function renderMap (centre, scale, elements=[], canvas, rule, context) {
             break;
         }
         case "dummy": {
-            const top = (parseFloat(rule.declarations["top"]) || 0) * devicePixelRatio;
-            const left = (parseFloat(rule.declarations["left"]) || 0) * devicePixelRatio;
-            renderPoint(ctx, rule, [left, top]);
+            renderPoint(ctx, rule, [0, 0]);
             break;
         }
         default:
@@ -137,6 +127,18 @@ export function renderMap (centre, scale, elements=[], canvas, rule, context) {
     }
 
     ctx.restore();
+}
+
+export function globalSetup(ctx, rule) {
+    if (rule.declarations["opacity"])
+        ctx.globalAlpha = +rule.declarations["opacity"];
+
+    if (rule.declarations["position"] === "relative") {
+        const top = (parseFloat(rule.declarations["top"]) || 0) * devicePixelRatio;
+        const left = (parseFloat(rule.declarations["left"]) || 0) * devicePixelRatio;
+
+        ctx.translate(left, top);
+    }
 }
 
 function renderRelation(ctx, rule, el, wayMap, nodeMap, projection) {
