@@ -12,6 +12,8 @@ import { applyTransform } from "./transform";
  * @param {OverpassElement} element
  */
 export function renderPoint(ctx, rule, [x, y], element = null) {
+    ctx.save();
+
     ctx.fillStyle = rule.declarations["fill"];
     ctx.strokeStyle = rule.declarations["stroke"];
     ctx.lineWidth = +rule.declarations["stroke-width"] * devicePixelRatio;
@@ -82,6 +84,8 @@ export function renderPoint(ctx, rule, [x, y], element = null) {
     if (rule.declarations["content"]) {
         renderText(ctx, rule, [0, 0], element);
     }
+
+    ctx.restore();
 }
 
 /**
