@@ -18,7 +18,7 @@ dummy {
     top: 200;
     left: 200;
     icon: url(http://ijmacd.github.io/map-maker/logo192.png);
-    transform: matrix(0,2.5,-2.5,0,0,0);
+    transform: translate(300, 0) matrix(0,2.5,-2.5,0,0,0);
 }
 dummy {
     path: M 0 10 L 10 0 L 0 -10 L -10 0 Z;
@@ -26,7 +26,7 @@ dummy {
     position: absolute;
     top: 100;
     left: 100;
-    transform: matrix(2,1.07,-1.07,2,0,0);
+    transform: matrix(2,1.07,-1.07,2,0,0) skew(-1);
 }
 area[building=yes] {
     fill: pink;
@@ -34,7 +34,7 @@ area[building=yes] {
     content: "🏠";
     position: relative;
     top: 25;
-    transform: matrix(1,0.75,-0.75,1,10,100);
+    transform: translate(-10, -30) scale(1.5) rotate(-135deg) skew(1.07rad, -1.07rad) scale(0.4) translate(15, 45);
     path: M -5 5 L 5 5 L 5 -5 L -5 -5 Z;
 }
 way[highway=primary],
@@ -45,5 +45,5 @@ way[highway=residential] {
     position: relative;
     left: 90;
     content: "Road";
-    stransform: matrix(1.5,0,0,1.5,0,0);
+    transform: matrix(0.9,0,0,0.9,0,0);
 }

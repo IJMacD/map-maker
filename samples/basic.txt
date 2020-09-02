@@ -41,7 +41,7 @@ way[natural=coastline] {
     }
 }
 @match (zoom >= 14) {
-    way[building=yes] {
+    area[building=yes] {
         fill: pink;
     }
     way[waterway=stream] {
