@@ -7,6 +7,7 @@ import { renderGridlines } from "./renderGridlines";
 import { renderPsuedoElement } from "./renderPsuedoElement";
 import { mercatorProjection, getCentrePoint, getMidPoint } from "./util";
 import { matchPsuedoClasses } from "./matchPsuedoClasses";
+import { renderRelation } from "./renderRelation";
 
 /**
  * @param {HTMLCanvasElement} canvas
@@ -139,30 +140,4 @@ export function globalSetup(ctx, rule) {
 
         ctx.translate(left, top);
     }
-}
-
-function renderRelation(ctx, rule, el, wayMap, nodeMap, projection) {
-    ctx.fillStyle = rule.declarations["fill"];
-    ctx.strokeStyle = rule.declarations["stroke"];
-    ctx.lineWidth = +rule.declarations["stroke-width"] * devicePixelRatio;
-
-    // As long as outer ways go anti-clockwise and inner rings go clockwise
-    // (or possibly vice-versa) then the CanvasRenderingContext2D can handle
-    // rending "holes".
-    ctx.beginPath();
-
-    const ways = el.members.filter(m => m.type === "way").map(m => wayMap[m.ref]);
-
-    for (const way of ways) {
-        const nodes = way.nodes.map(id => nodeMap[id]);
-
-        ctx.moveTo(...projection(nodes[0].lon, nodes[0].lat));
-        for (let i = 1; i < nodes.length; i++) {
-            ctx.lineTo(...projection(nodes[i].lon, nodes[i].lat));
-        }
-    }
-    ctx.closePath();
-
-    rule.declarations["fill"] && ctx.fill();
-    rule.declarations["stroke"] && ctx.stroke();
 }
