@@ -221,32 +221,32 @@ way[railway=rail] {
 @match (zoom >= 9) {
     gridlines:vertical(0.1deg),
     gridlines:horizontal(0.1deg) {
-    stroke: rgba(128,64,0,0.2);
-    stroke-width: 1.25;
+        stroke: rgba(128,64,0,0.2);
+        stroke-width: 1.25;
     }
 }
 @match (zoom < 9) {
     gridlines:vertical(1deg),
     gridlines:horizontal(1deg) {
-    stroke: rgba(128,64,0,0.2);
-    stroke-width: 1;
+        stroke: rgba(128,64,0,0.2);
+        stroke-width: 1;
     }
 }
 @match (zoom >= 9) {
     gridlines:vertical(1deg),
     gridlines:horizontal(1deg) {
-    stroke: rgba(128,64,0,0.2);
-    stroke-width: 2;
+        stroke: rgba(128,64,0,0.2);
+        stroke-width: 2;
     }
 }
 @match (zoom >= 9){
     node[place=city] {
-    fill: black;
-    stroke: rgba(255,255,255,0.8);
-    stroke-width: 5;
-    content: tag(name);
-    font-size: 30px;
-    font-weight: bold;
+        fill: black;
+        stroke: rgba(255,255,255,0.8);
+        stroke-width: 5;
+        content: tag(name);
+        font-size: 30px;
+        font-weight: bold;
     }
 }
 @match (zoom >= 11) {
