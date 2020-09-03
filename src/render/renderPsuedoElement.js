@@ -52,19 +52,28 @@ export function renderPsuedoElement(ctx, rule, element, nodes, points) {
         setFont(ctx, rule);
         const content = getContent(rule, element);
         const size = ctx.measureText(content);
-        const p = points[0];
+        let [ x, y ] = points[0];
         const { width, actualBoundingBoxDescent: desc, actualBoundingBoxAscent: asc } = size;
         const padding = rule.declarations["padding"] ? parseFloat(rule.declarations["padding"]) * devicePixelRatio : 0;
 
+        if (rule.declarations["text-align"] === "center" || rule.declarations["text-align"] === "centre") {
+            x -= width / 2;
+        }
+        else if (rule.declarations["text-align"] === "right") {
+            x -= width;
+        }
+
         /** @type {[number, number][]} */
         const boundPoints = [
-            [ p[0] - padding,           p[1] - asc - padding ],     // Top Left
-            [ p[0] - padding,           p[1] + desc + padding ],    // Bottom left
-            [ p[0] + width + padding,   p[1] + desc + padding ],    // Bottom right
-            [ p[0] + width + padding,   p[1] - asc - padding ],     // Top Right
-            [ p[0] - padding,           p[1] - asc - padding ],     // Top Left
+            [ x - padding,           y - asc - padding ],     // Top Left
+            [ x - padding,           y + desc + padding ],    // Bottom left
+            [ x + width + padding,   y + desc + padding ],    // Bottom right
+            [ x + width + padding,   y - asc - padding ],     // Top Right
         ];
 
-        renderAreaLine(ctx, rule, boundPoints, () => p, element);
+        // Close self
+        boundPoints.push(boundPoints[0]);
+
+        renderAreaLine(ctx, rule, boundPoints, () => points[0], element);
     }
 }

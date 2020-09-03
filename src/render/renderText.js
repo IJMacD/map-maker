@@ -27,6 +27,11 @@ export function renderText(ctx, rule, [x, y], element = null) {
         }
     }
 
+    if (rule.declarations["text-stroke"]) {
+        ctx.strokeStyle = rule.declarations["text-stroke"];
+        ctx.strokeText(content, x, y);
+    }
+
     if (rule.declarations["text-color"]) {
         ctx.fillStyle = rule.declarations["text-color"];
         ctx.fillText(content, x, y);
