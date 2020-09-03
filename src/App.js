@@ -85,8 +85,10 @@ function App() {
   function move (dX, dY) {
     /** @type {[number, number]} */
     const centrePoint = (debouncedCentre.split(",").map(p => +p));
-    const stepSize = 360 / Math.pow(2, scale);
-    const newCentre = [ centrePoint[0] + dX * stepSize, centrePoint[1] + dY * stepSize ];
+    const bb = bbox.split(",").map(p => +p);
+    const stepSizeX = (bb[2] - bb[0]) / 2;
+    const stepSizeY = (bb[3] - bb[1]) / 2;
+    const newCentre = [ centrePoint[0] + dX * stepSizeX, centrePoint[1] + dY * stepSizeY ];
     setCentre(newCentre.join(","));
   }
 

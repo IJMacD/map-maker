@@ -7,8 +7,8 @@ import { timeout } from './util';
 
 const API_ROOT = require("./const").API_ROOT;
 
-const overpassRe = /(node|way|rel(?:ation)?|area)/;
-const recurRe = /(way|rel(?:ation)?|area)/;
+const overpassRe = /^(node|way|rel(?:ation)?|area)/;
+const recurRe = /^(way|rel(?:ation)?|area)/;
 
 export class Overpass {
     constructor (bbox) {
@@ -30,8 +30,8 @@ export class Overpass {
     }
 
     /**
-     * 
-     * @param {StyleSelector[]} selectors 
+     *
+     * @param {StyleSelector[]} selectors
      */
     async preLoadElements (selectors) {
         const { bbox } = this;
@@ -47,14 +47,14 @@ export class Overpass {
         for (const [key, selector] of Object.entries(set)) {
             if (!overpassRe.test(selector.type)) delete set[key];
         }
-        console.debug(`Preloading Elements: ${Object.keys(set).length} are Overpass Elements`); 
+        console.debug(`Preloading Elements: ${Object.keys(set).length} are Overpass Elements`);
 
         // Remove selectors found in local hash map cache
         for (const key of Object.keys(set)) {
             if (this.elements.has(key)) delete set[key];
         }
-        console.debug(`Preloading Elements: ${Object.keys(set).length} not in HashMap`); 
-        
+        console.debug(`Preloading Elements: ${Object.keys(set).length} not in HashMap`);
+
         // Remove selectors which were found in database
         await Promise.all(Object.keys(set).map(s => {
             return this.database.searchElements(bbox, s)
@@ -115,14 +115,14 @@ export class Overpass {
         }
 
     /**
-     * 
-     * @param {StyleSelector[]} selectors 
+     *
+     * @param {StyleSelector[]} selectors
      * @returns {Promise<OverpassElement[]>}
      */
     query (selectors) {
         const sMap = selectors.map(mapSelectorForQuery);
         const query = `[out:json][bbox];\n(${sMap.join("")}\n);\nout;`
-        const url = `${API_ROOT}?data=${query.replace(/\s/,"")}&bbox=${this.bbox}`;
+        const url = `${API_ROOT}?data=${query.replace(/\s/,"")}&bbox=${clampBBox(this.bbox)}`;
 
         if (!this.fetchMap[url]) {;
             this.fetchMap[url] = fetch(url.toString()).then(r => r.ok ? r.json() : Promise.reject(r.status)).then(r => r.elements);
@@ -134,9 +134,9 @@ export class Overpass {
     }
 
     /**
-     * 
-     * @param {StyleSelector[]} selectors 
-     * @param {number} tries 
+     *
+     * @param {StyleSelector[]} selectors
+     * @param {number} tries
      * @returns {Promise<OverpassElement[]>}
      */
     tryQuery (selectors, tries=10) {
@@ -178,9 +178,9 @@ export class Overpass {
         }
 
         const p = this.tryQuery([selector]);
-        
+
         this.elements.set(s, p);
-        
+
         p.catch(() => this.elements.delete(s));
 
         p.then(elements => {
@@ -242,3 +242,12 @@ function mapSelector (selector) {
  * @property {{ ref: number, role: "inner"|"outer", type: "node"|"way"|"relation" }[]} members
  * @property {{ [key: string]: string }} [tags]
  */
+
+function clampBBox (bbox) {
+    const p = bbox.split(",").map(p => +p);
+    return `${clamp(p[0], -180, 180)},${clamp(p[1], -90, 90)},${clamp(p[2], -180, 180)},${clamp(p[3], -90, 90)}`;
+}
+
+function clamp (v, min, max) {
+    return Math.max(min, Math.min(v, max));
+}
