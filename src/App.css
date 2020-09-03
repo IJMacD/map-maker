@@ -1,6 +1,7 @@
 .App {
   display: flex;
   font-size: 18pt;
+  height: 100vh;
 }
 
 .sidebar {
@@ -28,5 +29,5 @@ label {
 
 textarea {
   min-width: 400px;
-  min-height: 600px;
+  min-height: 200px;
 }
