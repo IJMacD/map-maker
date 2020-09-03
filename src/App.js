@@ -9,6 +9,7 @@ import { makeBBox } from './bbox';
 import useGeolocation from './useGeolocation';
 import Textarea from './Textarea';
 import useDeepCompareEffect from 'use-deep-compare-effect';
+import CollisionSystem from './CollisionSystem';
 
 function App() {
   const [ style, setStyle ] = useSavedState("USER_STYLE", "node[amenity=post_box] {\n\tfill: black;\n\tsize: 2;\n}");
@@ -59,6 +60,8 @@ function App() {
 
         if (canvasRef.current) {
           clearMap(canvasRef.current);
+
+          CollisionSystem.getCollisionSystem().clear();
 
           /** @type {[number, number]} */
           const centrePoint = (debouncedCentre.split(",").map(p => +p));

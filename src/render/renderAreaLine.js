@@ -1,6 +1,8 @@
 import { renderPoint } from "./renderPoint";
 import { applyTransform } from "./transform";
 import { setStrokeFill } from "./parseStrokeFill";
+import { getBoundingBox } from "./util";
+import CollisionSystem from "../CollisionSystem";
 
 /** @typedef {import("../Style").StyleRule} StyleRule */
 /** @typedef {import("../Overpass").OverpassElement} OverpassElement */
@@ -15,6 +17,21 @@ import { setStrokeFill } from "./parseStrokeFill";
 export function renderAreaLine(ctx, rule, points, getPoint, element = null) {
     if (points.length === 0)
         return;
+
+
+    if (rule.declarations["collision-set"]) {
+        const box = getBoundingBox(points);
+
+        const collisionSystem = CollisionSystem.getCollisionSystem();
+
+        if (!collisionSystem.add(rule.declarations["collision-set"], box)) {
+            const policy = rule.declarations["collision-policy"] || "hide";
+
+            if (policy === "hide") {
+                return;
+            }
+        }
+    }
 
     ctx.save();
 
