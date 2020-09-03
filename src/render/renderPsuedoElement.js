@@ -2,7 +2,16 @@ import { rectToPoints } from "../geometry";
 import { renderPoint } from "./renderPoint";
 import { renderArea } from "./renderArea";
 import { getCentrePoint, getMidPoint, getAveragePoint, getBoundingBox } from "./util";
+import { setFont, getContent } from "./renderText";
+import { renderAreaLine } from "./renderAreaLine";
 
+/**
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {import("../Style").StyleRule} rule
+ * @param {import("../Overpass").OverpassElement} element
+ * @param {import("../Overpass").OverpassNodeElement[]} nodes
+ * @param {[number, number][]} points
+ */
 export function renderPsuedoElement(ctx, rule, element, nodes, points) {
     if (rule.selector.pseudoElement === "centre" || rule.selector.pseudoElement === "center") {
         // Centre of bounding box
@@ -38,5 +47,24 @@ export function renderPsuedoElement(ctx, rule, element, nodes, points) {
         const boundingPoints = rectToPoints(...bounding);
 
         renderArea(ctx, rule, boundingPoints, element);
+    }
+    else if (rule.selector.pseudoElement === "content-box") {
+        setFont(ctx, rule);
+        const content = getContent(rule, element);
+        const size = ctx.measureText(content);
+        const p = points[0];
+        const { width, actualBoundingBoxDescent: desc, actualBoundingBoxAscent: asc } = size;
+        const padding = rule.declarations["padding"] ? parseFloat(rule.declarations["padding"]) * devicePixelRatio : 0;
+
+        /** @type {[number, number][]} */
+        const boundPoints = [
+            [ p[0] - padding,           p[1] - asc - padding ],     // Top Left
+            [ p[0] - padding,           p[1] + desc + padding ],    // Bottom left
+            [ p[0] + width + padding,   p[1] + desc + padding ],    // Bottom right
+            [ p[0] + width + padding,   p[1] - asc - padding ],     // Top Right
+            [ p[0] - padding,           p[1] - asc - padding ],     // Top Left
+        ];
+
+        renderAreaLine(ctx, rule, boundPoints, () => p, element);
     }
 }

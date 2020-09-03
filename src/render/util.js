@@ -84,7 +84,7 @@ export function getCentrePoint(points) {
  */
 
 export function getMidPoint(points) {
-    return points[Math.floor(points.length / 2)];
+    return points[Math.floor((points.length - 1) / 2)];
 }
 /**
  * @param {[number, number][]} points

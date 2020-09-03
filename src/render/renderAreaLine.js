@@ -1,7 +1,6 @@
-import { isSelfClosing } from "../geometry";
-import { getCentrePoint } from "./util";
 import { renderPoint } from "./renderPoint";
 import { applyTransform } from "./transform";
+import { setStrokeFill } from "./parseStrokeFill";
 
 /** @typedef {import("../Style").StyleRule} StyleRule */
 /** @typedef {import("../Overpass").OverpassElement} OverpassElement */
@@ -19,11 +18,7 @@ export function renderAreaLine(ctx, rule, points, getPoint, element = null) {
 
     ctx.save();
 
-    const { fillStyle, strokeStyle, lineWidth } = parseStrokeFill(rule);
-
-    ctx.fillStyle = fillStyle;
-    ctx.strokeStyle = strokeStyle;
-    ctx.lineWidth = lineWidth;
+    setStrokeFill(ctx, rule);
 
     let offsetX = 0;
     let offsetY = 0;
@@ -64,37 +59,4 @@ export function renderAreaLine(ctx, rule, points, getPoint, element = null) {
     }
 }
 
-function parseStrokeFill(rule) {
-    const fillStyle = rule.declarations["fill"];
-    let strokeStyle = rule.declarations["stroke"];
-    let lineWidth;
-
-    // Numbers in e.g. rgba(128,64,0,0.2) confuse it
-    let mutedStyle = strokeStyle.replace(/\([^)]*\)/g, ss => " ".repeat(ss.length));
-
-    // So would hex colour strings
-    mutedStyle = mutedStyle.replace(/#[0-9a-f]{3}/, "    ");
-    mutedStyle = mutedStyle.replace(/#[0-9a-f]{6}/, "       ");
-
-    /**
-     * @todo A better parser would probably be nice
-     */
-
-    const swRe = /(\d+(?:\.\d+)?)\s*(?:px)?/;
-    const sm = swRe.exec(mutedStyle);
-    if (sm) {
-        lineWidth = +sm[1] * devicePixelRatio;
-        strokeStyle = strokeStyle.replace(sm[0], "");
-    }
-
-    if (rule.declarations["stroke-width"]) {
-        lineWidth = +rule.declarations["stroke-width"] * devicePixelRatio;
-    }
-
-    return {
-        fillStyle,
-        strokeStyle,
-        lineWidth,
-    };
-}
 

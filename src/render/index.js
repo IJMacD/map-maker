@@ -91,7 +91,14 @@ export function renderMap (centre, scale, elements=[], canvas, rule, context) {
                     case "node": {
                         if (el.type !== "node") continue;
 
-                        renderPoint(ctx, rule, projection(el.lon, el.lat), el);
+                        const point = projection(el.lon, el.lat);
+
+                        if (rule.selector.pseudoElement) {
+                            renderPsuedoElement(ctx, rule, el, [el], [point]);
+                        }
+                        else {
+                            renderPoint(ctx, rule, point, el);
+                        }
                         break;
                     }
                     case "way":
