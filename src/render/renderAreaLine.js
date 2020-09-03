@@ -19,9 +19,11 @@ export function renderAreaLine(ctx, rule, points, getPoint, element = null) {
 
     ctx.save();
 
-    ctx.fillStyle = rule.declarations["fill"];
-    ctx.strokeStyle = rule.declarations["stroke"];
-    ctx.lineWidth = +rule.declarations["stroke-width"] * devicePixelRatio;
+    const { fillStyle, strokeStyle, lineWidth } = parseStrokeFill(rule);
+
+    ctx.fillStyle = fillStyle;
+    ctx.strokeStyle = strokeStyle;
+    ctx.lineWidth = lineWidth;
 
     let offsetX = 0;
     let offsetY = 0;
@@ -61,3 +63,26 @@ export function renderAreaLine(ctx, rule, points, getPoint, element = null) {
         ctx.restore();
     }
 }
+function parseStrokeFill(rule) {
+    const fillStyle = rule.declarations["fill"];
+    let strokeStyle = rule.declarations["stroke"];
+    let lineWidth;
+
+    const swRe = /(\d+(?:\.\d+)?)\s*(?:px)?/;
+    const sm = swRe.exec(strokeStyle);
+    if (sm) {
+        lineWidth = +sm[1] * devicePixelRatio;
+        strokeStyle = strokeStyle.replace(sm[0], "");
+    }
+
+    if (rule.declarations["stroke-width"]) {
+        lineWidth = +rule.declarations["stroke-width"] * devicePixelRatio;
+    }
+
+    return {
+        fillStyle,
+        strokeStyle,
+        lineWidth,
+    };
+}
+

@@ -32,13 +32,13 @@ function App() {
   if (!overpassRef.current) {
     overpassRef.current = new Overpass(bbox);
   }
-  
+
   const debouncedStyle = useDebounce(style, 500);
-  
+
   const parsedStyle = React.useMemo(() => parseStyle(debouncedStyle), [debouncedStyle]);
 
   React.useEffect(() => overpassRef.current.setBBox(bbox), [bbox]);
-  
+
   // Refetch/Render map when bbox, or style change
   useDeepCompareEffect(() => {
     async function run () {
@@ -46,10 +46,10 @@ function App() {
       setError("");
 
       try {
-        const context = { zoom: debouncedScale, current };
+        const context = { zoom: debouncedScale, current, width, height };
         const rules = expandRules(parsedStyle.rules, context);
         await overpassRef.current.preLoadElements(rules.map(r => r.selector));
-        
+
         const map = rules.map(rule => {
           return {
             rule,
