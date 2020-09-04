@@ -173,6 +173,33 @@ map {
 <figcaption>Example setting the canvas fill and border.</figcaption>
 </figure>
 
+
+#### `gridlines`
+
+`gridlines` doesn't actually render anything by itself. Pseudo Classes are required to specify which grid lines to draw.
+There is a dummy tag added with a key of `name` and a value of the particular longitude or latitude being rendered.
+
+*This is sort of a pseudo-type. This is not an OSM feature and only exists on Map Maker.*
+
+```css
+gridlines:vertical(0.01deg),
+gridlines:horizontal(0.01deg) {
+    stroke: rgba(128,64,0,0.2);
+    content: tag(name);
+    text-color: rgba(128,64,0,0.2);
+}
+gridlines:vertical(0.1deg),
+gridlines:horizontal(0.1deg) {
+    stroke: rgba(128,64,0,0.2);
+    stroke-width: 1.25;
+}
+```
+
+<figure>
+<img src="https://raw.githubusercontent.com/IJMacD/map-maker/master/docs/img/gridlines.png" height="300" width="400" />
+<figcaption>Grid lines can be drawn.</figcaption>
+</figure>
+
 #### `current`
 Provided the user permits, this will render a Point feature at the geolocation provided by the user's browser.
 
@@ -343,6 +370,165 @@ area[building=yes]:has(area >= 3000) {
 </figure>
 
 ### Pseudo Elements
+
+#### `::centre` **Point**
+Renders a Point feature at the centre of the bounding box of a Line or Area. These are the same co-ordinates used when drawing a Point feature on an Area.
+
+*`::center` is provided as an alternative spelling.*
+
+```css
+area[building=yes] {
+    stroke: pink;
+}
+area[building=yes]::centre {
+    size: 2;
+    fill: black;
+}
+```
+
+<figure>
+<img src="https://raw.githubusercontent.com/IJMacD/map-maker/master/docs/img/centre.png" height="300" width="400" />
+<figcaption>Dot drawn at centre of bounding box.</figcaption>
+</figure>
+
+#### `::mid-point` **Point**
+Renders a Point feature at the N/2<sup>th</sup> point along a line. The point will always be on the line including areas.
+
+```css
+area[building=yes] {
+    stroke: pink;
+}
+area[building=yes]::mid-point {
+    size: 2;
+    fill: red;
+}
+way[highway=secondary],
+way[highway=residential] {
+    stroke: lightblue;
+}
+way[highway=secondary]::mid-point,
+way[highway=residential]::mid-point {
+    size: 2;
+    fill: blue;
+}
+```
+
+<figure>
+<img src="https://raw.githubusercontent.com/IJMacD/map-maker/master/docs/img/mid-point.png" height="300" width="400" />
+<figcaption>Showing the mid-points of lines and areas.</figcaption>
+</figure>
+
+#### `::average-point` **Point**
+Take the average of all the points in the way or area.
+
+```css
+area[building=yes] {
+    stroke: pink;
+}
+area[building=yes]::centre {
+    size: 2;
+    fill: black;
+}
+area[building=yes]::average-point {
+    size: 2;
+    fill: blue;
+}
+```
+
+<figure>
+<img src="https://raw.githubusercontent.com/IJMacD/map-maker/master/docs/img/average-point.png" height="300" width="400" />
+<figcaption>Comparing the average-point and bounding-box centre.</figcaption>
+</figure>
+
+#### `::start` **Point**
+Returns the first point in a line
+
+```css
+way[highway=secondary],
+way[highway=tertiary] {
+    stroke: black;
+}
+way[highway=secondary]::start,
+way[highway=tertiary]::start {
+    size: 4;
+    fill: green;
+}
+way[highway=secondary]::end,
+way[highway=tertiary]::end {
+    size: 2;
+    fill: orange;
+}
+```
+
+<figure>
+<img src="https://raw.githubusercontent.com/IJMacD/map-maker/master/docs/img/start-stop.png" height="300" width="400" />
+<figcaption>Showing the beginning and end of lines.</figcaption>
+</figure>
+
+#### `::end` **Point**
+Returns the last point in a line
+
+```css
+way[highway=secondary],
+way[highway=tertiary] {
+    stroke: black;
+}
+way[highway=secondary]::start,
+way[highway=tertiary]::start {
+    icon: url(/map-maker/start.svg) 16px 16px;
+    transform: translate(-16px, -8px);
+}
+way[highway=secondary]::end,
+way[highway=tertiary]::end {
+    icon: url(/map-maker/end.svg) 16px 16px;
+    transform: translate(0px, -8px);
+}
+```
+
+<figure>
+<img src="https://raw.githubusercontent.com/IJMacD/map-maker/master/docs/img/start-stop-icon.png" height="300" width="400" />
+<figcaption>Alternative Example.</figcaption>
+</figure>
+
+#### `::bounding-box` **Area**
+Returns are area which completely encloses the target way or area.
+
+```css
+area[building=yes]::bounding-box {
+    fill: lightblue;
+    stroke: blue;
+}
+area[building=yes] {
+    fill: pink;
+    stroke: maroon;
+}
+```
+
+<figure>
+<img src="https://raw.githubusercontent.com/IJMacD/map-maker/master/docs/img/bounding-box.png" height="300" width="400" />
+<figcaption>Axis aligned boxes containing buildings.</figcaption>
+</figure>
+
+#### `::content-box` **Area**
+A special area enclosing a text set with the `content` declaration.
+
+```css
+area[landuse=residential] {
+    fill: lightgrey;
+}
+node[place=town]::content-box {
+    fill: black;
+    stroke: 2px purple;
+    text-color: white;
+    padding: 4px;
+    content: tag(name);
+}
+```
+
+<figure>
+<img src="https://raw.githubusercontent.com/IJMacD/map-maker/master/docs/img/content-box.png" height="300" width="400" />
+<figcaption>Some towns in north east England.</figcaption>
+</figure>
 
 ### Match Queries
 

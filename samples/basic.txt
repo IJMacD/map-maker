@@ -240,43 +240,47 @@ way[railway=rail] {
     }
 }
 @match (zoom >= 9){
-    node[place=city] {
-        fill: black;
-        stroke: rgba(255,255,255,0.8);
+    node[place=city]::content-box {
+        text-color: black;
+        text-stroke: rgba(255,255,255,0.8);
         stroke-width: 5;
         content: tag(name);
         font-size: 30px;
         font-weight: bold;
+        collision-set: labels;
     }
 }
 @match (zoom >= 11) {
-    node[place=town] {
-        fill: black;
-        stroke: rgba(255,255,255,0.8);
+    node[place=town]::content-box {
+        text-color: black;
+        text-stroke: rgba(255,255,255,0.8);
         stroke-width: 5;
         content: tag(name);
         font-size: 20px;
         font-weight: bold;
+        collision-set: labels;
     }
 }
 @match (zoom >= 12) {
-    node[place=village] {
+    node[place=village]::content-box {
         content: tag(name);
-        fill: black;
-        stroke: rgba(255,255,255,0.8);
+        text-color: black;
+        text-stroke: rgba(255,255,255,0.8);
         stroke-width: 3;
         font-size: 15px;
         font-weight: bold;
+        collision-set: labels;
     }
 }
 @match (zoom >= 13) {
-    node[place=hamlet] {
+    node[place=hamlet]::content-box {
         content: tag(name);
-        fill: black;
-       stroke: rgba(255,255,255,0.8);
+        text-color: black;
+        text-stroke: rgba(255,255,255,0.8);
         stroke-width: 3;
         font-size: 10px;
         font-weight: bold;
+        collision-set: labels;
     }
 }
 current {
