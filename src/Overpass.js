@@ -120,6 +120,8 @@ export class Overpass {
      * @returns {Promise<OverpassElement[]>}
      */
     query (selectors) {
+        if (this.bbox.split(",").map(p => +p).some(isNaN)) throw Error("Invalid BBox");
+
         const sMap = selectors.map(mapSelectorForQuery);
         const query = `[out:json][bbox];\n(${sMap.join("")}\n);\nout;`
         const url = `${API_ROOT}?data=${query.replace(/\s/,"")}&bbox=${clampBBox(this.bbox)}`;
