@@ -1,10 +1,10 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "9a262d9d241d481e8ddfa1319bfac8d6",
+    "revision": "f8467ae9e7a57460928779ceb0a5b1d4",
     "url": "/map-maker/index.html"
   },
   {
-    "revision": "844e7a7fcedc193197b0",
+    "revision": "6e29599814ae4ce763d6",
     "url": "/map-maker/static/css/main.ba272b8b.chunk.css"
   },
   {
@@ -16,8 +16,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/map-maker/static/js/2.1a64c7d4.chunk.js.LICENSE.txt"
   },
   {
-    "revision": "844e7a7fcedc193197b0",
-    "url": "/map-maker/static/js/main.8cbd734b.chunk.js"
+    "revision": "6e29599814ae4ce763d6",
+    "url": "/map-maker/static/js/main.f53bf1f7.chunk.js"
   },
   {
     "revision": "2f95e9f626ca59912134",
