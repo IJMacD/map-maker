@@ -95,15 +95,17 @@ export default class IDBElementDatabase {
             const range = IDBKeyRange.bound([selector,0,"0"], [selector,Number.MAX_VALUE,"999999999999999999"]);
             const request = index.openKeyCursor(range);
             let count = 0;
+            const bboxOversizeArea = getArea(bbox) * 9;
             request.addEventListener("success", e => {
                 const cursor = request.result;
 
                 if (cursor) {
                     const { key, primaryKey } = cursor;
                     const keyBBox = key[2];
+                    const keyArea = key[1];
                     count++;
                     console.debug(`Checking index #${count} for ${selector}`);
-                    if (contains(keyBBox, bbox)) {
+                    if (contains(keyBBox, bbox) && keyArea < bboxOversizeArea) {
                         console.debug(`${selector} found after checking ${count} records`);
                         resolve(primaryKey.toString());
                         return;
