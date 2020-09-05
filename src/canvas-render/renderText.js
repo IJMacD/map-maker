@@ -33,15 +33,9 @@ export function renderText(ctx, rule, [x, y], element = null, context) {
         ctx.strokeText(content, x, y);
     }
 
-    if (rule.declarations["text-color"]) {
+    if (rule.declarations["text-color"] || !rule.declarations["text-stroke"]) {
         ctx.fillStyle = rule.declarations["text-color"];
         ctx.fillText(content, x, y);
-    }
-    else {
-        if (rule.declarations["stroke"])
-            ctx.strokeText(content, x, y);
-        if (rule.declarations["fill"] || !rule.declarations["stroke"])
-            ctx.fillText(content, x, y);
     }
 }
 
@@ -55,17 +49,24 @@ export function setFont(ctx, rule, scale) {
     let fontWeight = "normal";
     let fontFamily = "sans-serif";
 
-    if (rule.declarations["font-size"]) {
-        fontSize = rule.declarations["font-size"].replace(/^\d[\d.]*/, m => `${+m * scale}`);
+    if (rule.declarations["font"]) {
+        // It would be nice for the specific properties to override the
+        // shorthand, but it would complicate things a bit.
+        ctx.font = rule.declarations["font"].replace(/\d+(?:\.\d+)?/, s => `${+s * scale}`);
     }
+    else {
+        if (rule.declarations["font-size"]) {
+            fontSize = rule.declarations["font-size"].replace(/^\d[\d.]*/, m => `${+m * scale}`);
+        }
 
-    if (rule.declarations["font-weight"]) {
-        fontWeight = rule.declarations["font-weight"];
+        if (rule.declarations["font-weight"]) {
+            fontWeight = rule.declarations["font-weight"];
+        }
+
+        if (rule.declarations["font-family"]) {
+            fontFamily = rule.declarations["font-family"];
+        }
+
+        ctx.font = `${fontWeight} ${fontSize} ${fontFamily}`;
     }
-
-    if (rule.declarations["font-family"]) {
-        fontFamily = rule.declarations["font-family"];
-    }
-
-    ctx.font = rule.declarations["font"] || `${fontWeight} ${fontSize} ${fontFamily}`;
 }
