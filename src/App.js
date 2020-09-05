@@ -3,6 +3,7 @@ import './App.css';
 import useSavedState from './useSavedState';
 import { parseStyle, expandRules } from './Style';
 import CanvasRender from './canvas-render';
+import SVGRender from './svg-render';
 import { Overpass } from './Overpass';
 import { useDebounce } from './useDebounce';
 import { makeBBox } from './bbox';
@@ -23,6 +24,8 @@ function App() {
   /** @type {[ string, (string) => void ]} */
   const [ status, setStatus ] = React.useState(null);
   const [ error, setError ] = React.useState("");
+  const [ downloading, setDownloading ] = React.useState(false);
+  const [ progress, setProgress ] = React.useState(0);
 
   const { clientWidth, clientHeight } = canvasRef.current || { clientWidth: 1000, clientHeight: 1000 };
 
@@ -56,12 +59,24 @@ function App() {
 
   // Refetch/Render map when bbox, or style change
   useDeepCompareEffect(() => {
+    let currentEffect = true;
+
     async function run () {
       setStatus("Fetching...");
       setError("");
 
       try {
-        await overpassRef.current.preLoadElements(rules.map(r => r.selector));
+        const count = await overpassRef.current.preLoadElements(rules.map(r => r.selector));
+
+        if (!currentEffect) return;
+
+        // Check if we're already preloading something
+        if (count < 0) return;
+
+        if (count === 0)
+          setStatus(`Rendering...`);
+        else
+          setStatus(`Rendering ${count} elements...`);
 
         const map = rules.map(rule => {
           return {
@@ -73,15 +88,30 @@ function App() {
         CollisionSystem.getCollisionSystem().clear();
 
         if (canvasRef.current) {
+          if (!currentEffect) return;
 
           const renderer = new CanvasRender(canvasRef.current);
 
           renderer.clear(context);
 
+          let count = 0;
+
           for (const item of map) {
+            const prefix = `${count++}/${map.length}`;
+            setProgress(count/map.length);
+
+            console.debug(`${prefix} Loading elements for ${item.rule.selector}`);
             const elements = await item.promise;
+
+            if (!currentEffect) return;
+
+            console.debug(`${prefix} Rendering ${item.rule.selector}`);
+
             renderer.renderRule(context, item.rule, elements);
           }
+          setProgress(0);
+
+          console.debug(`Rendered!`);
         }
 
         setStatus(null);
@@ -93,6 +123,8 @@ function App() {
     }
 
     run();
+
+    return () => { currentEffect = false; };
   }, [debouncedCentre, debouncedZoom, rules, context]);
 
   function move (dX, dY) {
@@ -103,6 +135,13 @@ function App() {
     const stepSizeY = (bb[3] - bb[1]) / 2;
     const newCentre = [ centrePoint[0] + dX * stepSizeX, centrePoint[1] + dY * stepSizeY ];
     setCentre(newCentre.join(","));
+  }
+
+  function handleDownload () {
+    if (!downloading) {
+      setDownloading(true);
+      downloadSVG(context, parsedStyle, overpassRef.current, () => setDownloading(false));
+    }
   }
 
   return (
@@ -116,12 +155,16 @@ function App() {
           <button onClick={() => setZoom(zoom + 1)}>➕</button>
           <button onClick={() => setZoom(zoom - 1)}>➖</button>
           { current && <button onClick={() => setCentre(`${current.coords.longitude},${current.coords.latitude}`)}>📍</button> }
+          <button onClick={handleDownload} disabled={downloading}>⭳</button>
         </div>
         <label>Centre <input value={centre} onChange={e => setCentre(e.target.value)} /></label>
         <label>Zoom <input type="number" value={zoom} onChange={e => setZoom(+e.target.value)} /></label>
         <Textarea value={style} onChange={setStyle} style={{flex:1}} spellCheck={false} />
-        { status && <p>{status}</p> }
-        { error && <p style={{color:"red"}}>{error}</p> }
+        <div className="status-area">
+          { status && <p>{status}</p> }
+          { progress > 0 && <progress value={progress} />}
+          { error && <p style={{color:"red"}}>{error}</p> }
+        </div>
       </div>
       <canvas ref={canvasRef} />
     </div>
@@ -129,3 +172,35 @@ function App() {
 }
 
 export default App;
+
+async function downloadSVG (context, style, overpass, callback=null) {
+  const rules = expandRules(style.rules, context);
+
+  const map = rules.map(rule => {
+    return {
+      rule,
+      promise: overpass.getElements(rule.selector),
+    }
+  });
+
+  CollisionSystem.getCollisionSystem().clear();
+
+  const svgRender = new SVGRender(context.width, context.height);
+
+  for (const item of map) {
+    const elements = await item.promise;
+    svgRender.renderRule(context, item.rule, elements);
+  }
+
+  const blob = svgRender.toBlob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.download = "map.svg";
+  a.href = url;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  if (callback) callback();
+}

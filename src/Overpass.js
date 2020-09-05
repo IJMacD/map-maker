@@ -18,6 +18,8 @@ export class Overpass {
         this.database = new IDBElementDatabase();
         /** @type {{ [url: string]: Promise<OverpassElement[]> }} */
         this.fetchMap = {};
+        /** @type {Promise<any>} */
+        this.currentJob = Promise.resolve();
     }
 
     setBBox (bbox) {
@@ -34,85 +36,89 @@ export class Overpass {
      * @param {StyleSelector[]} selectors
      */
     async preLoadElements (selectors) {
-        const { bbox } = this;
+        return this.jobs(async () => {
+            const { bbox } = this;
 
-        // Create set of selectors
-        /** @type {{ [key: string]: StyleSelector }} */
-        const set = {};
-        selectors.forEach(s => set[mapSelector(s)] = s);
+            // Create set of selectors
+            /** @type {{ [key: string]: StyleSelector }} */
+            const set = {};
+            selectors.forEach(s => set[mapSelector(s)] = s);
 
-        console.debug(`Preloading Elements: ${selectors.length} requested (${Object.keys(set).length} unique)`);
+            console.debug(`Preloading Elements: ${selectors.length} requested (${Object.keys(set).length} unique)`);
 
-        // Remove non-overpass selectors
-        for (const [key, selector] of Object.entries(set)) {
-            if (!overpassRe.test(selector.type)) delete set[key];
-        }
-        console.debug(`Preloading Elements: ${Object.keys(set).length} are Overpass Elements`);
-
-        // Remove selectors found in local hash map cache
-        for (const key of Object.keys(set)) {
-            if (this.elements.has(key)) delete set[key];
-        }
-        console.debug(`Preloading Elements: ${Object.keys(set).length} not in HashMap`);
-
-        // Remove selectors which were found in database
-        await Promise.all(Object.keys(set).map(s => {
-            return this.database.searchElements(bbox, s)
-                .then(els => {
-                    if (els) delete set[s];
-                });
-        }));
-        console.debug(`Preloading Elements: ${Object.keys(set).length} not in Database`);
-
-        if (Object.keys(set).length === 0) return;
-
-        const elements = await this.tryQuery(Object.values(set));
-
-        console.log(`Preloading Elements: Fetched ${elements.length} elements from Server`);
-
-        // Prepare node map
-        /** @type {{ [id: number]: import("./Overpass").OverpassNodeElement }} */
-        const nodeMap = {};
-        elements.forEach(n => n.type === "node" && (nodeMap[n.id] = n));
-        // Prepare way map
-        /** @type {{ [id: number]: import("./Overpass").OverpassWayElement }} */
-        const wayMap = {};
-        elements.forEach(n => n.type === "way" && (wayMap[n.id] = n));
-
-        return Promise.all(Object.values(set).map(selector => {
-            const out = elements.filter(el => matchSelector(selector, el));
-
-            if (selector.type === "relation") {
-                /** @type {OverpassRelElement[]} */
-                const rels = (out.slice());
-
-                /** @type {OverpassWayElement[]} */
-                const ways = [];
-
-                for (const rel of rels) {
-                    const refs = rel.members.map(m => m.ref);
-                    ways.push(...refs.map(id => wayMap[id]));
-                }
-
-                out.push(...ways);
-
-                for (const way of ways) {
-                    out.push(...way.nodes.map(id => nodeMap[id]));
-                }
-
-            } else if (selector.type === "way" || selector.type === "area") {
-                /** @type {OverpassWayElement[]} */
-                const ways = (out.slice());
-
-                for (const way of ways) {
-                    out.push(...way.nodes.map(id => nodeMap[id]));
-                }
+            // Remove non-overpass selectors
+            for (const [key, selector] of Object.entries(set)) {
+                if (!overpassRe.test(selector.type)) delete set[key];
             }
+            console.debug(`Preloading Elements: ${Object.keys(set).length} are Overpass Elements`);
 
-            this.elements.set(mapSelector(selector), Promise.resolve(out));
-            return this.database.saveElements(bbox, mapSelector(selector), { elements: out, cached: Date.now() });
-        }));
-        }
+            // Remove selectors found in local hash map cache
+            for (const key of Object.keys(set)) {
+                if (this.elements.has(key)) delete set[key];
+            }
+            console.debug(`Preloading Elements: ${Object.keys(set).length} not in HashMap`);
+
+            // Remove selectors which were found in database
+            await Promise.all(Object.keys(set).map(s => {
+                return this.database.searchElements(bbox, s)
+                    .then(els => {
+                        if (els) delete set[s];
+                    });
+            }));
+            console.debug(`Preloading Elements: ${Object.keys(set).length} not in Database`);
+
+            if (Object.keys(set).length === 0) return 0;
+
+            const elements = await this.tryQuery(Object.values(set));
+
+            console.log(`Preloading Elements: Fetched ${elements.length} elements from Server`);
+
+            // Prepare node map
+            /** @type {{ [id: number]: import("./Overpass").OverpassNodeElement }} */
+            const nodeMap = {};
+            elements.forEach(n => n.type === "node" && (nodeMap[n.id] = n));
+            // Prepare way map
+            /** @type {{ [id: number]: import("./Overpass").OverpassWayElement }} */
+            const wayMap = {};
+            elements.forEach(n => n.type === "way" && (wayMap[n.id] = n));
+
+            await Promise.all(Object.values(set).map(selector => {
+                const out = elements.filter(el => matchSelector(selector, el));
+
+                if (selector.type === "relation") {
+                    /** @type {OverpassRelElement[]} */
+                    const rels = (out.slice());
+
+                    /** @type {OverpassWayElement[]} */
+                    const ways = [];
+
+                    for (const rel of rels) {
+                        const refs = rel.members.map(m => m.ref);
+                        ways.push(...refs.map(id => wayMap[id]));
+                    }
+
+                    out.push(...ways);
+
+                    for (const way of ways) {
+                        out.push(...way.nodes.map(id => nodeMap[id]));
+                    }
+
+                } else if (selector.type === "way" || selector.type === "area") {
+                    /** @type {OverpassWayElement[]} */
+                    const ways = (out.slice());
+
+                    for (const way of ways) {
+                        out.push(...way.nodes.map(id => nodeMap[id]));
+                    }
+                }
+
+                this.elements.set(mapSelector(selector), Promise.resolve(out));
+                return this.database.saveElements(bbox, mapSelector(selector), { elements: out, cached: Date.now() });
+            }));
+
+            return elements.length;
+        });
+    }
 
     /**
      *
@@ -190,6 +196,12 @@ export class Overpass {
         });
 
         return p;
+    }
+
+    jobs (fn) {
+        this.currentJob = this.currentJob.then(() => fn());
+
+        return this.currentJob;
     }
 }
 

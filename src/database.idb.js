@@ -47,17 +47,17 @@ export default class IDBElementDatabase {
     }
 
     /**
-     * 
-     * @param {number[]} ids 
+     *
+     * @param {number[]} ids
      */
     getNodes (ids) {
         return Promise.all(ids.map(id => this.getNode(id)));
     }
 
     /**
-     * 
-     * @param {string} bbox 
-     * @param {string} selector 
+     *
+     * @param {string} bbox
+     * @param {string} selector
      * @returns {Promise<{ elements: import("./Overpass").OverpassElement[] }>}
      */
     getElements (bbox, selector) {
@@ -66,8 +66,8 @@ export default class IDBElementDatabase {
     }
 
     /**
-     * 
-     * @param {string} key 
+     *
+     * @param {string} key
      * @returns {Promise<{ elements: import("./Overpass").OverpassElement[] }>}
      */
     async getElementsByKey (key) {
@@ -81,9 +81,9 @@ export default class IDBElementDatabase {
     }
 
     /**
-     * 
-     * @param {string} bbox 
-     * @param {string} selector 
+     *
+     * @param {string} bbox
+     * @param {string} selector
      * @returns {Promise<string>}
      */
     async searchElements (bbox, selector) {
@@ -97,14 +97,15 @@ export default class IDBElementDatabase {
             let count = 0;
             request.addEventListener("success", e => {
                 const cursor = request.result;
-                
+
                 if (cursor) {
                     const { key, primaryKey } = cursor;
                     const keyBBox = key[2];
                     count++;
+                    console.debug(`Checking index #${count} for ${selector}`);
                     if (contains(keyBBox, bbox)) {
                         console.debug(`${selector} found after checking ${count} records`);
-                        resolve(primaryKey);
+                        resolve(primaryKey.toString());
                         return;
                     }
                     cursor.continue();
@@ -119,10 +120,10 @@ export default class IDBElementDatabase {
     }
 
     /**
-     * 
-     * @param {string} bbox 
-     * @param {string} selector 
-     * @param {{ elements: import("./Overpass").OverpassElement[], cached: number }} record 
+     *
+     * @param {string} bbox
+     * @param {string} selector
+     * @param {{ elements: import("./Overpass").OverpassElement[], cached: number }} record
      */
     async saveElements (bbox, selector, record) {
         const db = await this.db;
