@@ -83,7 +83,7 @@ export class Overpass {
             elements.forEach(n => n.type === "way" && (wayMap[n.id] = n));
 
             await Promise.all(Object.values(set).map(selector => {
-                const out = elements.filter(el => matchSelector(selector, el));
+                const out = elements.filter(el => matchSelector(selector, el, false));
 
                 if (selector.type === "relation") {
                     /** @type {OverpassRelElement[]} */
@@ -215,7 +215,7 @@ function mapSelectorForQuery (selector) {
 function mapSelector (selector) {
     const type = selector.type === "area" ? "way" : selector.type;
     const tags = Object.entries(selector.tags).map(([k,v]) => {
-        return v === "*" ? `[${k}]` : `[${k}=${v}]`;
+        return (/^[<=>]+/.test(v) || v === "*") ? `[${k}]` : `[${k}=${v}]`;
     });
     return `${type}${tags.join("")}`;
 }

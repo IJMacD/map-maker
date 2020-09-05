@@ -35,7 +35,10 @@ export class StyleSelector {
     }
 
     toString () {
-      return `${this.type}${Object.entries(this.tags).map(([k,v]) => `[${k}=${v}]`).join("")}`;
+      return `${this.type}${Object.entries(this.tags).map(([k,v]) => {
+        const op = /^[<=>]/.test(v) ? "" : "=";
+        return `[${k}${op}${v}]`;
+      }).join("")}`;
     }
 }
 
@@ -59,14 +62,16 @@ function (text) {
 
     let tagText = text.substring(m[0].length).trim();
 
-    const re2 = /^\[([^[\]=]+)=([^[\]=]+)\]/;
+    const re2 = /^\[([a-z0-9_-]+)(=|<=|>=|<|>)([^[\]]+)\]/i;
 
     while (true) {
       const m2 = re2.exec(tagText);
 
       if (!m2) break;
 
-      tags[m2[1]] = m2[2];
+      const op = m2[2] === "=" ? "" : m2[2];
+
+      tags[m2[1]] = op + m2[3];
 
       tagText = tagText.substring(m2[0].length);
     }
@@ -134,19 +139,37 @@ export function matchRule (style, element) {
  * @param {StyleSelector} selector
  * @param {import("./Overpass").OverpassElement} element
  */
-export function matchSelector (selector, element) {
+export function matchSelector (selector, element, inequalities=true) {
   if (element.type !== selector.type && !(selector.type === "area" && element.type === "way")) return false;
 
-  let match = true;
+  const entries = Object.entries(selector.tags);
+  if (entries.length && typeof element.tags === "undefined") return false;
 
-  for (const [key, value] of Object.entries(selector.tags)) {
-    if (!element.tags || typeof element.tags[key] === "undefined" || (value !== "*" && element.tags[key] !== value)) {
-      match = false;
-      break;
+  for (const [key, value] of entries) {
+    if (typeof element.tags[key] === "undefined") return false;
+
+    const m = /^[<=>]+/.exec(value);
+    if (m) {
+      // Only test if inequalities are enabled
+      if (inequalities) {
+        const op = m[0];
+        const cmp = COMPARE[op];
+        // Skip if invalid operator
+        if (!cmp) continue;
+        const v = value.substr(m[0].length);
+        // String compare or numeric compare
+        const res = isNaN(+v) ? cmp(element.tags[key].localeCompare(v), 0) : cmp(+element.tags[key], +v);
+
+        if (!res) return false;
+      }
+      // If inequalities are disabled then this tag gets a pass
+    }
+    else if (value !== "*" && element.tags[key] !== value) {
+      return false;
     }
   }
 
-  return match;
+  return true;
 }
 
 /**

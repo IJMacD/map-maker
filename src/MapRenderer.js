@@ -3,6 +3,7 @@ import { rectToPoints, isSelfClosing } from "./geometry";
 import { matchPseudoClasses } from "./matchPseudoClasses";
 import { getContent } from "./canvas-render/getContent";
 import { makeBBox } from "./bbox";
+import { matchSelector } from "./Style";
 
 /** @typedef {{ centre: [number, number], zoom: number, current: Position, width: number, height: number, scale: number }} MapContext */
 
@@ -61,6 +62,8 @@ export default class MapRenderer {
             default:
                 // Then iterate all elements
                 for (const el of elements) {
+                    if (!matchSelector(rule.selector, el)) continue;
+
                     switch (type) {
                         case "node": {
                             if (el.type !== "node") continue;
