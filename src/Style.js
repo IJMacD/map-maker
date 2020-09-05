@@ -140,7 +140,7 @@ export function matchSelector (selector, element) {
   let match = true;
 
   for (const [key, value] of Object.entries(selector.tags)) {
-    if (!element.tags || element.tags[key] !== value) {
+    if (!element.tags || typeof element.tags[key] === "undefined" || (value !== "*" && element.tags[key] !== value)) {
       match = false;
       break;
     }
