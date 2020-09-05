@@ -137,10 +137,15 @@ function App() {
     setCentre(newCentre.join(","));
   }
 
-  function handleDownload () {
+  function handleDownload (type) {
     if (!downloading) {
       setDownloading(true);
-      downloadSVG(context, parsedStyle, overpassRef.current, () => setDownloading(false));
+      const cb = () => setDownloading(false);
+      if (type === "png") {
+        downloadPNG(canvasRef.current, cb);
+      } else {
+        downloadSVG(context, parsedStyle, overpassRef.current, cb);
+      }
     }
   }
 
@@ -155,7 +160,8 @@ function App() {
           <button onClick={() => setZoom(+cleanup(zoom + 1))}>➕</button>
           <button onClick={() => setZoom(+cleanup(zoom - 1))}>➖</button>
           { current && <button onClick={() => setCentre(`${current.coords.longitude},${current.coords.latitude}`)}>📍</button> }
-          <button onClick={handleDownload} disabled={downloading}>⭳</button>
+          <button onClick={() => handleDownload("png")} disabled={downloading}>⭳ PNG</button>
+          <button onClick={() => handleDownload("svg")} disabled={downloading}>⭳ SVG</button>
         </div>
         <label>Centre <input value={centre} onChange={e => setCentre(e.target.value)} /></label>
         <label>Zoom <input type="number" value={zoom} onChange={e => setZoom(+e.target.value)} /></label>
@@ -172,6 +178,16 @@ function App() {
 }
 
 export default App;
+
+/**
+ * @param {HTMLCanvasElement} canvas
+ */
+function downloadPNG (canvas, callback=null) {
+  canvas.toBlob(blob => {
+    blobDownload(blob, "map.png");
+    if (callback) callback();
+  });
+}
 
 async function downloadSVG (context, style, overpass, callback=null) {
   const rules = expandRules(style.rules, context);
@@ -193,16 +209,20 @@ async function downloadSVG (context, style, overpass, callback=null) {
   }
 
   const blob = svgRender.toBlob();
+  blobDownload(blob, "map.svg");
+
+  if (callback) callback();
+}
+
+function blobDownload (blob, filename) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.download = "map.svg";
+  a.download = filename;
   a.href = url;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-
-  if (callback) callback();
 }
 
 /**
