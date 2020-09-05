@@ -133,7 +133,7 @@ function App() {
     const bb = bbox.split(",").map(p => +p);
     const stepSizeX = (bb[2] - bb[0]) / 2;
     const stepSizeY = (bb[3] - bb[1]) / 2;
-    const newCentre = [ centrePoint[0] + dX * stepSizeX, centrePoint[1] + dY * stepSizeY ];
+    const newCentre = [ cleanup(centrePoint[0] + dX * stepSizeX), cleanup(centrePoint[1] + dY * stepSizeY) ];
     setCentre(newCentre.join(","));
   }
 
@@ -152,8 +152,8 @@ function App() {
           <button onClick={() => move(1,0)}>⏵</button>
           <button onClick={() => move(0,1)}>⏶</button>
           <button onClick={() => move(0,-1)}>⏷</button>
-          <button onClick={() => setZoom(zoom + 1)}>➕</button>
-          <button onClick={() => setZoom(zoom - 1)}>➖</button>
+          <button onClick={() => setZoom(+cleanup(zoom + 1))}>➕</button>
+          <button onClick={() => setZoom(+cleanup(zoom - 1))}>➖</button>
           { current && <button onClick={() => setCentre(`${current.coords.longitude},${current.coords.latitude}`)}>📍</button> }
           <button onClick={handleDownload} disabled={downloading}>⭳</button>
         </div>
@@ -203,4 +203,11 @@ async function downloadSVG (context, style, overpass, callback=null) {
   URL.revokeObjectURL(url);
 
   if (callback) callback();
+}
+
+/**
+ * @param {number} n
+ */
+function cleanup (n) {
+  return n.toFixed(5).replace(/^0+|0+$/g, "");
 }
