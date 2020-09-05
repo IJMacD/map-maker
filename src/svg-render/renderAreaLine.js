@@ -33,14 +33,7 @@ export function renderAreaLine(layer, rule, points, getPoint, element = null, co
         }
     }
 
-    // ctx.save();
-
     const path = { type: "path" };
-
-    const colours = parseStrokeFill(rule);
-
-    path.stroke = colours.strokeStyle;
-    path.fill = colours.fillStyle || "none";
 
     let offsetX = 0;
     let offsetY = 0;
@@ -77,7 +70,7 @@ export function renderAreaLine(layer, rule, points, getPoint, element = null, co
 
     // Text Handling, Icons etc.
     if (rule.declarations["content"] || rule.declarations["size"] || rule.declarations["path"] || rule.declarations["icon"]) {
-        this.renderPoint(context, rule, getPoint(points), element);
+        // this.renderPoint(context, rule, getPoint(points), element);
     }
 }
 

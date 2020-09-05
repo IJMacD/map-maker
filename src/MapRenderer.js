@@ -228,5 +228,7 @@ export default class MapRenderer {
      * @param {string} text
      * @return {{ width: number, ascending: number, descending: number, height: number }}
      */
-    measureText (context, rule, text) { }
+    measureText (context, rule, text) {
+        return { width: 0, ascending: 0, descending: 0, height: 0 };
+    }
 }

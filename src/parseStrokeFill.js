@@ -8,8 +8,8 @@ export function parseStrokeFill(rule, scale) {
         let mutedStyle = strokeStyle.replace(/\([^)]*\)/g, ss => " ".repeat(ss.length));
 
         // So would hex colour strings
-        mutedStyle = mutedStyle.replace(/#[0-9a-f]{3}/, "    ");
-        mutedStyle = mutedStyle.replace(/#[0-9a-f]{6}/, "       ");
+        mutedStyle = mutedStyle.replace(/#[0-9a-f]{3}/i, "    ");
+        mutedStyle = mutedStyle.replace(/#[0-9a-f]{6}/i, "       ");
 
         /**
          * @todo A better parser would probably be nice

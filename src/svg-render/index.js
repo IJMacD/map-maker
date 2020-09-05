@@ -1,6 +1,6 @@
 import MapRenderer from "../MapRenderer";
 import { renderAreaLine } from "./renderAreaLine";
-import { getMidPoint } from "../util";
+import { parseStrokeFill } from "../parseStrokeFill";
 
 /** @typedef {import("../Style").StyleRule} StyleRule */
 /** @typedef {import("../Overpass").OverpassElement} OverpassElement */
@@ -30,6 +30,11 @@ export default class SVGRender extends MapRenderer {
     renderRule (context, rule, elements=[]) {
         this.currentLayer = { elements: [] };
 
+        const colours = parseStrokeFill(rule);
+
+        this.currentLayer.stroke = colours.strokeStyle;
+        this.currentLayer.fill = colours.fillStyle || "none";
+
         // Set up global context options
         layerSetup(this.currentLayer, rule, context.scale);
 
@@ -38,42 +43,38 @@ export default class SVGRender extends MapRenderer {
         this.layers.push(this.currentLayer);
     }
 
-    renderLine (context, rule, points, element=null) {
-        renderAreaLine(this.currentLayer, rule, points, getMidPoint, element, context);
+    renderAreaLine (context, rule, points, getPoint, element=null) {
+        renderAreaLine(this.currentLayer, rule, points, getPoint, element, context);
     }
 
     toString () {
-        return `<svg viewBox="0 0 ${this.width} ${this.height}" width="${this.width}" height="${this.height}">
-        ${this.layers.map(layer => {
-            const { elements, ...attr } = layer;
-            return `\n<g ${attributes(attr)}>${elements.map(element => {
-                const { type, ...attr } = element;
-                return `\n<${type} ${attributes(attr)} />`;
-            })}</g>`
-        })}\n</svg>`;
+        return this.getTextParts().join("");
     }
 
     toBlob () {
+        return new Blob(this.getTextParts());
+    }
+
+    getTextParts() {
         const parts = [];
 
-        parts.push(`<svg viewBox="0 0 ${this.width} ${this.height}" width="${this.width}" height="${this.height}">`);
+        parts.push(`<svg version="1.1" viewBox="0 0 ${this.width} ${this.height}" width="${this.width}" height="${this.height}" xmlns="http://www.w3.org/2000/svg">\n`);
 
         for (const layer of this.layers) {
             const { elements, ...attr } = layer;
 
-            parts.push(`\n<g ${attributes(attr)}>`);
+            parts.push(`<g ${attributes(attr)}>\n`);
 
             for (const element of elements) {
                 const { type, ...attr } = element;
-                parts.push(`\n<${type} ${attributes(attr)} />`);
+                parts.push(`<${type} ${attributes(attr)} />\n`);
             }
 
-            parts.push(`</g>`);
+            parts.push(`</g>\n`);
         }
 
-        parts.push(`\n</svg>`);
-
-        return new Blob(parts);
+        parts.push(`</svg>`);
+        return parts;
     }
 }
 
