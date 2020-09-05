@@ -2,6 +2,7 @@ import { mercatorProjection, getCentrePoint, getMidPoint, getAveragePoint, getBo
 import { rectToPoints, isSelfClosing } from "./geometry";
 import { matchPseudoClasses } from "./matchPseudoClasses";
 import { getContent } from "./canvas-render/getContent";
+import { makeBBox } from "./bbox";
 
 /** @typedef {{ centre: [number, number], zoom: number, current: Position, width: number, height: number, scale: number }} MapContext */
 
@@ -50,7 +51,7 @@ export default class MapRenderer {
                 break;
             }
             case "gridlines": {
-                // this.renderGridlines(context, rule, projection);
+                this.renderGridlines(context, rule, projection);
                 break;
             }
             case "dummy": {
@@ -215,6 +216,52 @@ export default class MapRenderer {
                     this.renderLine(context, rule, decimatedPoints, element);
                 }
                 break;
+            }
+        }
+    }
+
+    renderGridlines (context, rule, projection) {
+        const vertical = rule.selector.pseudoClasses.find(p => p.name === "vertical");
+        const horizontal = rule.selector.pseudoClasses.find(p => p.name === "horizontal");
+
+        const { width, height, centre, zoom } = context;
+
+        const bbox = makeBBox(centre, zoom, [width, height]);
+        const parts = bbox.split(",");
+
+        if (vertical) {
+            const step = parseFloat(vertical.params[0]);
+
+            const round = 1 / step;
+
+            const sigFigs = Math.ceil(Math.log10(round));
+
+            const xmin = Math.floor(+parts[0] * round) / round;
+            const xmax = Math.ceil(+parts[2] * round) / round;
+            const ymin = Math.floor(+parts[1] * round) / round;
+            const ymax = Math.ceil(+parts[3] * round) / round;
+
+            for (let i = xmin; i <= xmax; i += step) {
+                const points = [ projection(i, ymin),  projection(i, (ymin + ymax) / 2), projection(i, ymax) ];
+                this.renderLine(context, rule, points, { type: "way", id: 0, nodes: [], tags: { name: i.toFixed(sigFigs) }});
+            }
+        }
+
+        if (horizontal) {
+            const step = parseFloat(horizontal.params[0]);
+
+            const round = 1 / step;
+
+            const sigFigs = Math.ceil(Math.log10(round));
+
+            const xmin = Math.floor(+parts[0] * round) / round;
+            const xmax = Math.ceil(+parts[2] * round) / round;
+            const ymin = Math.floor(+parts[1] * round) / round;
+            const ymax = Math.ceil(+parts[3] * round) / round;
+
+            for (let j = ymin; j <= ymax; j += step) {
+                const points = [ projection(xmin, j), projection((xmin + xmax) / 2, j), projection(xmax, j) ];
+                this.renderLine(context, rule, points, { type: "way", id: 0, nodes: [], tags: { name: j.toFixed(sigFigs) }});
             }
         }
     }
