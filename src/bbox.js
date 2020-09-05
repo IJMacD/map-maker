@@ -4,23 +4,23 @@
  * - Are there four parts?
  * - Are they all numberic?
  * - Are they in the correct order?
- * @param {string} bbox 
+ * @param {string} bbox
  */
 export function isValid (bbox) {
     const parts = bbox.split(",");
-    
+
     if (parts.length !== 4) return false;
-  
+
     if (parts.some(p => isNaN(+p))) return false;
-  
+
     return +parts[0] < +parts[2] && +parts[1] < +parts[3];
 }
 
 /**
  * Determines whether or not areaB is entirely contained
  * within areaA
- * @param {string} areaA 
- * @param {string} areaB 
+ * @param {string} areaA
+ * @param {string} areaB
  * @returns {boolean}
  */
 export function contains (areaA, areaB) {
@@ -32,7 +32,7 @@ export function contains (areaA, areaB) {
 
 /**
  * Compute simple area
- * @param {string} bbox 
+ * @param {string} bbox
  */
 export function getArea (bbox) {
     const parts = bbox.split(",");
@@ -40,21 +40,21 @@ export function getArea (bbox) {
 }
 
 /**
- * 
- * @param {[number, number]} centre 
- * @param {number} scale 
- * @param {[number, number]} size 
+ *
+ * @param {[number, number]} centre
+ * @param {number} zoom
+ * @param {[number, number]} size
  */
-export function makeBBox (centre, scale, size) {
+export function makeBBox (centre, zoom, size) {
     const baseTileSize = 256;
 
     const [ lon, lat ] = centre;
     const [ width, height ] = size;
 
-    const tileCount = Math.pow(2, scale)
+    const tileCount = Math.pow(2, zoom)
     const xSpan = 180 / tileCount;
     const ySpan = 180 / tileCount;
-    
+
     const hTileCount = width / baseTileSize;
     const vTileCount = height / baseTileSize;
 

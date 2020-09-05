@@ -1,11 +1,11 @@
 import { makeBBox } from "../bbox";
 import { renderLine } from "./renderLine";
 
-export function renderGridlines(ctx, rule, centre, scale, width, height, projection) {
+export function renderGridlines(ctx, rule, centre, zoom, width, height, projection, context = {}) {
     const vertical = rule.selector.pseudoClasses.find(p => p.name === "vertical");
     const horizontal = rule.selector.pseudoClasses.find(p => p.name === "horizontal");
 
-    const bbox = makeBBox(centre, scale, [width, height]);
+    const bbox = makeBBox(centre, zoom, [width, height]);
     const parts = bbox.split(",");
 
     if (vertical) {
@@ -40,7 +40,7 @@ export function renderGridlines(ctx, rule, centre, scale, width, height, project
 
         for (let j = ymin; j <= ymax; j += step) {
             const points = [ projection(xmin, j), projection((xmin + xmax) / 2, j), projection(xmax, j) ];
-            renderLine(ctx, rule, points, { type: "way", id: 0, nodes: [], tags: { name: j.toFixed(sigFigs) }});
+            renderLine(ctx, rule, points, { type: "way", id: 0, nodes: [], tags: { name: j.toFixed(sigFigs) }}, context);
         }
     }
 }

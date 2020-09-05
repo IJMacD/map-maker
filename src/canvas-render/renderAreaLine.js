@@ -1,7 +1,7 @@
 import { renderPoint } from "./renderPoint";
 import { applyTransform } from "./transform";
-import { setStrokeFill } from "./parseStrokeFill";
-import { getBoundingBox } from "./util";
+import { setStrokeFill } from "./setStrokeFill";
+import { getBoundingBox } from "../util";
 import CollisionSystem from "../CollisionSystem";
 
 /** @typedef {import("../Style").StyleRule} StyleRule */
@@ -14,7 +14,7 @@ import CollisionSystem from "../CollisionSystem";
  * @param {(points: [number, number][]) => [number, number]} getPoint
  * @param {OverpassElement} element
  */
-export function renderAreaLine(ctx, rule, points, getPoint, element = null) {
+export function renderAreaLine(ctx, rule, points, getPoint, element = null, context = {}) {
     if (points.length === 0)
         return;
 
@@ -35,7 +35,7 @@ export function renderAreaLine(ctx, rule, points, getPoint, element = null) {
 
     ctx.save();
 
-    setStrokeFill(ctx, rule);
+    setStrokeFill(ctx, rule, context.scale);
 
     let offsetX = 0;
     let offsetY = 0;
@@ -54,7 +54,7 @@ export function renderAreaLine(ctx, rule, points, getPoint, element = null) {
         ctx.translate(offsetX, offsetY);
 
         // Apply the transformation
-        applyTransform(ctx, rule);
+        applyTransform(ctx, rule, context.scale);
     }
 
     ctx.beginPath();
@@ -71,7 +71,7 @@ export function renderAreaLine(ctx, rule, points, getPoint, element = null) {
     // Text Handling, Icons etc.
     if (rule.declarations["content"] || rule.declarations["size"] || rule.declarations["path"] || rule.declarations["icon"]) {
         ctx.save();
-        renderPoint(ctx, rule, getPoint(points), element);
+        renderPoint(ctx, rule, getPoint(points), element, context);
         ctx.restore();
     }
 }

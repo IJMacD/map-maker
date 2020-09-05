@@ -1,7 +1,8 @@
 /** @typedef {import("../Style").StyleRule} StyleRule */
 /** @typedef {import("../Overpass").OverpassElement} OverpassElement */
 
-import { setStrokeFill } from "./parseStrokeFill";
+import { setStrokeFill } from "./setStrokeFill";
+import { getContent } from "./getContent";
 
 /**
  * @param {CanvasRenderingContext2D} ctx
@@ -9,12 +10,12 @@ import { setStrokeFill } from "./parseStrokeFill";
  * @param {[number, number]} param2
  * @param {OverpassElement} [element]
  */
-export function renderText(ctx, rule, [x, y], element = null) {
-    setStrokeFill(ctx, rule);
+export function renderText(ctx, rule, [x, y], element = null, context) {
+    setStrokeFill(ctx, rule, context.scale);
 
     let content = getContent(rule, element);
 
-    setFont(ctx, rule);
+    setFont(ctx, rule, context.scale);
 
     if (rule.declarations["text-align"]) {
         const textWidth = ctx.measureText(content).width;
@@ -44,13 +45,18 @@ export function renderText(ctx, rule, [x, y], element = null) {
     }
 }
 
-export function setFont(ctx, rule) {
-    let fontSize = `${10 * devicePixelRatio}px`;
+/**
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {StyleRule} rule
+ * @param {number} scale
+ */
+export function setFont(ctx, rule, scale) {
+    let fontSize = `${10 * scale}px`;
     let fontWeight = "normal";
     let fontFamily = "sans-serif";
 
     if (rule.declarations["font-size"]) {
-        fontSize = rule.declarations["font-size"].replace(/^\d[\d.]*/, m => `${+m * devicePixelRatio}`);
+        fontSize = rule.declarations["font-size"].replace(/^\d[\d.]*/, m => `${+m * scale}`);
     }
 
     if (rule.declarations["font-weight"]) {
@@ -63,26 +69,3 @@ export function setFont(ctx, rule) {
 
     ctx.font = rule.declarations["font"] || `${fontWeight} ${fontSize} ${fontFamily}`;
 }
-
-/**
- * @param {StyleRule} rule
- * @param {import("../Overpass").OverpassElement} element
- */
-export function getContent(rule, element) {
-    let content = rule.declarations["content"];
-
-    if (!content) return "";
-
-    if (content.match(/^".*"$/g)) {
-        content = content.replace(/^"|"$/g, "");
-    }
-    else if (content.match(/tag\(([^)]+)\)/)) {
-        const m = content.match(/tag\(([^)]+)\)/);
-        content = element.tags[m[1]] || "";
-    }
-    else {
-        content = "?";
-    }
-    return content;
-}
-

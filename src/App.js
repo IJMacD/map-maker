@@ -2,7 +2,7 @@ import React from 'react';
 import './App.css';
 import useSavedState from './useSavedState';
 import { parseStyle, expandRules } from './Style';
-import { renderMap, clearMap } from './render';
+import CanvasRender from './canvas-render';
 import { Overpass } from './Overpass';
 import { useDebounce } from './useDebounce';
 import { makeBBox } from './bbox';
@@ -14,21 +14,25 @@ import CollisionSystem from './CollisionSystem';
 function App() {
   const [ style, setStyle ] = useSavedState("USER_STYLE", "node[amenity=post_box] {\n\tfill: black;\n\tsize: 2;\n}");
   const [ centre, setCentre ] = useSavedState("USER_CENTRE", "7.1,50.7");
-  const [ scale, setScale ] = useSavedState("USER_SCALE", 14);
+  const [ zoom, setZoom ] = useSavedState("USER_SCALE", 14);
   const current = useGeolocation();
   /** @type {React.MutableRefObject<HTMLCanvasElement>} */
   const canvasRef = React.useRef();
   /** @type {React.MutableRefObject<Overpass>} */
   const overpassRef = React.useRef();
-  const [ fetching, setFetching ] = React.useState(false);
+  /** @type {[ string, (string) => void ]} */
+  const [ status, setStatus ] = React.useState(null);
   const [ error, setError ] = React.useState("");
 
-  const { clientWidth: width, clientHeight: height } = canvasRef.current || { clientWidth: 1000, clientHeight: 1000 };
+  const { clientWidth, clientHeight } = canvasRef.current || { clientWidth: 1000, clientHeight: 1000 };
+
+  const width = clientWidth * devicePixelRatio;
+  const height = clientHeight * devicePixelRatio;
 
   const debouncedCentre = useDebounce(centre, 500);
-  const debouncedScale = useDebounce(scale, 500);
+  const debouncedZoom = useDebounce(zoom, 500);
 
-  const bbox = React.useMemo(() => makeBBox(debouncedCentre.split(",").map(p => +p), debouncedScale, [width, height]), [debouncedCentre, debouncedScale, width, height]);
+  const bbox = React.useMemo(() => makeBBox(debouncedCentre.split(",").map(p => +p), debouncedZoom, [clientWidth, clientHeight]), [debouncedCentre, debouncedZoom, clientWidth, clientHeight]);
 
   if (!overpassRef.current) {
     overpassRef.current = new Overpass(bbox);
@@ -40,15 +44,23 @@ function App() {
 
   React.useEffect(() => overpassRef.current.setBBox(bbox), [bbox]);
 
+  /** @type {[number, number]} */
+  const centrePoint = (debouncedCentre.split(",").map(p => +p));
+
+  const context = { centre: centrePoint, zoom: debouncedZoom, scale: devicePixelRatio, width, height };
+  const rules = expandRules(parsedStyle.rules, context);
+
+  if (rules.some(r => r.selector.type === "current")) {
+    context.current = current;
+  }
+
   // Refetch/Render map when bbox, or style change
   useDeepCompareEffect(() => {
     async function run () {
-      setFetching(true);
+      setStatus("Fetching...");
       setError("");
 
       try {
-        const context = { zoom: debouncedScale, current, width, height };
-        const rules = expandRules(parsedStyle.rules, context);
         await overpassRef.current.preLoadElements(rules.map(r => r.selector));
 
         const map = rules.map(rule => {
@@ -58,29 +70,30 @@ function App() {
           }
         });
 
+        CollisionSystem.getCollisionSystem().clear();
+
         if (canvasRef.current) {
-          clearMap(canvasRef.current);
 
-          CollisionSystem.getCollisionSystem().clear();
+          const renderer = new CanvasRender(canvasRef.current);
 
-          /** @type {[number, number]} */
-          const centrePoint = (debouncedCentre.split(",").map(p => +p));
+          renderer.clear(context);
 
           for (const item of map) {
             const elements = await item.promise;
-            renderMap(centrePoint, debouncedScale, elements, canvasRef.current, item.rule, context);
+            renderer.renderRule(context, item.rule, elements);
           }
         }
+
+        setStatus(null);
       } catch (e) {
         setError("Error Fetching");
+        setStatus(null);
         console.log(e);
-      } finally {
-        setFetching(false);
       }
     }
 
     run();
-  }, [debouncedCentre, debouncedScale, parsedStyle, current]);
+  }, [debouncedCentre, debouncedZoom, rules, context]);
 
   function move (dX, dY) {
     /** @type {[number, number]} */
@@ -100,14 +113,14 @@ function App() {
           <button onClick={() => move(1,0)}>⏵</button>
           <button onClick={() => move(0,1)}>⏶</button>
           <button onClick={() => move(0,-1)}>⏷</button>
-          <button onClick={() => setScale(scale + 1)}>➕</button>
-          <button onClick={() => setScale(scale - 1)}>➖</button>
+          <button onClick={() => setZoom(zoom + 1)}>➕</button>
+          <button onClick={() => setZoom(zoom - 1)}>➖</button>
           { current && <button onClick={() => setCentre(`${current.coords.longitude},${current.coords.latitude}`)}>📍</button> }
         </div>
         <label>Centre <input value={centre} onChange={e => setCentre(e.target.value)} /></label>
-        <label>Zoom <input type="number" value={scale} onChange={e => setScale(+e.target.value)} /></label>
+        <label>Zoom <input type="number" value={zoom} onChange={e => setZoom(+e.target.value)} /></label>
         <Textarea value={style} onChange={setStyle} style={{flex:1}} spellCheck={false} />
-        { fetching && <p>Loading...</p> }
+        { status && <p>{status}</p> }
         { error && <p style={{color:"red"}}>{error}</p> }
       </div>
       <canvas ref={canvasRef} />

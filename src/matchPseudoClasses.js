@@ -1,16 +1,18 @@
-import { getArea, isConvex, isAntiClockwise, getLength } from "../geometry";
-import { testPredicate } from "../Style";
+import { getArea, isConvex, isAntiClockwise, getLength } from "./geometry";
+import { testPredicate } from "./Style";
 import { getBoundingBox } from "./util";
 
-/** @typedef {import("../Style").StyleRule} StyleRule */
-/** @typedef {import("../Overpass").OverpassElement} OverpassElement */
+/** @typedef {import("./Style").StyleRule} StyleRule */
+/** @typedef {import("./Overpass").OverpassElement} OverpassElement */
 
 
 /**
  * @param {StyleRule} rule
- * @param {import("../Overpass").OverpassElement} element
+ * @param {[number, number][]} points
+ * @param {import("./Overpass").OverpassElement} element
+ * @param {import("./Overpass").OverpassElement[]} nodes
  */
-export function matchPsuedoClasses(rule, element, nodes = null, points = null) {
+export function matchPseudoClasses(rule, points, element=null, nodes = null) {
     const { selector } = rule;
 
     if (includesPseudoClass(selector, "is", "convex")) {
@@ -47,14 +49,14 @@ export function matchPsuedoClasses(rule, element, nodes = null, points = null) {
         const predicate = pc.params[0];
 
         // Functions for lazy evaluation
-        const context = {
+        const elementContext = {
             area: () => getArea(points),
             length: () => getLength(points),
             width: () => getBoundingBox(points)[2],
             height: () => getBoundingBox(points)[3],
         };
 
-        const match = testPredicate(predicate, context);
+        const match = testPredicate(predicate, elementContext);
 
         if (!match) return false;
     }
@@ -64,7 +66,7 @@ export function matchPsuedoClasses(rule, element, nodes = null, points = null) {
 
 /**
  * @todo Add support for more than one paramater
- * @param {import("../Overpass").StyleSelector} selector
+ * @param {import("./Overpass").StyleSelector} selector
  * @param {string} name
  * @param  {...string} params
  */

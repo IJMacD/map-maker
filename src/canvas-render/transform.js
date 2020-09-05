@@ -4,8 +4,7 @@
  * @param {CanvasRenderingContext2D} ctx
  * @param {StyleRule} rule
  */
-export function applyTransform(ctx, rule) {
-    const dpr = devicePixelRatio;
+export function applyTransform(ctx, rule, scale) {
 
     if (rule.declarations["transform"]) {
         const r = /\s*([a-z]+)\(([^)]*)\)\s*/g;
@@ -13,7 +12,7 @@ export function applyTransform(ctx, rule) {
         let m;
         while (m = r.exec(t)) {
             const trans = m[1];
-            const params = m[2].split(",").map(s => ({ value: parseFloat(s) * dpr, unit: s.replace(/[-\d.\s]/g, "") }));
+            const params = m[2].split(",").map(s => ({ value: parseFloat(s) * scale, unit: s.replace(/[-\d.\s]/g, "") }));
             switch (trans) {
                 case "matrix":
                     // @ts-ignore

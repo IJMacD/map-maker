@@ -1,4 +1,4 @@
-/** 
+/**
  * @typedef StyleRule
  * @property {"rule"} type
  * @property {StyleSelector} [selector]
@@ -9,7 +9,7 @@
 /**
  * @typedef MediaQuery
  * @property {"query"} type
- * @property {Predicate} predicate 
+ * @property {Predicate} predicate
  * @property {StyleRule[]} rules
  */
 
@@ -33,19 +33,19 @@ export class StyleSelector {
       this.pseudoClasses = pseudoClasses;
       this.pseudoElement = pseudoElement;
     }
-  
+
     toString () {
       return `${this.type}${Object.entries(this.tags).map(([k,v]) => `[${k}=${v}]`).join("")}`;
     }
 }
-  
+
 StyleSelector.parse = /**
  * @param {string} text
  */
 function (text) {
     const re = /^\s*([a-z]+)/;
     const m = re.exec(text);
-  
+
     if (!m) return null;
 
     let type = m[1];
@@ -56,9 +56,9 @@ function (text) {
 
     /** @type {{ [key: string]: string }} */
     const tags = {};
-  
+
     let tagText = text.substring(m[0].length).trim();
-  
+
     const re2 = /^\[([^[\]=]+)=([^[\]=]+)\]/;
 
     while (true) {
@@ -73,7 +73,7 @@ function (text) {
 
     /** @type {{ name: string, params: (string|Predicate)[] }[]} */
     const pseudoClasses = [];
-  
+
     const re3 = /^:([a-z-]+)(?:\(([^)]+)\))?/;
 
     while (true) {
@@ -89,7 +89,7 @@ function (text) {
     }
 
     let pseudoElement = null;
-  
+
     const re4 = /^::([a-z-]+)?/;
 
     if (re4.test(tagText)) {
@@ -104,22 +104,22 @@ function (text) {
       console.log(`Invalid selector: ${text} unexpected part: '${tagText}'`);
       return null;
     }
-  
+
     return new StyleSelector(type, tags, pseudoClasses, pseudoElement);
 };
-  
+
 /**
- * 
- * @param {string} text 
+ *
+ * @param {string} text
  */
 StyleSelector.parseMultiple = function (text) {
     return text.split(",").map(StyleSelector.parse).filter(x => x);
 }
 
 /**
- * 
- * @param {{ rules: StyleRule[] }} style 
- * @param {import("./Overpass").OverpassElement} element 
+ *
+ * @param {{ rules: StyleRule[] }} style
+ * @param {import("./Overpass").OverpassElement} element
  * @returns {StyleRule}
  */
 export function matchRule (style, element) {
@@ -207,7 +207,7 @@ function parseMedia (mediaText) {
     mediaText = mediaText.substring(index);
 
     match2 = re2.exec(mediaText);
-    
+
     if (match2) {
       out.mediaQueries.push({
         type: "query",
@@ -234,7 +234,7 @@ function parseRules (ruleText) {
   while(match = re.exec(ruleText)) {
     /** @type {{ [key: string]: string }} */
     const declarations = {};
-    
+
     match[2].split(";").map(s => s.trim()).filter(s => s).forEach(s => {
       // s.split(":", 2) is not the same as PHP
       const i = s.indexOf(":");
@@ -262,17 +262,19 @@ function parseRules (ruleText) {
 }
 
 /**
- * 
- * @param {(StyleRule|MediaQuery)[]} rules 
- * @param {object} context 
+ *
+ * @param {(StyleRule|MediaQuery)[]} rules
+ * @param {object} context
+ * @returns {StyleRule[]}
  */
 export function expandRules (rules, context) {
+  /** @type {StyleRule[]} */
   const out = [];
   for (const rule of rules) {
     if (rule.type === "rule") {
       const { declarations } = rule;
       for (const selector of rule.selectors) {
-        out.push({ selector, declarations });
+        out.push({ type: "rule", selector, declarations });
       }
     } else {
       if (testPredicate(rule.predicate, context)) {
@@ -310,15 +312,15 @@ function makePredicate(match) {
 }
 
 /**
- * 
- * @param {Predicate} predicate 
- * @param {object} [context] 
+ *
+ * @param {Predicate} predicate
+ * @param {object} [context]
  * @returns {boolean}
  */
 export function testPredicate (predicate, context={}) {
-  let left = typeof predicate.left === "string" || typeof predicate.left === "number" ? 
+  let left = typeof predicate.left === "string" || typeof predicate.left === "number" ?
     predicate.left : testPredicate(predicate.left, context);
-  let right = typeof predicate.right === "string" || typeof predicate.right === "number"  ? 
+  let right = typeof predicate.right === "string" || typeof predicate.right === "number"  ?
     predicate.right : testPredicate(predicate.right, context);
 
   if (typeof left === "string" && left in context) {
@@ -336,11 +338,11 @@ export function testPredicate (predicate, context={}) {
 
     right = context[right];
   }
-    
+
   const op = COMPARE[predicate.operator];
 
   if (!op) return false;
-  
+
   return op(left, right);
 }
 

@@ -8,10 +8,11 @@
  * @param {{ [id: string]: import("../Overpass").OverpassNodeElement; }} nodeMap
  * @param { (lon: number, lat: number) => [number, number] } projection
  */
-export function renderRelation(ctx, rule, element, wayMap, nodeMap, projection) {
+export function renderRelation(ctx, rule, element, wayMap, nodeMap, projection, context = {}) {
+    const { scale } = context;
     ctx.fillStyle = rule.declarations["fill"];
     ctx.strokeStyle = rule.declarations["stroke"];
-    ctx.lineWidth = +rule.declarations["stroke-width"] * devicePixelRatio;
+    ctx.lineWidth = +rule.declarations["stroke-width"] * scale;
 
     // As long as outer ways go anti-clockwise and inner rings go clockwise
     // (or possibly vice-versa) then the CanvasRenderingContext2D can handle

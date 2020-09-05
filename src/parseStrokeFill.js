@@ -1,4 +1,4 @@
-export function parseStrokeFill(rule) {
+export function parseStrokeFill(rule, scale) {
     const fillStyle = rule.declarations["fill"];
     let strokeStyle = rule.declarations["stroke"];
     let lineWidth;
@@ -17,13 +17,13 @@ export function parseStrokeFill(rule) {
         const swRe = /(\d+(?:\.\d+)?)\s*(?:px)?/;
         const sm = swRe.exec(mutedStyle);
         if (sm) {
-            lineWidth = +sm[1] * devicePixelRatio;
+            lineWidth = +sm[1] * scale;
             strokeStyle = strokeStyle.replace(sm[0], "");
         }
     }
 
     if (rule.declarations["stroke-width"]) {
-        lineWidth = +rule.declarations["stroke-width"] * devicePixelRatio;
+        lineWidth = +rule.declarations["stroke-width"] * scale;
     }
 
     return {
@@ -31,16 +31,4 @@ export function parseStrokeFill(rule) {
         strokeStyle,
         lineWidth,
     };
-}
-
-/**
- * @param {CanvasRenderingContext2D} ctx
- * @param {import("../Style").StyleRule} rule
- */
-export function setStrokeFill (ctx, rule) {
-    const { fillStyle, strokeStyle, lineWidth } = parseStrokeFill(rule);
-
-    ctx.fillStyle = fillStyle;
-    ctx.strokeStyle = strokeStyle;
-    ctx.lineWidth = lineWidth;
 }
