@@ -2,7 +2,7 @@
 /** @typedef {import("../Overpass").OverpassElement} OverpassElement */
 
 import { setStrokeFill } from "./setStrokeFill";
-import { getContent } from "./getContent";
+import { getContent } from "../getContent";
 
 /**
  * @param {CanvasRenderingContext2D} ctx
@@ -17,8 +17,23 @@ export function renderText(ctx, rule, [x, y], element = null, context) {
 
     setFont(ctx, rule, context.scale);
 
+    for (const line of content.split("\n")) {
+        y += renderLine(ctx, rule, line, x, y);
+    }
+}
+
+/**
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {StyleRule} rule
+ * @param {string} content
+ * @param {number} x
+ * @param {number} y
+ */
+function renderLine(ctx, rule, content, x, y) {
+    const size = ctx.measureText(content);
+
     if (rule.declarations["text-align"]) {
-        const textWidth = ctx.measureText(content).width;
+        const textWidth = size.width;
 
         if (rule.declarations["text-align"] === "center" || rule.declarations["text-align"] === "centre") {
             x -= textWidth / 2;
@@ -37,6 +52,9 @@ export function renderText(ctx, rule, [x, y], element = null, context) {
         ctx.fillStyle = rule.declarations["text-color"];
         ctx.fillText(content, x, y);
     }
+
+    const height = size.actualBoundingBoxAscent + size.actualBoundingBoxDescent;
+    return height;
 }
 
 /**

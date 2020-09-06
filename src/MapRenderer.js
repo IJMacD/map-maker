@@ -1,7 +1,7 @@
 import { mercatorProjection, getCentrePoint, getMidPoint, getAveragePoint, getBoundingBox } from "./util";
 import { rectToPoints, isSelfClosing } from "./geometry";
 import { matchPseudoClasses } from "./matchPseudoClasses";
-import { getContent } from "./canvas-render/getContent";
+import { getContent } from "./getContent";
 import { makeBBox } from "./bbox";
 import { matchSelector } from "./Style";
 
@@ -185,10 +185,26 @@ export default class MapRenderer {
             }
             case "content-box": {
                 const { scale } = context;
-                const content = getContent(rule, element);
-                const size = this.measureText(context, rule, content);
                 let [ x, y ] = points[0];
-                const { width, ascending, descending } = size;
+
+                const content = getContent(rule, element);
+
+                let width = Number.NEGATIVE_INFINITY;;
+                let top = Number.NaN;
+                let bottom;
+                let baseline = y;
+                for (const line of content.split("\n")) {
+                    const size = this.measureText(context, rule, line);
+
+                    width = Math.max(width, size.width);
+
+                    if (isNaN(top)) top = y - size.ascending;
+
+                    bottom = baseline + size.descending;
+
+                    baseline += size.height;
+                }
+
                 const padding = rule.declarations["padding"] ? parseFloat(rule.declarations["padding"]) * scale : 0;
 
                 if (rule.declarations["text-align"] === "center" || rule.declarations["text-align"] === "centre") {
@@ -200,10 +216,10 @@ export default class MapRenderer {
 
                 /** @type {[number, number][]} */
                 const boundPoints = [
-                    [ x - padding,           y - ascending - padding ],     // Top Left
-                    [ x - padding,           y + descending + padding ],    // Bottom left
-                    [ x + width + padding,   y + descending + padding ],    // Bottom right
-                    [ x + width + padding,   y - ascending - padding ],     // Top Right
+                    [ x - padding,           top - padding ],     // Top Left
+                    [ x - padding,           bottom + padding ],    // Bottom left
+                    [ x + width + padding,   bottom + padding ],    // Bottom right
+                    [ x + width + padding,   top - padding ],     // Top Right
                 ];
 
                 // Close self
