@@ -13,7 +13,7 @@ import { getContent } from "../getContent";
 export function renderText(ctx, rule, [x, y], element = null, context) {
     setStrokeFill(ctx, rule, context.scale);
 
-    let content = getContent(rule, element);
+    let content = getContent(rule, element, context);
 
     setFont(ctx, rule, context.scale);
 

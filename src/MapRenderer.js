@@ -187,7 +187,7 @@ export default class MapRenderer {
                 const { scale } = context;
                 let [ x, y ] = points[0];
 
-                const content = getContent(rule, element);
+                const content = getContent(rule, element, context);
 
                 let width = Number.NEGATIVE_INFINITY;;
                 let top = Number.NaN;
