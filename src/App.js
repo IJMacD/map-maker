@@ -97,8 +97,8 @@ function App() {
           let count = 0;
 
           for (const item of map) {
-            const prefix = `${count++}/${map.length}`;
-            setProgress(count/map.length);
+            const prefix = `${count+1}/${map.length}`;
+            setProgress(count++/map.length);
 
             console.debug(`${prefix} Loading elements for ${item.rule.selector}`);
             const elements = await item.promise;

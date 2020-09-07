@@ -1,5 +1,5 @@
 map {
-    fill: lightblue;
+    fill: white;
 }
 way[natural=coastline] {
     fill: white;
@@ -88,6 +88,15 @@ way[natural=coastline] {
         stroke: blue;
         stroke-width: 2;
     }
+    way[highway=motrway]::content-box {
+        stroke: blue;
+        stroke-width: 1.5;
+        fill: white;
+        text-color: blue;
+        content: tag(ref);
+        padding: 4px;
+        collision-set: road-labels;
+    }
 }
 @match (zoom >= 8) {
     way[highway=trunk],
@@ -100,6 +109,15 @@ way[natural=coastline] {
         stroke: green;
         stroke-width: 1;
     }
+    way[highway=trunk]::content-box {
+        stroke: green;
+        stroke-width: 1.5;
+        fill: white;
+        text-color: green;
+        content: tag(ref);
+        padding: 4px;
+        collision-set: road-labels;
+    }
 }
 @match (zoom >= 9) {
     way[highway=primary],
@@ -107,11 +125,29 @@ way[natural=coastline] {
         stroke: #D00000;
         stroke-width: 1.5;
     }
+    way[highway=primary]::content-box {
+        stroke: #D00000;
+        stroke-width: 1.5;
+        fill: white;
+        text-color: #d00000;
+        content: tag(ref);
+        padding: 4px;
+        collision-set: road-labels;
+    }
 }
 @match (zoom >= 10) {
     way[highway=secondary] {
         stroke: darkorange;
         stroke-width: 1;
+    }
+    way[highway=secondary]::content-box {
+        stroke: darkorange;
+        stroke-width: 1.5;
+        fill: white;
+        text-color: orange;
+        content: tag(ref);
+        padding: 4px;
+        collision-set: road-labels;
     }
 }
 @match (zoom >= 11) {
@@ -201,10 +237,7 @@ way[railway=rail] {
 }
 @match (zoom > 13) {
     node[amenity=post_box] {
-        fill: red;
         content: "📮";
-        font-size: 10px;
-        opacity: 0.8;
     }
     node[amenity=telephone] {
         fill: black;

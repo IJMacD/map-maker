@@ -189,6 +189,8 @@ export default class MapRenderer {
 
                 const content = getContent(rule, element, context);
 
+                if (!content) return;
+
                 let width = Number.NEGATIVE_INFINITY;;
                 let top = Number.NaN;
                 let bottom;
