@@ -96,6 +96,7 @@ way[natural=coastline] {
         content: tag(ref);
         padding: 4px;
         collision-set: road-labels;
+        collision-size: 300%;
     }
 }
 @match (zoom >= 8) {
@@ -117,6 +118,7 @@ way[natural=coastline] {
         content: tag(ref);
         padding: 4px;
         collision-set: road-labels;
+        collision-size: 300%;
     }
 }
 @match (zoom >= 9) {
@@ -133,6 +135,7 @@ way[natural=coastline] {
         content: tag(ref);
         padding: 4px;
         collision-set: road-labels;
+        collision-size: 200%;
     }
 }
 @match (zoom >= 10) {
@@ -148,6 +151,7 @@ way[natural=coastline] {
         content: tag(ref);
         padding: 4px;
         collision-set: road-labels;
+        collision-size: 200%;
     }
 }
 @match (zoom >= 11) {
@@ -237,7 +241,7 @@ way[railway=rail] {
 }
 @match (zoom > 13) {
     node[amenity=post_box] {
-        content: "📮";
+        content: "📮" tag(ref);
     }
     node[amenity=telephone] {
         fill: black;
