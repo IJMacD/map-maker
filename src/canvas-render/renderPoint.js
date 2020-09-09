@@ -5,7 +5,7 @@ import { applyTransform } from "./transform";
 /** @typedef {import("../Overpass").OverpassElement} OverpassElement */
 
 /**
- * @param {CanvasRenderingContext2D} ctx
+ * @param {CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D} ctx
  * @param {StyleRule} rule
  * @param {[number, number]} position
  * @param {OverpassElement} element
@@ -89,7 +89,7 @@ export function renderPoint(ctx, rule, [x, y], element = null, context = {}) {
 }
 
 /**
- * @param {CanvasRenderingContext2D} ctx
+ * @param {CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D} ctx
  * @param {string} pathSpec
  */
 function drawPath (ctx, pathSpec, scale) {

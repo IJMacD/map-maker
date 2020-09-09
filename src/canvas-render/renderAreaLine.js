@@ -8,7 +8,7 @@ import CollisionSystem from "../CollisionSystem";
 /** @typedef {import("../Overpass").OverpassElement} OverpassElement */
 
 /**
- * @param {CanvasRenderingContext2D} ctx
+ * @param {CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D} ctx
  * @param {StyleRule} rule
  * @param {[number, number][]} points
  * @param {(points: [number, number][]) => [number, number]} getPoint

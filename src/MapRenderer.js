@@ -5,7 +5,7 @@ import { getContent } from "./getContent";
 import { makeBBox } from "./bbox";
 import { matchSelector } from "./Style";
 
-/** @typedef {{ centre: [number, number], zoom: number, current: Position, width: number, height: number, scale: number }} MapContext */
+/** @typedef {{ centre: [number, number], zoom: number, current?: { longitude: number, latitude: number }, width: number, height: number, scale: number }} MapContext */
 
 export default class MapRenderer {
 
@@ -30,7 +30,7 @@ export default class MapRenderer {
         const projection = mercatorProjection(centre, zoom, width, height);
 
         // Set up global context options
-        this.globalSetup(rule);
+        this.globalSetup(context, rule);
 
         const { type } = rule.selector;
 
@@ -46,7 +46,7 @@ export default class MapRenderer {
             }
             case "current": {
                 if (context.current) {
-                    const { coords } = context.current;
+                    const coords = context.current;
                     this.renderPoint(context, rule, projection(coords.longitude, coords.latitude));
                 }
                 break;
@@ -287,7 +287,9 @@ export default class MapRenderer {
         }
     }
 
-    globalSetup (rule) { }
+    clear (context) {}
+
+    globalSetup (context, rule) { }
 
     /**
      *

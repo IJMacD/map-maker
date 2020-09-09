@@ -3,6 +3,7 @@ import './App.css';
 import useSavedState from './useSavedState';
 import { parseStyle, expandRules } from './Style';
 import CanvasRender from './canvas-render';
+import WorkerRender from './WorkerRenderer';
 import SVGRender from './svg-render';
 import { Overpass } from './Overpass';
 import { useDebounce } from './useDebounce';
@@ -11,6 +12,8 @@ import useGeolocation from './useGeolocation';
 import Textarea from './Textarea';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import CollisionSystem from './CollisionSystem';
+
+/** @typedef {import('./MapRenderer').default} MapRenderer */
 
 function App() {
   const [ style, setStyle ] = useSavedState("USER_STYLE", "node[amenity=post_box] {\n\tfill: black;\n\tsize: 2;\n}");
@@ -26,6 +29,8 @@ function App() {
   const [ error, setError ] = React.useState("");
   const [ downloading, setDownloading ] = React.useState(false);
   const [ progress, setProgress ] = React.useState(0);
+  /** @type {React.MutableRefObject<MapRenderer>} */
+  const rendererRef = React.useRef();
 
   const { clientWidth, clientHeight } = canvasRef.current || { clientWidth: 1000, clientHeight: 1000 };
 
@@ -50,11 +55,21 @@ function App() {
   /** @type {[number, number]} */
   const centrePoint = (debouncedCentre.split(",").map(p => +p));
 
+  /** @type {import('./MapRenderer').MapContext} */
   const context = { centre: centrePoint, zoom: debouncedZoom, scale: devicePixelRatio, width, height };
   const rules = expandRules(parsedStyle.rules, context);
 
   if (rules.some(r => r.selector.type === "current")) {
-    context.current = current;
+    const { coords: { longitude, latitude } } = current || { coords: {} };
+    context.current = { longitude, latitude };
+  }
+
+  if (canvasRef.current && !rendererRef.current) {
+    if (window.Worker && canvasRef.current.transferControlToOffscreen && localStorage.getItem("worker-enabled")) {
+      rendererRef.current = new WorkerRender(canvasRef.current);
+    } else {
+      rendererRef.current = new CanvasRender(canvasRef.current);
+    }
   }
 
   // Refetch/Render map when bbox, or style change
@@ -87,10 +102,10 @@ function App() {
 
         CollisionSystem.getCollisionSystem().clear();
 
-        if (canvasRef.current) {
+        if (canvasRef.current && rendererRef.current) {
           if (!currentEffect) return;
 
-          const renderer = new CanvasRender(canvasRef.current);
+          const renderer = rendererRef.current;
 
           renderer.clear(context);
 

@@ -10,7 +10,7 @@ import { renderAreaLine } from "./renderAreaLine";
 export default class CanvasRender extends MapRenderer {
 
     /**
-     * @param {HTMLCanvasElement} canvas
+     * @param {HTMLCanvasElement|OffscreenCanvas} canvas
      */
     constructor (canvas) {
         super();
@@ -31,7 +31,7 @@ export default class CanvasRender extends MapRenderer {
         ctx.restore();
     }
 
-    globalSetup(rule, scale) {
+    globalSetup({ scale }, rule) {
         const ctx = this.canvas.getContext("2d");
 
         if (rule.declarations["opacity"])

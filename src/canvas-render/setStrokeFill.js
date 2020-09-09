@@ -1,7 +1,7 @@
 import { parseStrokeFill } from '../parseStrokeFill';
 
 /**
- * @param {CanvasRenderingContext2D} ctx
+ * @param {CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D} ctx
  * @param {import("../Style").StyleRule} rule
  */
 export function setStrokeFill (ctx, rule, scale) {
