@@ -31,6 +31,7 @@ function App() {
   const [ progress, setProgress ] = React.useState(0);
   /** @type {React.MutableRefObject<MapRenderer>} */
   const rendererRef = React.useRef();
+  const [ renderPending, forceRender ] = useForceRender();
 
   const { clientWidth, clientHeight } = canvasRef.current || { clientWidth: 1000, clientHeight: 1000 };
 
@@ -74,73 +75,13 @@ function App() {
 
   // Refetch/Render map when bbox, or style change
   useDeepCompareEffect(() => {
-    let currentEffect = true;
+    // Double pointer to update inside render function scope
+    let current = { currentEffect: true };
 
-    async function run () {
-      setStatus("Fetching...");
-      setError("");
+    render(rules, overpassRef.current, rendererRef.current, context, setStatus, setError, setProgress, current);
 
-      try {
-        const count = await overpassRef.current.preLoadElements(rules.map(r => r.selector));
-
-        if (!currentEffect) return;
-
-        // Check if we're already preloading something
-        if (count < 0) return;
-
-        if (count === 0)
-          setStatus(`Rendering...`);
-        else
-          setStatus(`Rendering ${count} elements...`);
-
-        const map = rules.map(rule => {
-          return {
-            rule,
-            promise: overpassRef.current.getElements(rule.selector),
-          }
-        });
-
-        CollisionSystem.getCollisionSystem().clear();
-
-        if (canvasRef.current && rendererRef.current) {
-          if (!currentEffect) return;
-
-          const renderer = rendererRef.current;
-
-          renderer.clear(context);
-
-          let count = 0;
-
-          for (const item of map) {
-            const prefix = `${count+1}/${map.length}`;
-            setProgress(count++/map.length);
-
-            console.debug(`${prefix} Loading elements for ${item.rule.selector}`);
-            const elements = await item.promise;
-
-            if (!currentEffect) return;
-
-            console.debug(`${prefix} Rendering ${item.rule.selector}`);
-
-            renderer.renderRule(context, item.rule, elements);
-          }
-          setProgress(0);
-
-          console.debug(`Rendered!`);
-        }
-
-        setStatus(null);
-      } catch (e) {
-        setError("Error Fetching");
-        setStatus(null);
-        console.log(e);
-      }
-    }
-
-    run();
-
-    return () => { currentEffect = false; };
-  }, [debouncedCentre, debouncedZoom, rules, context]);
+    return () => { current.currentEffect = false; };
+  }, [debouncedCentre, debouncedZoom, rules, context, renderPending]);
 
   function move (dX, dY) {
     /** @type {[number, number]} */
@@ -245,4 +186,81 @@ function blobDownload (blob, filename) {
  */
 function cleanup (n) {
   return n.toFixed(5).replace(/^0+|0+$/g, "");
+}
+
+function useForceRender () {
+  const [ counter, setCounter ] = React.useState(0);
+
+  return [ counter, () => setCounter(c => c + 1) ];
+}
+
+/**
+ * @param {import('./Style').StyleRule[]} [rules]
+ * @param {Overpass} [overpass]
+ * @param {MapRenderer} [renderer]
+ * @param {import('./MapRenderer').MapContext} [context]
+ * @param {(arg0: string) => void} [setStatus]
+ * @param {(arg0: string) => void} [setError]
+ * @param {(arg0: number) => void} [setProgress]
+ * @param {{ currentEffect: any; }} [current]
+ */
+async function render (rules, overpass, renderer, context, setStatus, setError, setProgress, current) {
+  setStatus("Fetching...");
+  setError("");
+
+  try {
+    const count = await overpass.preLoadElements(rules.map(r => r.selector));
+
+    if (!current.currentEffect) return;
+
+    // Check if we're already preloading something
+    if (count < 0) return;
+
+    if (count === 0)
+      setStatus(`Rendering...`);
+    else
+      setStatus(`Rendering ${count} elements...`);
+
+    const map = rules.map(rule => {
+      return {
+        rule,
+        promise: overpass.getElements(rule.selector),
+      }
+    });
+
+    CollisionSystem.getCollisionSystem().clear();
+
+    if (renderer) {
+      if (!current.currentEffect) return;
+
+      renderer.clear(context);
+
+      let count = 0;
+      setProgress(0);
+
+      for (const item of map) {
+        const prefix = `${++count}/${map.length}`;
+
+        console.debug(`${prefix} Loading elements for ${item.rule.selector}`);
+        const elements = await item.promise;
+
+        if (!current.currentEffect) return;
+
+        console.debug(`${prefix} Rendering ${item.rule.selector}`);
+
+        renderer.renderRule(context, item.rule, elements);
+
+        setProgress(count/map.length);
+      }
+      setProgress(0);
+
+      console.debug(`Rendered!`);
+    }
+
+    setStatus(null);
+  } catch (e) {
+    setError("Error Fetching");
+    setStatus(null);
+    console.log(e);
+  }
 }
