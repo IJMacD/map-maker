@@ -90,7 +90,7 @@ function App() {
   const centrePoint = (debouncedCentre.split(",").map(p => +p));
 
   /** @type {import('./MapRenderer').MapContext} */
-  const context = { centre: centrePoint, zoom: debouncedZoom, scale: devicePixelRatio, width, height };
+  const context = { centre: centrePoint, zoom: debouncedZoom, bbox, scale: devicePixelRatio, width, height };
   const rules = expandRules(parsedStyle.rules, context);
 
   React.useEffect(() => {
@@ -267,7 +267,7 @@ async function render (rules, overpass, renderer, context, setStatus, setError, 
     const map = rules.map(rule => {
       return {
         rule,
-        promise: overpass.getElements(rule.selector),
+        promise: renderer instanceof WorkerRender ? Promise.resolve() : overpass.getElements(rule.selector),
       }
     });
 
@@ -279,7 +279,7 @@ async function render (rules, overpass, renderer, context, setStatus, setError, 
       renderer.clear(context);
 
       let count = 0;
-      setProgress(0);
+      // setProgress(0);
 
       for (const item of map) {
         const prefix = `${++count}/${map.length}`;
@@ -293,9 +293,9 @@ async function render (rules, overpass, renderer, context, setStatus, setError, 
 
         renderer.renderRule(context, item.rule, elements);
 
-        setProgress(count/map.length);
+        // setProgress(count/map.length);
       }
-      setProgress(0);
+      // setProgress(0);
 
       console.debug(`Rendered!`);
     }

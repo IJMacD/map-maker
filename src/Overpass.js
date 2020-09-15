@@ -171,6 +171,8 @@ export class Overpass {
     async getElements (selector) {
         if (!overpassRe.test(selector.type)) return;
 
+        if (!this.bbox) return;
+
         const s = mapSelector(selector);
         if (this.elements.has(s)) return this.elements.get(s);
 

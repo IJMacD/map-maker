@@ -1,9 +1,14 @@
 import CanvasRender from './canvas-render';
+import { Overpass } from './Overpass';
 
 /** @type {OffscreenCanvas} */
 let canvas;
 /** @type {import('./MapRenderer').default} */
 let renderer;
+/** @type {Overpass} */
+let overpass = new Overpass();
+
+let chain = Promise.resolve();
 
 onmessage = (msg) => {
     if (msg.data.canvas) {
@@ -12,15 +17,23 @@ onmessage = (msg) => {
     }
 
     if (msg.data.method === "clear") {
-        const { context: { width, height } } = msg.data;
+        const { context: { width, height, bbox } } = msg.data;
 
         canvas.width = width;
         canvas.height = height;
+
+        overpass.setBBox(bbox);
+
+        chain = Promise.resolve();
     }
 
     if (msg.data.method === "renderRule") {
-        const { context, rule, elements } = msg.data;
+        /** @type {{ context: import('./MapRenderer').MapContext, rule: import('./Style').StyleRule }} */
+        const { context, rule } = msg.data;
 
-        renderer.renderRule(context, rule, elements);
+        overpass.setBBox(context.bbox);
+        const pElements = overpass.getElements(rule.selector);
+
+        chain = chain.then(() => pElements.then(elements => renderer.renderRule(context, rule, elements)));
     }
 };

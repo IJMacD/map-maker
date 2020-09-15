@@ -5,7 +5,7 @@ import { getContent } from "./getContent";
 import { makeBBox } from "./bbox";
 import { matchSelector } from "./Style";
 
-/** @typedef {{ centre: [number, number], zoom: number, current?: { longitude: number, latitude: number }, width: number, height: number, scale: number }} MapContext */
+/** @typedef {{ centre: [number, number], zoom: number, bbox: string, current?: { longitude: number, latitude: number }, width: number, height: number, scale: number }} MapContext */
 
 export default class MapRenderer {
 
