@@ -11,7 +11,8 @@ const overpassRe = /^(node|way|rel(?:ation)?|area)/;
 const recurRe = /^(way|rel(?:ation)?|area)/;
 
 export class Overpass {
-    constructor (bbox) {
+    /** @param {string} bbox */
+    constructor (bbox=null) {
         /** @type {Map<string, Promise<OverpassElement[]>>} */
         this.elements = new Map();
         this.bbox = bbox;
@@ -25,7 +26,7 @@ export class Overpass {
     setBBox (bbox) {
         // If the new bbox is completely contained within the
         // old one then we don't need to clear our cache
-        if (!contains(this.bbox, bbox)) {
+        if (this.bbox && !contains(this.bbox, bbox)) {
             this.elements.clear();
         }
         this.bbox = bbox;
@@ -38,6 +39,10 @@ export class Overpass {
     async preLoadElements (selectors) {
         return this.jobs(async () => {
             const { bbox } = this;
+
+            if (!this.bbox) {
+                throw Error("No bounding box specified");
+            }
 
             // Create set of selectors
             /** @type {{ [key: string]: StyleSelector }} */
@@ -202,6 +207,13 @@ export class Overpass {
         this.currentJob = this.currentJob.then(() => fn());
 
         return this.currentJob;
+    }
+
+    // Delete everything from cache
+    clearCache (database = false) {
+        this.elements.clear();
+        if (database)
+            return this.database.clear();
     }
 }
 

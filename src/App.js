@@ -12,6 +12,9 @@ import useGeolocation from './useGeolocation';
 import Textarea from './Textarea';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import CollisionSystem from './CollisionSystem';
+import { Console } from 'app-console';
+
+import 'app-console/dist/index.css';
 
 /** @typedef {import('./MapRenderer').default} MapRenderer */
 
@@ -23,7 +26,7 @@ function App() {
   /** @type {React.MutableRefObject<HTMLCanvasElement>} */
   const canvasRef = React.useRef();
   /** @type {React.MutableRefObject<Overpass>} */
-  const overpassRef = React.useRef();
+  const overpassRef = React.useRef(new Overpass());
   /** @type {[ string, (string) => void ]} */
   const [ status, setStatus ] = React.useState(null);
   const [ error, setError ] = React.useState("");
@@ -31,7 +34,33 @@ function App() {
   const [ progress, setProgress ] = React.useState(0);
   /** @type {React.MutableRefObject<MapRenderer>} */
   const rendererRef = React.useRef();
+  const shellContextRef = React.useRef({
+    executables: {
+      "clear-cache": () => {
+        if (overpassRef.current) {
+          overpassRef.current.clearCache(true);
+        }
+      },
+    },
+  });
   const [ renderPending, forceRender ] = useForceRender();
+  React.useEffect(() => {
+    const { current: { executables } } = shellContextRef;
+    executables.render = forceRender;
+    executables.get = name => {
+      if (name === "centre") return centre;
+      if (name === "zoom") return zoom;
+      if (name === "myPos") return `${current.coords.longitude},${current.coords.latitude}`;
+      return void 0;
+    };
+    executables.set = (name, value) => {
+      if (name === "centre") { setCentre(value); return true; }
+      if (name === "zoom") { setZoom(value); return true; }
+      return false;
+    };
+
+  }, [ forceRender, centre, zoom, setCentre, setZoom, current ]);
+  const [ consoleVisible, showConsole ] = React.useState(false);
 
   const { clientWidth, clientHeight } = canvasRef.current || { clientWidth: 1000, clientHeight: 1000 };
 
@@ -42,10 +71,6 @@ function App() {
   const debouncedZoom = useDebounce(zoom, 500);
 
   const bbox = React.useMemo(() => makeBBox(debouncedCentre.split(",").map(p => +p), debouncedZoom, [clientWidth, clientHeight]), [debouncedCentre, debouncedZoom, clientWidth, clientHeight]);
-
-  if (!overpassRef.current) {
-    overpassRef.current = new Overpass(bbox);
-  }
 
   const debouncedStyle = useDebounce(style, 500);
 
@@ -59,6 +84,15 @@ function App() {
   /** @type {import('./MapRenderer').MapContext} */
   const context = { centre: centrePoint, zoom: debouncedZoom, scale: devicePixelRatio, width, height };
   const rules = expandRules(parsedStyle.rules, context);
+
+  React.useEffect(() => {
+    /** @type {(e: KeyboardEvent) => void} */
+    const callback = e => e.key === "k" && e.ctrlKey && e.altKey && showConsole(!consoleVisible);
+
+    document.addEventListener("keyup", callback);
+
+    return () => document.removeEventListener("keyup", callback);
+  }, [consoleVisible]);
 
   if (rules.some(r => r.selector.type === "current")) {
     const { coords: { longitude, latitude } } = current || { coords: {} };
@@ -127,6 +161,7 @@ function App() {
           { progress > 0 && <progress value={progress} />}
           { error && <p style={{color:"red"}}>{error}</p> }
         </div>
+        { consoleVisible && <Console context={shellContextRef.current} style={{ maxHeight: 200 }} /> }
       </div>
       <canvas ref={canvasRef} />
     </div>

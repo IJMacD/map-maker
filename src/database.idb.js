@@ -142,6 +142,17 @@ export default class IDBElementDatabase {
             request.addEventListener("error", reject);
         });
     }
+
+    // Delete all saved nodes
+    async clear () {
+        const db = await this.db;
+
+        return new Promise((resolve, reject) => {
+            const req = db.transaction("elements", "readwrite").objectStore("elements").clear();
+            req.onsuccess = resolve;
+            req.onerror = reject;
+        });
+    }
 }
 
 function makeKey (bbox, selector) {
