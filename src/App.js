@@ -16,6 +16,7 @@ import { Console } from 'app-console';
 
 import 'app-console/dist/index.css';
 
+const WORKER_ENABLED_KEY = "worker-enabled";
 /** @typedef {import('./MapRenderer').default} MapRenderer */
 
 function App() {
@@ -58,7 +59,14 @@ function App() {
       if (name === "zoom") { setZoom(value); return true; }
       return false;
     };
-
+    executables["enable-worker"] = () => {
+      localStorage.setItem(WORKER_ENABLED_KEY, "on");
+      window.location.reload();
+    };
+    executables["disable-worker"] = () => {
+      localStorage.removeItem(WORKER_ENABLED_KEY);
+      window.location.reload();
+    };
   }, [ forceRender, centre, zoom, setCentre, setZoom, current ]);
   const [ consoleVisible, showConsole ] = React.useState(false);
 
@@ -100,7 +108,7 @@ function App() {
   }
 
   if (canvasRef.current && !rendererRef.current) {
-    if (window.Worker && canvasRef.current.transferControlToOffscreen && localStorage.getItem("worker-enabled")) {
+    if (window.Worker && canvasRef.current.transferControlToOffscreen && localStorage.getItem(WORKER_ENABLED_KEY)) {
       rendererRef.current = new WorkerRender(canvasRef.current);
     } else {
       rendererRef.current = new CanvasRender(canvasRef.current);
