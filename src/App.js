@@ -102,6 +102,22 @@ function App() {
     return () => document.removeEventListener("keyup", callback);
   }, [consoleVisible]);
 
+  /**
+   * @param {React.MouseEvent<HTMLCanvasElement, MouseEvent>} e
+   */
+  function handleDoubleClick (e) {
+    const { offsetX: x, offsetY: y, ctrlKey, shiftKey, altKey } = e.nativeEvent;
+
+    // Flip client height so y-axis is negative
+    // @ts-ignore
+    const { x: lon, y: lat } = interpolateBox({ x, y }, [0, clientHeight, clientWidth, 0], parseBBox(bbox));
+    setCentre(cleanupPoint(lon, lat));
+
+    const dz = altKey ? 3 : 1;
+    if (ctrlKey) setZoom(zoom + dz);
+    else if (shiftKey) setZoom(zoom - dz);
+  }
+
   if (rules.some(r => r.selector.type === "current")) {
     const { coords: { longitude, latitude } } = current || { coords: {} };
     context.current = { longitude, latitude };
@@ -125,16 +141,23 @@ function App() {
     return () => { current.currentEffect = false; };
   }, [debouncedCentre, debouncedZoom, rules, context, renderPending]);
 
+  /**
+   * @param {number} dX
+   * @param {number} dY
+   */
   function move (dX, dY) {
     /** @type {[number, number]} */
     const centrePoint = (debouncedCentre.split(",").map(p => +p));
     const bb = bbox.split(",").map(p => +p);
     const stepSizeX = (bb[2] - bb[0]) / 2;
     const stepSizeY = (bb[3] - bb[1]) / 2;
-    const newCentre = [ cleanup(centrePoint[0] + dX * stepSizeX), cleanup(centrePoint[1] + dY * stepSizeY) ];
-    setCentre(newCentre.join(","));
+    const newCentre = cleanupPoint(centrePoint[0] + dX * stepSizeX, centrePoint[1] + dY * stepSizeY);
+    setCentre(newCentre);
   }
 
+  /**
+   * @param {string} type
+   */
   function handleDownload (type) {
     if (!downloading) {
       setDownloading(true);
@@ -171,7 +194,7 @@ function App() {
         </div>
         { consoleVisible && <Console context={shellContextRef.current} style={{ maxHeight: 200 }} /> }
       </div>
-      <canvas ref={canvasRef} />
+      <canvas ref={canvasRef} onDoubleClick={handleDoubleClick} />
     </div>
   );
 }
@@ -229,6 +252,10 @@ function blobDownload (blob, filename) {
  */
 function cleanup (n) {
   return n.toFixed(5).replace(/^0+|0+$/g, "");
+}
+
+function cleanupPoint (x, y) {
+  return `${cleanup(x)},${cleanup(y)}`;
 }
 
 function useForceRender () {
@@ -306,4 +333,27 @@ async function render (rules, overpass, renderer, context, setStatus, setError, 
     setStatus(null);
     console.log(e);
   }
+}
+
+/**
+ * @param {string} bbox
+ */
+function parseBBox (bbox) {
+  return bbox.split(",").map(s => +s);
+}
+
+
+/**
+ * @param {{ x: number, y: number }} param0
+ * @param {[number, number, number, number]} from
+ * @param {[number, number, number, number]} to
+ */
+function interpolateBox ({x, y}, from, to) {
+  const fx = (x - from[0]) / (from[2] - from[0]);
+  const fy = (y - from[1]) / (from[3] - from[1]);
+
+  const tw = to[2] - to[0];
+  const th = to[3] - to[1];
+
+  return { x: fx * tw + to[0], y: fy * th+ to[1] };
 }

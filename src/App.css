@@ -21,6 +21,7 @@
 canvas {
   flex: 4;
   height: 100vh;
+  user-select: none;
 }
 
 label {
