@@ -1,4 +1,5 @@
 import { renderText } from "./renderText";
+import { setStrokeFill } from "./setStrokeFill";
 import { applyTransform } from "./transform";
 
 /** @typedef {import("../Style").StyleRule} StyleRule */
@@ -15,9 +16,7 @@ export function renderPoint(ctx, rule, [x, y], element = null, context = {}) {
 
     const { scale } = context;
 
-    ctx.fillStyle = rule.declarations["fill"];
-    ctx.strokeStyle = rule.declarations["stroke"];
-    ctx.lineWidth = +rule.declarations["stroke-width"] * scale;
+    setStrokeFill(ctx, rule, scale);
 
     if (rule.declarations["position"] === "absolute") {
         x = (parseFloat(rule.declarations["left"]) || 0) * scale;
