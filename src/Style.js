@@ -62,7 +62,7 @@ function (text) {
 
     let tagText = text.substring(m[0].length).trim();
 
-    const re2 = /^\[([a-z0-9_-]+)(=|<=|>=|<|>)([^[\]]+)\]/i;
+    const re2 = /^\[([a-z0-9_-]+)(?:(=|<=|>=|<|>)([^[\]]+))?\]/i;
 
     while (true) {
       const m2 = re2.exec(tagText);
@@ -71,7 +71,7 @@ function (text) {
 
       const op = m2[2] === "=" ? "" : m2[2];
 
-      tags[m2[1]] = op + m2[3];
+      tags[m2[1]] = m2[3] ? op + m2[3] : "*";
 
       tagText = tagText.substring(m2[0].length);
     }
