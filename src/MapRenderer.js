@@ -185,7 +185,14 @@ export default class MapRenderer {
             }
             case "content-box": {
                 const { scale } = context;
-                let [ x, y ] = points[0];
+                let point = points[0];
+
+                if (rule.selector.type === "way")
+                    point = getMidPoint(points);
+                else if (rule.selector.type === "area")
+                    point = getCentrePoint(points);
+
+                let [ x, y ] = point;
 
                 const content = getContent(rule, element, context);
 
@@ -227,7 +234,7 @@ export default class MapRenderer {
                 // Close self
                 boundPoints.push(boundPoints[0]);
 
-                this.renderAreaLine(context, rule, boundPoints, () => points[0], element);
+                this.renderAreaLine(context, rule, boundPoints, () => point, element);
                 break;
             }
             case "decimate": {

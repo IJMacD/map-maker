@@ -9,6 +9,7 @@ import { getContent } from "../getContent";
  * @param {StyleRule} rule
  * @param {[number, number]} param2
  * @param {OverpassElement} [element]
+ * @param {import("../MapRenderer").MapContext} context
  */
 export function renderText(ctx, rule, [x, y], element = null, context) {
     setStrokeFill(ctx, rule, context.scale);
@@ -18,18 +19,19 @@ export function renderText(ctx, rule, [x, y], element = null, context) {
     setFont(ctx, rule, context.scale);
 
     for (const line of content.split("\n")) {
-        y += renderLine(ctx, rule, line, x, y);
+        y += renderLine(ctx, rule, line, x, y, context);
     }
 }
 
 /**
- * @param {CanvasRenderingContext2D} ctx
+ * @param {CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D} ctx
  * @param {StyleRule} rule
  * @param {string} content
  * @param {number} x
  * @param {number} y
+ * @param {import("../MapRenderer").MapContext} context
  */
-function renderLine(ctx, rule, content, x, y) {
+function renderLine(ctx, rule, content, x, y, context) {
     const size = ctx.measureText(content);
 
     if (rule.declarations["text-align"]) {
@@ -43,7 +45,12 @@ function renderLine(ctx, rule, content, x, y) {
         }
     }
 
+    if (rule.declarations["stroke-width"]) {
+        ctx.lineWidth = parseFloat(rule.declarations["stroke-width"]) * context.scale;
+    }
+
     if (rule.declarations["text-stroke"]) {
+        // Todo: parse `2px red`
         ctx.strokeStyle = rule.declarations["text-stroke"];
         ctx.strokeText(content, x, y);
     }
