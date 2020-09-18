@@ -1,0 +1,106 @@
+map {
+    fill: white;
+}
+@match (zoom >= 12) {
+    way[landuse=railway] {
+        fill: #EEEEEE;
+    }
+}
+@match (zoom >= 9) {
+    way[waterway=river] {
+        stroke: lightblue;
+        stroke-width: 1.5;
+    }
+    way[waterway=riverbank],
+    way[waterway=dock] {
+        fill: lightblue;
+    }
+}
+way[natural=coastline] {
+    stroke: lightgrey;
+    stroke-width: 1;
+}
+way[railway=rail],
+way[railway=subway] {
+    stroke: black;
+    stroke-width: 1;
+}
+@match (zoom >= 13) {
+    way[railway=funicular],
+    way[railway=light_rail],
+    way[railway=miniature],
+    way[railway=narrow_gauge] {
+        stroke: black;
+        stroke-width: 0.5;
+    }
+    way[railway=disused] {
+        stroke: grey;
+        stroke-width: 0.5;
+    }
+    way[railway=construction] {
+        stroke: black;
+        stroke-width: 1;
+        stroke-dash: 4 4;
+    }
+}
+@match (zoom >= 15) {
+    node[railway=stop] {
+        size: 2;
+        fill: black;
+    }
+    area[railway=platform] {
+        fill: pink;
+        stroke: red;
+    }
+    node[railway=station],
+    area[railway=station] {
+        stroke: 2px red;
+        text-color: black;
+    }
+}
+@match (zoom > 10) {
+    node[railway=station],
+    area[railway=station]::centre {
+        size: 4;
+        fill: red;
+    }
+}
+@match (zoom > 13) {
+    node[railway=station]::content-box,
+    area[railway=station]::content-box {
+        text-stroke: white;
+        stroke-width: 3px;
+        text-color: black;
+        font-weight: bold;
+        font-size: 14px;
+        content: tag(name);
+        collision-set: labels;
+    }
+}
+@match (zoom >= 11) {
+    gridlines:vertical(0.01deg),
+    gridlines:horizontal(0.01deg) {
+        stroke: rgba(128,64,0,0.2);
+    }
+}
+@match (zoom >= 9) {
+    gridlines:vertical(0.1deg),
+    gridlines:horizontal(0.1deg) {
+        stroke: rgba(128,64,0,0.2);
+        stroke-width: 1.25;
+    }
+}
+@match (zoom < 9) {
+    gridlines:vertical(1deg),
+    gridlines:horizontal(1deg) {
+        stroke: rgba(128,64,0,0.2);
+        stroke-width: 1;
+    }
+}
+@match (zoom >= 9) {
+    gridlines:vertical(1deg),
+    gridlines:horizontal(1deg) {
+        stroke: rgba(128,64,0,0.2);
+        stroke-width: 2;
+    }
+}

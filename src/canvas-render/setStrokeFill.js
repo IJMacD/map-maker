@@ -5,9 +5,12 @@ import { parseStrokeFill } from '../parseStrokeFill';
  * @param {import("../Style").StyleRule} rule
  */
 export function setStrokeFill (ctx, rule, scale) {
-    const { fillStyle, strokeStyle, lineWidth } = parseStrokeFill(rule, scale);
+    const { fillStyle, strokeStyle, lineWidth, lineDash } = parseStrokeFill(rule, scale);
 
     ctx.fillStyle = fillStyle;
     ctx.strokeStyle = strokeStyle;
     ctx.lineWidth = lineWidth;
+    if (lineDash) {
+        ctx.setLineDash(lineDash);
+    }
 }
