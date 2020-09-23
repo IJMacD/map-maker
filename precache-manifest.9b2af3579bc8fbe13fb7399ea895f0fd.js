@@ -1,6 +1,6 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "e126c96230f80e986d128bba71a8a07b",
+    "revision": "0fb296221f12e2923526f503af403009",
     "url": "/map-maker/index.html"
   },
   {
@@ -8,8 +8,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/map-maker/static/css/2.bb4479ce.chunk.css"
   },
   {
-    "revision": "e7845c50ccb8c79fe5d4",
-    "url": "/map-maker/static/css/main.16b738a9.chunk.css"
+    "revision": "a2f53cdb40e640eca580",
+    "url": "/map-maker/static/css/main.0090ae9d.chunk.css"
   },
   {
     "revision": "90fef98967f1e236bee1",
@@ -20,12 +20,12 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/map-maker/static/js/2.68c28e4d.chunk.js.LICENSE.txt"
   },
   {
-    "revision": "e7845c50ccb8c79fe5d4",
-    "url": "/map-maker/static/js/main.8585c58f.chunk.js"
+    "revision": "a2f53cdb40e640eca580",
+    "url": "/map-maker/static/js/main.0544f4ba.chunk.js"
   },
   {
-    "revision": "5207c550a7ca55cc4e008590aa0ebde1",
-    "url": "/map-maker/static/js/render-worker.bc6cf0f4.worker.js"
+    "revision": "93aee7f9e6e385dab0a3bd306c4676be",
+    "url": "/map-maker/static/js/render-worker.30a7101a.worker.js"
   },
   {
     "revision": "2f95e9f626ca59912134",
