@@ -1,3 +1,4 @@
+import { evaluateValue } from "../evaluate";
 import { renderText } from "./renderText";
 import { setStrokeFill } from "./setStrokeFill";
 import { applyTransform } from "./transform";
@@ -9,14 +10,14 @@ import { applyTransform } from "./transform";
  * @param {CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D} ctx
  * @param {StyleRule} rule
  * @param {[number, number]} position
- * @param {OverpassElement} element
+ * @param {OverpassElement?} element
  */
-export function renderPoint(ctx, rule, [x, y], element = null, context = {}) {
+export function renderPoint(ctx, rule, [x, y], element, context = {}) {
     ctx.save();
 
     const { scale } = context;
 
-    setStrokeFill(ctx, rule, scale);
+    setStrokeFill(ctx, rule, element, context);
 
     if (rule.declarations["position"] === "absolute") {
         x = (parseFloat(rule.declarations["left"]) || 0) * scale;
@@ -29,7 +30,7 @@ export function renderPoint(ctx, rule, [x, y], element = null, context = {}) {
     if (rule.declarations["size"]) {
         ctx.beginPath();
 
-        const r = +rule.declarations["size"] * scale;
+        const r = +evaluateValue(rule.declarations["size"], element, context) * scale;
 
         ctx.ellipse(0, 0, r, r, 0, 0, Math.PI * 2);
 

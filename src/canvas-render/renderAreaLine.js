@@ -12,7 +12,7 @@ import CollisionSystem from "../CollisionSystem";
  * @param {StyleRule} rule
  * @param {[number, number][]} points
  * @param {(points: [number, number][]) => [number, number]} getPoint
- * @param {OverpassElement} element
+ * @param {OverpassElement?} element
  */
 export function renderAreaLine(ctx, rule, points, getPoint, element = null, context = {}) {
     if (points.length === 0)
@@ -48,7 +48,7 @@ export function renderAreaLine(ctx, rule, points, getPoint, element = null, cont
 
     ctx.save();
 
-    setStrokeFill(ctx, rule, context.scale);
+    setStrokeFill(ctx, rule, element, context);
 
     let offsetX = 0;
     let offsetY = 0;

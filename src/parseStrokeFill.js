@@ -1,13 +1,18 @@
+import { evaluateValue } from "./evaluate";
+
 /**
  * @param {import("./Style").StyleRule} rule
- * @param {number} scale
+ * @param {import("./Overpass").OverpassElement} element
+ * @param {import("./MapRenderer").MapContext} context
  */
-export function parseStrokeFill(rule, scale) {
-    const fillStyle = rule.declarations["fill"];
-    let strokeStyle = rule.declarations["stroke"];
+export function parseStrokeFill(rule, element, context) {
+    const fillStyle = evaluateValue(rule.declarations["fill"], element, context);
+    let strokeStyle = evaluateValue(rule.declarations["stroke"], element, context);
     let lineWidth;
     /** @type {number[]} */
     let lineDash;
+
+    const { scale } = context;
 
     if (strokeStyle) {
         // Numbers in e.g. rgba(128,64,0,0.2) confuse it

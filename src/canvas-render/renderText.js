@@ -8,11 +8,11 @@ import { getContent } from "../getContent";
  * @param {CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D} ctx
  * @param {StyleRule} rule
  * @param {[number, number]} param2
- * @param {OverpassElement} [element]
+ * @param {OverpassElement?} element
  * @param {import("../MapRenderer").MapContext} context
  */
 export function renderText(ctx, rule, [x, y], element = null, context) {
-    setStrokeFill(ctx, rule, context.scale);
+    setStrokeFill(ctx, rule, element, context);
 
     let content = getContent(rule, element, context);
 
