@@ -229,6 +229,7 @@ function mapSelectorForQuery (selector) {
 function mapSelector (selector) {
     const type = selector.type === "area" ? "way" : selector.type;
     const tags = Object.entries(selector.tags).map(([k,v]) => {
+        if (k.includes(":")) k = `"${k}"`;
         return (/^[<=>]+/.test(v) || v === "*") ? `[${k}]` : `[${k}=${v}]`;
     });
     return `${type}${tags.join("")}`;
