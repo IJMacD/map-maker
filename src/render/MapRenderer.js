@@ -1,26 +1,24 @@
-import { mercatorProjection, getCentrePoint, getMidPoint, getAveragePoint, getBoundingBox } from "./util";
-import { rectToPoints, isSelfClosing } from "./geometry";
-import { matchPseudoClasses } from "./matchPseudoClasses";
-import { getContent } from "./getContent";
-import { makeBBox } from "./bbox";
-import { matchSelector } from "./Style";
-
-/** @typedef {{ centre: [number, number], zoom: number, bbox: string, current?: { longitude: number, latitude: number }, width: number, height: number, scale: number }} MapContext */
+import { mercatorProjection, getCentrePoint, getMidPoint, getAveragePoint, getBoundingBox } from "../util/util";
+import { rectToPoints, isSelfClosing } from "../util/geometry";
+import { matchPseudoClasses } from "../util/matchPseudoClasses";
+import { getContent } from "../util/getContent";
+import { makeBBox } from "../util/bbox";
+import { matchSelector } from "../Classes/Style";
 
 export default class MapRenderer {
 
     /**
      * @param {MapContext} context
-     * @param {import("./Style").StyleRule} rule
-     * @param {import("./Overpass").OverpassElement[]} elements
+     * @param {StyleRule} rule
+     * @param {OverpassElement[]} elements
      */
     renderRule (context, rule, elements=[]) {
         // Prepare node map
-        /** @type {{ [id: number]: import("./Overpass").OverpassNodeElement }} */
+        /** @type {{ [id: number]: OverpassNodeElement }} */
         const nodeMap = {};
         elements.forEach(n => n.type === "node" && (nodeMap[n.id] = n));
         // Prepare way map
-        /** @type {{ [id: number]: import("./Overpass").OverpassWayElement }} */
+        /** @type {{ [id: number]: OverpassWayElement }} */
         const wayMap = {};
         elements.forEach(n => n.type === "way" && (wayMap[n.id] = n));
 
@@ -82,7 +80,7 @@ export default class MapRenderer {
                         case "area": {
                             if (el.type !== "way") continue;
 
-                            /** @type {import("./Overpass").OverpassNodeElement[]} */
+                            /** @type {OverpassNodeElement[]} */
                             const nodes = el.nodes.map(id => nodeMap[id]);
                             const points = nodes.map(n => projection(n.lon, n.lat));
 
@@ -118,6 +116,12 @@ export default class MapRenderer {
         this.renderAreaLine(context, rule, points, getMidPoint, element);
     }
 
+    /**
+     * @param {MapContext} context
+     * @param {StyleRule} rule
+     * @param {[number, number][]} points
+     * @param {OverpassElement?} points
+     */
     renderArea (context, rule, points, element=null) {
         if (points.length === 0)
             return;
@@ -133,10 +137,10 @@ export default class MapRenderer {
 
     /**
      * @param {MapContext} context
-     * @param {import("./Style").StyleRule} rule
+     * @param {StyleRule} rule
      * @param {[number, number][]} points
-     * @param {import("./Overpass").OverpassElement} [element]
-     * @param {import("./Overpass").OverpassNodeElement[]} [nodes]
+     * @param {OverpassElement?} [element]
+     * @param {OverpassNodeElement[]} [nodes]
      */
     renderPseudoElement(context, rule, points, element=null, nodes=null) {
         switch (rule.selector.pseudoElement) {
@@ -301,7 +305,7 @@ export default class MapRenderer {
     /**
      *
      * @param {MapContext} context
-     * @param {import("./Style").StyleRule} rule
+     * @param {StyleRule} rule
      * @param {string} text
      * @return {{ width: number, ascending: number, descending: number, height: number }}
      */

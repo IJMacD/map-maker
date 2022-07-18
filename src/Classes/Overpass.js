@@ -1,18 +1,17 @@
-import IDBElementDatabase from "./database.idb";
-import { contains } from "./bbox";
+import IDBElementDatabase from "../data/database.idb";
+import { contains } from "../util/bbox";
 import { matchSelector } from "./Style";
-import { timeout } from './util';
+import { timeout } from '../util/util';
 
-/** @typedef {import("./Style").StyleSelector} StyleSelector */
 
-const API_ROOT = require("./const").API_ROOT;
+const API_ROOT = require("../conf").API_ROOT;
 
 const overpassRe = /^(node|way|rel(?:ation)?|area)/;
 const recurRe = /^(way|rel(?:ation)?|area)/;
 
 export class Overpass {
-    /** @param {string} bbox */
-    constructor (bbox=null) {
+    /** @param {string?} bbox */
+    constructor (bbox = null) {
         /** @type {Map<string, Promise<OverpassElement[]>>} */
         this.elements = new Map();
         this.bbox = bbox;
@@ -79,11 +78,11 @@ export class Overpass {
             console.log(`Preloading Elements: Fetched ${elements.length} elements from Server`);
 
             // Prepare node map
-            /** @type {{ [id: number]: import("./Overpass").OverpassNodeElement }} */
+            /** @type {{ [id: number]: OverpassNodeElement }} */
             const nodeMap = {};
             elements.forEach(n => n.type === "node" && (nodeMap[n.id] = n));
             // Prepare way map
-            /** @type {{ [id: number]: import("./Overpass").OverpassWayElement }} */
+            /** @type {{ [id: number]: OverpassWayElement }} */
             const wayMap = {};
             elements.forEach(n => n.type === "way" && (wayMap[n.id] = n));
 
@@ -165,7 +164,7 @@ export class Overpass {
     }
 
     /**
-     * @param {import("./Style").StyleSelector} selector
+     * @param {StyleSelector} selector
      * @returns {Promise<OverpassElement[]>}
      */
     async getElements (selector) {
@@ -234,45 +233,6 @@ function mapSelector (selector) {
     });
     return `${type}${tags.join("")}`;
 }
-
-/** @typedef {import('./Style.js').StyleRule} StyleRule */
-
-/**
- * @typedef {OverpassNodeElement|OverpassWayElement|OverpassAreaElement|OverpassRelElement} OverpassElement
- */
-
-/**
- * @typedef OverpassNodeElement
- * @property {number} id
- * @property {"node"} type
- * @property {number} lon
- * @property {number} lat
- * @property {{ [key: string]: string }} [tags]
- */
-
-/**
- * @typedef OverpassWayElement
- * @property {number} id
- * @property {"way"} type
- * @property {number[]} nodes
- * @property {{ [key: string]: string }} [tags]
- */
-
-/**
- * @typedef OverpassAreaElement
- * @property {number} id
- * @property {"area"} type
- * @property {number[]} nodes
- * @property {{ [key: string]: string }} [tags]
- */
-
-/**
- * @typedef OverpassRelElement
- * @property {number} id
- * @property {"relation"} type
- * @property {{ ref: number, role: "inner"|"outer", type: "node"|"way"|"relation" }[]} members
- * @property {{ [key: string]: string }} [tags]
- */
 
 function clampBBox (bbox) {
     const p = bbox.split(",").map(p => +p);

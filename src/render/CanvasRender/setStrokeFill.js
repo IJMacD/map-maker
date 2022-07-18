@@ -1,10 +1,10 @@
-import { parseStrokeFill } from '../parseStrokeFill';
+import { parseStrokeFill } from '../../util/parseStrokeFill';
 
 /**
  * @param {CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D} ctx
- * @param {import("../Style").StyleRule} rule
- * @param {import('.').OverpassElement} element
- * @param {import('../MapRenderer').MapContext} context
+ * @param {StyleRule} rule
+ * @param {OverpassElement} element
+ * @param {MapContext} context
  */
 export function setStrokeFill (ctx, rule, element, context) {
     const { fillStyle, strokeStyle, lineWidth, lineDash } = parseStrokeFill(rule, element, context);

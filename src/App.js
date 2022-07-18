@@ -1,40 +1,38 @@
 import React from 'react';
 import './App.css';
-import useSavedState from './useSavedState';
-import { parseStyle, expandRules } from './Style';
-import CanvasRender from './canvas-render';
-import WorkerRender from './WorkerRenderer';
-import SVGRender from './svg-render';
-import { Overpass } from './Overpass';
-import { useDebounce } from './useDebounce';
-import { makeBBox } from './bbox';
-import useGeolocation from './useGeolocation';
-import Textarea from './Textarea';
+import useSavedState from './hooks/useSavedState';
+import useGeolocation from './hooks/useGeolocation';
+import { useDebounce } from './hooks/useDebounce';
+import { parseStyle, filterRules } from './Classes/Style';
+import { Overpass } from './Classes/Overpass';
+import CollisionSystem from './Classes/CollisionSystem';
+import CanvasRender from './render/CanvasRender';
+import WorkerRender from './render/WorkerRenderer';
+import SVGRender from './render/SVGRender';
+import { makeBBox } from './util/bbox';
+import Textarea from './Components/Textarea';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import CollisionSystem from './CollisionSystem';
 import { Console } from 'app-console';
 
 import 'app-console/dist/index.css';
 
 const WORKER_ENABLED_KEY = "worker-enabled";
-/** @typedef {import('./MapRenderer').default} MapRenderer */
 
 function App() {
   const [ style, setStyle ] = useSavedState("USER_STYLE", "node[amenity=post_box] {\n\tfill: black;\n\tsize: 2;\n}");
   const [ centre, setCentre ] = useSavedState("USER_CENTRE", "7.1,50.7");
   const [ zoom, setZoom ] = useSavedState("USER_SCALE", 14);
   const current = useGeolocation();
-  /** @type {React.MutableRefObject<HTMLCanvasElement>} */
-  const canvasRef = React.useRef();
+  /** @type {React.MutableRefObject<HTMLCanvasElement?>} */
+  const canvasRef = React.useRef(null);
   /** @type {React.MutableRefObject<Overpass>} */
   const overpassRef = React.useRef(new Overpass());
-  /** @type {[ string, (string) => void ]} */
-  const [ status, setStatus ] = React.useState(null);
+  const [ status, setStatus ] = React.useState(/** @type {string?} */(null));
   const [ error, setError ] = React.useState("");
   const [ downloading, setDownloading ] = React.useState(false);
   const [ progress, setProgress ] = React.useState(0);
-  /** @type {React.MutableRefObject<MapRenderer>} */
-  const rendererRef = React.useRef();
+  /** @type {React.MutableRefObject<MapRenderer?>} */
+  const rendererRef = React.useRef(null);
   const shellContextRef = React.useRef({
     executables: {
       "clear-cache": () => {
@@ -89,13 +87,13 @@ function App() {
   /** @type {[number, number]} */
   const centrePoint = (debouncedCentre.split(",").map(p => +p));
 
-  /** @type {import('./MapRenderer').MapContext} */
+  /** @type {MapContext} */
   const context = { centre: centrePoint, zoom: debouncedZoom, bbox, scale: devicePixelRatio, width, height };
-  const rules = expandRules(parsedStyle.rules, context);
+  const rules = filterRules(parsedStyle.rules, context);
 
   React.useEffect(() => {
     /** @type {(e: KeyboardEvent) => void} */
-    const callback = e => e.key === "k" && e.ctrlKey && e.altKey && showConsole(!consoleVisible);
+    const callback = e => { e.key === "k" && e.ctrlKey && e.altKey && showConsole(!consoleVisible); }
 
     document.addEventListener("keyup", callback);
 
@@ -118,27 +116,34 @@ function App() {
     else if (shiftKey) setZoom(zoom - dz);
   }
 
-  if (rules.some(r => r.selector.type === "current")) {
+  if (rules.some(r => r.selector?.type === "current")) {
     const { coords: { longitude, latitude } } = current || { coords: {} };
     context.current = { longitude, latitude };
   }
 
   if (canvasRef.current && !rendererRef.current) {
-    if (window.Worker && canvasRef.current.transferControlToOffscreen && localStorage.getItem(WORKER_ENABLED_KEY)) {
+    if (window.Worker &&
+      // @ts-ignore
+      canvasRef.current.transferControlToOffscreen &&
+      localStorage.getItem(WORKER_ENABLED_KEY))
+    {
       rendererRef.current = new WorkerRender(canvasRef.current);
-    } else {
+    }
+    else {
       rendererRef.current = new CanvasRender(canvasRef.current);
     }
   }
 
   // Refetch/Render map when bbox, or style change
   useDeepCompareEffect(() => {
-    // Double pointer to update inside render function scope
-    let current = { currentEffect: true };
+    if (rendererRef.current) {
+      // Double pointer to update inside render function scope
+      let current = { currentEffect: true };
 
-    render(rules, overpassRef.current, rendererRef.current, context, setStatus, setError, setProgress, current);
+      render(rules, overpassRef.current, rendererRef.current, context, setStatus, setError, setProgress, current);
 
-    return () => { current.currentEffect = false; };
+      return () => { current.currentEffect = false; };
+    }
   }, [debouncedCentre, debouncedZoom, rules, context, renderPending]);
 
   /**
@@ -163,7 +168,9 @@ function App() {
       setDownloading(true);
       const cb = () => setDownloading(false);
       if (type === "png") {
-        downloadPNG(canvasRef.current, cb);
+        if (canvasRef.current) {
+          downloadPNG(canvasRef.current, cb);
+        }
       } else {
         downloadSVG(context, parsedStyle, overpassRef.current, cb);
       }
@@ -203,16 +210,23 @@ export default App;
 
 /**
  * @param {HTMLCanvasElement} canvas
+ * @param {() => void} [callback]
  */
-function downloadPNG (canvas, callback=null) {
+function downloadPNG (canvas, callback) {
   canvas.toBlob(blob => {
     blobDownload(blob, "map.png");
     if (callback) callback();
   });
 }
 
-async function downloadSVG (context, style, overpass, callback=null) {
-  const rules = expandRules(style.rules, context);
+/**
+ * @param {MapContext} context
+ * @param {{ rules: (StyleRule|MediaQuery)[] }} style
+ * @param {Overpass} overpass
+ * @param {() => void} [callback]
+ */
+async function downloadSVG (context, style, overpass, callback) {
+  const rules = filterRules(style.rules, context);
 
   const map = rules.map(rule => {
     return {
@@ -265,14 +279,14 @@ function useForceRender () {
 }
 
 /**
- * @param {import('./Style').StyleRule[]} [rules]
- * @param {Overpass} [overpass]
- * @param {MapRenderer} [renderer]
- * @param {import('./MapRenderer').MapContext} [context]
- * @param {(arg0: string) => void} [setStatus]
- * @param {(arg0: string) => void} [setError]
- * @param {(arg0: number) => void} [setProgress]
- * @param {{ currentEffect: any; }} [current]
+ * @param {StyleRule[]} rules
+ * @param {Overpass} overpass
+ * @param {MapRenderer} renderer
+ * @param {MapContext} context
+ * @param {(arg0: string?) => void} setStatus
+ * @param {(arg0: string) => void} setError
+ * @param {(arg0: number) => void} setProgress
+ * @param {{ currentEffect: any; }} current
  */
 async function render (rules, overpass, renderer, context, setStatus, setError, setProgress, current) {
   setStatus("Fetching...");

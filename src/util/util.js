@@ -21,6 +21,7 @@ export function flatProjection(minLon, minLat, maxLon, maxLat, width, height) {
     const scale = Math.max(xScale, yScale);
     return ((lon, lat) => [(lon - minLon) * scale, height - (lat - minLat) * scale]);
 }
+
 /**
  * @param {[number, number]} centre
  * @param {number} scale
@@ -60,23 +61,23 @@ export function mercatorProjection(centre, scale, width, height) {
         return [cX + dX, cY - dY];
     };
 }
+
 /**
  *
  * @param {[number, number][]} points
  */
-
 export function getAveragePoint(points) {
     const sum = points.reduce((sum, p) => [sum[0] + p[0], sum[1] + p[1]], [0, 0]);
     /** @type {[number, number]} */
     const avg = (sum.map(x => x / points.length));
     return avg;
 }
+
 /**
  *
  * @param {[number, number][]} points
  * @returns {[number, number]}
  */
-
 export function getCentrePoint(points) {
     const boundingBox = getBoundingBox(points);
 
@@ -85,20 +86,20 @@ export function getCentrePoint(points) {
         boundingBox[1] + boundingBox[3] / 2,
     ];
 }
+
 /**
  *
  * @param {[number, number][]} points
  * @returns {[number, number]}
  */
-
 export function getMidPoint(points) {
     return points[Math.floor((points.length - 1) / 2)];
 }
+
 /**
  * @param {[number, number][]} points
  * @returns {[number, number, number, number]} (x, y, width, height)
  */
-
 export function getBoundingBox(points) {
     const minMax = points.reduce((minMax, point) => {
         return [

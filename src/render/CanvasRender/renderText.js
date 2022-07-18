@@ -1,15 +1,12 @@
-/** @typedef {import("../Style").StyleRule} StyleRule */
-/** @typedef {import("../Overpass").OverpassElement} OverpassElement */
-
 import { setStrokeFill } from "./setStrokeFill";
-import { getContent } from "../getContent";
+import { getContent } from "../../util/getContent";
 
 /**
  * @param {CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D} ctx
  * @param {StyleRule} rule
  * @param {[number, number]} param2
  * @param {OverpassElement?} element
- * @param {import("../MapRenderer").MapContext} context
+ * @param {MapContext} context
  */
 export function renderText(ctx, rule, [x, y], element = null, context) {
     setStrokeFill(ctx, rule, element, context);
@@ -29,7 +26,7 @@ export function renderText(ctx, rule, [x, y], element = null, context) {
  * @param {string} content
  * @param {number} x
  * @param {number} y
- * @param {import("../MapRenderer").MapContext} context
+ * @param {MapContext} context
  */
 function renderLine(ctx, rule, content, x, y, context) {
     const size = ctx.measureText(content);

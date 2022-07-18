@@ -1,9 +1,9 @@
-import CanvasRender from './canvas-render';
-import { Overpass } from './Overpass';
+import CanvasRender from './CanvasRender';
+import { Overpass } from '../Classes/Overpass';
 
 /** @type {OffscreenCanvas} */
 let canvas;
-/** @type {import('./MapRenderer').default} */
+/** @type {MapRenderer} */
 let renderer;
 /** @type {Overpass} */
 let overpass = new Overpass();
@@ -28,7 +28,7 @@ onmessage = (msg) => {
     }
 
     if (msg.data.method === "renderRule") {
-        /** @type {{ context: import('./MapRenderer').MapContext, rule: import('./Style').StyleRule }} */
+        /** @type {{ context: MapContext, rule: StyleRule }} */
         const { context, rule } = msg.data;
 
         overpass.setBBox(context.bbox);

@@ -1,9 +1,6 @@
 import MapRenderer from "../MapRenderer";
 import { renderAreaLine } from "./renderAreaLine";
-import { parseStrokeFill } from "../parseStrokeFill";
-
-/** @typedef {import("../Style").StyleRule} StyleRule */
-/** @typedef {import("../Overpass").OverpassElement} OverpassElement */
+import { parseStrokeFill } from "../../util/parseStrokeFill";
 
 export default class SVGRender extends MapRenderer {
     /**
@@ -23,14 +20,14 @@ export default class SVGRender extends MapRenderer {
     }
 
     /**
-     * @param {import("../MapRenderer").MapContext} context
-     * @param {import("../Style").StyleRule} rule
-     * @param {import("../Overpass").OverpassElement[]} elements
+     * @param {MapContext} context
+     * @param {StyleRule} rule
+     * @param {OverpassElement[]} elements
      */
     renderRule (context, rule, elements=[]) {
-        this.currentLayer = { elements: [] };
+        this.currentLayer = { elements };
 
-        const colours = parseStrokeFill(rule);
+        const colours = parseStrokeFill(rule, elements[0], context);
 
         this.currentLayer.stroke = colours.strokeStyle;
         this.currentLayer.fill = colours.fillStyle || "none";

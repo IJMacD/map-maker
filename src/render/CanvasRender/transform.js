@@ -1,5 +1,3 @@
-/** @typedef {import("../Style").StyleRule} StyleRule */
-
 /**
  * @param {CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D} ctx
  * @param {StyleRule} rule

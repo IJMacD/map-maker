@@ -14,8 +14,8 @@
  *  fill: rgb(255,0,0);
  *
  * @param {string} value
- * @param {import("./Overpass").OverpassElement} element
- * @param {import("./MapRenderer").MapContext} context
+ * @param {OverpassElement} element
+ * @param {MapContext} context
  * @returns
  */
 export function evaluateValue (value, element, context) {

@@ -1,11 +1,6 @@
-// import { renderPoint } from "./renderPoint";
-// import { applyTransform } from "./transform";
-import { parseStrokeFill } from "../parseStrokeFill";
-import { getBoundingBox } from "../util";
-import CollisionSystem from "../CollisionSystem";
+import { getBoundingBox } from "../../util/util";
+import CollisionSystem from "../../Classes/CollisionSystem";
 
-/** @typedef {import("../Style").StyleRule} StyleRule */
-/** @typedef {import("../Overpass").OverpassElement} OverpassElement */
 
 /**
  * @param {{ elements: { type: string, [key: string]: string }[] }} layer

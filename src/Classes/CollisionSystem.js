@@ -39,9 +39,9 @@ export default class CollisionSystem {
 
 
 /**
- * [x , y, width, height]
- * @param {[number, number, number, number]} boxA
- * @param {[number, number, number, number]} boxB
+ * Checks whether two bounding boxes intersect
+ * @param {[number, number, number, number]} boxA [x , y, width, height]
+ * @param {[number, number, number, number]} boxB [x , y, width, height]
  */
 function intersects (boxA, boxB) {
     const ax1 = boxA[0];

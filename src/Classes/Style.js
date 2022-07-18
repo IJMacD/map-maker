@@ -1,25 +1,3 @@
-/**
- * @typedef StyleRule
- * @property {"rule"} type
- * @property {StyleSelector} [selector]
- * @property {StyleSelector[]} [selectors]
- * @property {{ [key: string]: string }} declarations
- */
-
-/**
- * @typedef MediaQuery
- * @property {"query"} type
- * @property {Predicate} predicate
- * @property {StyleRule[]} rules
- */
-
-/**
- * @typedef Predicate
- * @property {string|number|Predicate} left
- * @property {string} operator
- * @property {string|number|Predicate} right
- */
-
 export class StyleSelector {
     /**
      * @param {string} type
@@ -27,7 +5,7 @@ export class StyleSelector {
      * @param {{ name: string, params: (string|Predicate)[] }[]} pseudoClasses
      * @param {string} [pseudoElement]
      */
-    constructor (type, tags, pseudoClasses=[], pseudoElement=null) {
+    constructor (type, tags, pseudoClasses=[], pseudoElement) {
       this.type = type;
       this.tags = tags;
       this.pseudoClasses = pseudoClasses;
@@ -93,13 +71,12 @@ function (text) {
       tagText = tagText.substring(m3[0].length);
     }
 
-    let pseudoElement = null;
+    let pseudoElement;
 
     const re4 = /^::([a-z-]+)?/;
 
-    if (re4.test(tagText)) {
-      const m4 = re4.exec(tagText);
-
+    const m4 = re4.exec(tagText);
+    if (m4) {
       pseudoElement = m4[1];
 
       tagText = tagText.substring(m4[0].length);
@@ -124,20 +101,20 @@ StyleSelector.parseMultiple = function (text) {
 /**
  *
  * @param {{ rules: StyleRule[] }} style
- * @param {import("./Overpass").OverpassElement} element
- * @returns {StyleRule}
+ * @param {OverpassElement} element
+ * @returns {StyleRule?}
  */
 export function matchRule (style, element) {
     for (const rule of style.rules) {
-      for (const selector of rule.selectors) {
-        if (matchSelector(selector, element))  return rule;
-      }
+      if (matchSelector(rule.selector, element))
+        return rule;
     }
+    return null;
 }
 
 /**
  * @param {StyleSelector} selector
- * @param {import("./Overpass").OverpassElement} element
+ * @param {OverpassElement} element
  */
 export function matchSelector (selector, element, inequalities=true) {
   if (element.type !== selector.type && !(selector.type === "area" && element.type === "way")) return false;
@@ -268,10 +245,11 @@ function parseRules (ruleText) {
 
     const selectors = StyleSelector.parseMultiple(match[1]);
 
-    if (selectors.length) {
+    // Duplicate rules for all selectors
+    for (const selector of selectors) {
       out.rules.push({
         type: "rule",
-        selectors,
+        selector,
         declarations,
       });
     }
@@ -287,21 +265,18 @@ function parseRules (ruleText) {
 /**
  *
  * @param {(StyleRule|MediaQuery)[]} rules
- * @param {object} context
+ * @param {MapContext} context
  * @returns {StyleRule[]}
  */
-export function expandRules (rules, context) {
+export function filterRules (rules, context) {
   /** @type {StyleRule[]} */
   const out = [];
   for (const rule of rules) {
     if (rule.type === "rule") {
-      const { declarations } = rule;
-      for (const selector of rule.selectors) {
-        out.push({ type: "rule", selector, declarations });
-      }
+      out.push(rule);
     } else {
       if (testPredicate(rule.predicate, context)) {
-        out.push(...expandRules(rule.rules, context));
+        out.push(...filterRules(rule.rules, context));
       }
     }
   }
@@ -337,7 +312,7 @@ function makePredicate(match) {
 /**
  *
  * @param {Predicate} predicate
- * @param {object} [context]
+ * @param {MapContext} [context]
  * @returns {boolean}
  */
 export function testPredicate (predicate, context={}) {

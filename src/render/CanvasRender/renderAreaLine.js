@@ -1,11 +1,8 @@
 import { renderPoint } from "./renderPoint";
 import { applyTransform } from "./transform";
 import { setStrokeFill } from "./setStrokeFill";
-import { getBoundingBox } from "../util";
-import CollisionSystem from "../CollisionSystem";
-
-/** @typedef {import("../Style").StyleRule} StyleRule */
-/** @typedef {import("../Overpass").OverpassElement} OverpassElement */
+import { getBoundingBox } from "../../util/util";
+import CollisionSystem from "../../Classes/CollisionSystem";
 
 /**
  * @param {CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D} ctx
@@ -13,8 +10,9 @@ import CollisionSystem from "../CollisionSystem";
  * @param {[number, number][]} points
  * @param {(points: [number, number][]) => [number, number]} getPoint
  * @param {OverpassElement?} element
+ * @param {MapContext} context
  */
-export function renderAreaLine(ctx, rule, points, getPoint, element = null, context = {}) {
+export function renderAreaLine(ctx, rule, points, getPoint, element = null, context) {
     if (points.length === 0)
         return;
 

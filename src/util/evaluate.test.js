@@ -1,8 +1,8 @@
 import { evaluateValue } from "./evaluate";
 
-/** @type {import("./Overpass").OverpassElement} */
+/** @type {OverpassElement} */
 const nodeElement = { id: 99, type: "node", lon: 0, lat: 0, tags: { "name": "World" } };
-/** @type {import("./MapRenderer").MapContext} */
+/** @type {MapContext} */
 const context = { centre: [0,0], zoom: 10, bbox: "-180,-90,180,90", width: 1000, height: 1000, scale: 2 };
 
 describe("basic", () => {

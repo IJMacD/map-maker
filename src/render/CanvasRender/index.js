@@ -3,10 +3,6 @@ import { renderPoint } from "./renderPoint";
 import { setFont } from "./renderText";
 import { renderAreaLine } from "./renderAreaLine";
 
-/** @typedef {import("../Style").StyleRule} StyleRule */
-/** @typedef {import("../Overpass").OverpassElement} OverpassElement */
-
-
 export default class CanvasRender extends MapRenderer {
 
     /**

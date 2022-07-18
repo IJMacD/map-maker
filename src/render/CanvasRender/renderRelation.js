@@ -2,10 +2,10 @@
 
 /**
  * @param {CanvasRenderingContext2D} ctx
- * @param {import("../Style").StyleRule} rule
- * @param {import("../Overpass").OverpassRelElement} element
- * @param {{ [id: string]: import("../Overpass").OverpassWayElement; }} wayMap
- * @param {{ [id: string]: import("../Overpass").OverpassNodeElement; }} nodeMap
+ * @param {StyleRule} rule
+ * @param {OverpassRelElement} element
+ * @param {{ [id: string]: OverpassWayElement; }} wayMap
+ * @param {{ [id: string]: OverpassNodeElement; }} nodeMap
  * @param { (lon: number, lat: number) => [number, number] } projection
  */
 export function renderRelation(ctx, rule, element, wayMap, nodeMap, projection, context = {}) {

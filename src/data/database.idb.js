@@ -1,4 +1,4 @@
-import { contains, getArea } from "./bbox";
+import { contains, getArea } from "../util/bbox";
 
 export default class IDBElementDatabase {
     constructor (name="OverpassElements") {
@@ -58,7 +58,7 @@ export default class IDBElementDatabase {
      *
      * @param {string} bbox
      * @param {string} selector
-     * @returns {Promise<{ elements: import("./Overpass").OverpassElement[] }>}
+     * @returns {Promise<{ elements: OverpassElement[] }>}
      */
     getElements (bbox, selector) {
         const key = makeKey(bbox, selector);
@@ -68,7 +68,7 @@ export default class IDBElementDatabase {
     /**
      *
      * @param {string} key
-     * @returns {Promise<{ elements: import("./Overpass").OverpassElement[] }>}
+     * @returns {Promise<{ elements: OverpassElement[] }>}
      */
     async getElementsByKey (key) {
         const db = await this.db;
@@ -125,7 +125,7 @@ export default class IDBElementDatabase {
      *
      * @param {string} bbox
      * @param {string} selector
-     * @param {{ elements: import("./Overpass").OverpassElement[], cached: number }} record
+     * @param {{ elements: OverpassElement[], cached: number }} record
      */
     async saveElements (bbox, selector, record) {
         const db = await this.db;

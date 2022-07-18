@@ -1,16 +1,12 @@
 import { getArea, isConvex, isAntiClockwise, getLength } from "./geometry";
-import { testPredicate } from "./Style";
+import { testPredicate } from "../Classes/Style";
 import { getBoundingBox } from "./util";
-
-/** @typedef {import("./Style").StyleRule} StyleRule */
-/** @typedef {import("./Overpass").OverpassElement} OverpassElement */
-
 
 /**
  * @param {StyleRule} rule
  * @param {[number, number][]} points
- * @param {import("./Overpass").OverpassElement} element
- * @param {import("./Overpass").OverpassElement[]} nodes
+ * @param {OverpassElement} element
+ * @param {OverpassElement[]} nodes
  */
 export function matchPseudoClasses(rule, points, element=null, nodes = null) {
     const { selector } = rule;
@@ -66,7 +62,7 @@ export function matchPseudoClasses(rule, points, element=null, nodes = null) {
 
 /**
  * @todo Add support for more than one paramater
- * @param {import("./Overpass").StyleSelector} selector
+ * @param {StyleSelector} selector
  * @param {string} name
  * @param  {...string} params
  */

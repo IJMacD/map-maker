@@ -1,18 +1,16 @@
-import { evaluateValue } from "../evaluate";
+import { evaluateValue } from "../../util/evaluate";
 import { renderText } from "./renderText";
 import { setStrokeFill } from "./setStrokeFill";
 import { applyTransform } from "./transform";
-
-/** @typedef {import("../Style").StyleRule} StyleRule */
-/** @typedef {import("../Overpass").OverpassElement} OverpassElement */
 
 /**
  * @param {CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D} ctx
  * @param {StyleRule} rule
  * @param {[number, number]} position
  * @param {OverpassElement?} element
+ * @param {MapContext} context
  */
-export function renderPoint(ctx, rule, [x, y], element, context = {}) {
+export function renderPoint(ctx, rule, [x, y], element, context) {
     ctx.save();
 
     const { scale } = context;
