@@ -31,6 +31,8 @@ type MapContext = {
     scale: number;
 };
 
+type Overpass = import("./src/Classes/Overpass").Overpass;
+
 type OverpassElement = OverpassNodeElement|OverpassWayElement|OverpassAreaElement|OverpassRelElement;
 
 type OverpassNodeElement = {
@@ -68,3 +70,7 @@ type ElementContext = {
     width: () => number;
     height: () => number;
 };
+
+type ElementSource = { fetch: (selectors: StyleSelector[], bbox: string) => Promise<ElementSourceResult[]>; };
+
+type ElementSourceResult = { selector: string; bbox: string; elements: OverpassElement[]; };
