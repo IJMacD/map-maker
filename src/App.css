@@ -2,6 +2,7 @@
   display: flex;
   font-size: 18pt;
   height: 100vh;
+  overflow: hidden;
 }
 
 .sidebar {

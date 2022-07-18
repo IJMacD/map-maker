@@ -68,10 +68,10 @@ function App() {
   }, [ forceRender, centre, zoom, setCentre, setZoom, current ]);
   const [ consoleVisible, showConsole ] = React.useState(false);
 
-  const { clientWidth, clientHeight } = canvasRef.current || { clientWidth: 1000, clientHeight: 1000 };
+  const { clientWidth, clientHeight } = canvasRef.current || { clientWidth: 300, clientHeight: 150 };
 
-  const width = clientWidth * devicePixelRatio;
-  const height = clientHeight * devicePixelRatio;
+  const width = clientWidth;
+  const height = clientHeight;
 
   const debouncedCentre = useDebounce(centre, 500);
   const debouncedZoom = useDebounce(zoom, 500);

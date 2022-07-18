@@ -5,10 +5,10 @@ import { getBoundingBox } from "./util";
 /**
  * @param {StyleRule} rule
  * @param {[number, number][]} points
- * @param {OverpassElement} element
- * @param {OverpassElement[]} nodes
+ * @param {OverpassElement} [element]
+ * @param {OverpassElement[]} [nodes]
  */
-export function matchPseudoClasses(rule, points, element=null, nodes = null) {
+export function matchPseudoClasses(rule, points, element, nodes) {
     const { selector } = rule;
 
     if (includesPseudoClass(selector, "is", "convex")) {
@@ -32,7 +32,7 @@ export function matchPseudoClasses(rule, points, element=null, nodes = null) {
     }
 
     if (includesPseudoClass(selector, "is", "self-closing")) {
-        if (nodes[0] !== nodes[points.length - 1])
+        if (nodes && nodes[0] !== nodes[points.length - 1])
             return false;
     }
 

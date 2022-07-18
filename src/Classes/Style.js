@@ -93,8 +93,10 @@ function (text) {
 /**
  *
  * @param {string} text
+ * @returns {StyleSelector[]}
  */
 StyleSelector.parseMultiple = function (text) {
+    // @ts-ignore
     return text.split(",").map(StyleSelector.parse).filter(x => x);
 }
 
@@ -312,16 +314,16 @@ function makePredicate(match) {
 /**
  *
  * @param {Predicate} predicate
- * @param {MapContext} [context]
+ * @param {MapContext|ElementContext} [context]
  * @returns {boolean}
  */
-export function testPredicate (predicate, context={}) {
+export function testPredicate (predicate, context) {
   let left = typeof predicate.left === "string" || typeof predicate.left === "number" ?
     predicate.left : testPredicate(predicate.left, context);
   let right = typeof predicate.right === "string" || typeof predicate.right === "number"  ?
     predicate.right : testPredicate(predicate.right, context);
 
-  if (typeof left === "string" && left in context) {
+  if (context && typeof left === "string" && left in context) {
     // Lazily evaluate and replace context value
     if (context[left] instanceof Function)
       context[left] = context[left]();
@@ -329,7 +331,7 @@ export function testPredicate (predicate, context={}) {
     left = context[left];
   }
 
-  if (typeof right === "string" && right in context) {
+  if (context && typeof right === "string" && right in context) {
     // Lazily evaluate and replace context value
     if (context[right] instanceof Function)
       context[right] = context[right]();
