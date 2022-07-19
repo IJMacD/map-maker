@@ -8,8 +8,6 @@ let renderer;
 /** @type {Overpass} */
 let overpass = new Overpass();
 
-let chain = Promise.resolve();
-
 onmessage = (msg) => {
     if (msg.data.canvas) {
         canvas = msg.data.canvas;
@@ -17,23 +15,16 @@ onmessage = (msg) => {
     }
 
     if (msg.data.method === "clear") {
-        const { context: { width, height, bbox } } = msg.data;
+        const { context: { width, height, scale } } = msg.data;
 
-        canvas.width = width;
-        canvas.height = height;
-
-        overpass.setBBox(bbox);
-
-        chain = Promise.resolve();
+        canvas.width = width * scale;
+        canvas.height = height * scale;
     }
 
     if (msg.data.method === "renderRule") {
-        /** @type {{ context: MapContext, rule: StyleRule }} */
-        const { context, rule } = msg.data;
+        /** @type {{ context: MapContext, rule: StyleRule, elements: OverpassElement[] }} */
+        const { context, rule, elements } = msg.data;
 
-        overpass.setBBox(context.bbox);
-        const pElements = overpass.getElements(rule.selector);
-
-        chain = chain.then(() => pElements.then(elements => renderer.renderRule(context, rule, elements)));
+        renderer.renderRule(context, rule, elements);
     }
 };

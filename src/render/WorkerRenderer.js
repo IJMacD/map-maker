@@ -20,7 +20,7 @@ export default class WorkerRenderer extends MapRenderer {
         this.worker.postMessage({ method: "clear", context });
     }
 
-    renderRule (context, rule, _elements) {
-        this.worker.postMessage({ method: "renderRule", context, rule });
+    renderRule (context, rule, elements) {
+        this.worker.postMessage({ method: "renderRule", context, rule, elements });
     }
 }
