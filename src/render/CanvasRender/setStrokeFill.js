@@ -1,9 +1,9 @@
 import { parseStrokeFill } from '../../util/parseStrokeFill';
 
 /**
- * @param {CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D} ctx
+ * @param {CanvasRenderingContext2D} ctx
  * @param {StyleRule} rule
- * @param {OverpassElement} element
+ * @param {OverpassElement?} element
  * @param {MapContext} context
  */
 export function setStrokeFill (ctx, rule, element, context) {

@@ -50,9 +50,6 @@ function App() {
   const [ downloading, setDownloading ] = React.useState(false);
   const [ progress, setProgress ] = React.useState(0);
 
-  /** @type {React.MutableRefObject<MapRenderer?>} */
-  const rendererRef = React.useRef(null);
-
   const shellContextRef = React.useRef({
     executables: {
       "clear-cache": () => {
@@ -91,7 +88,7 @@ function App() {
 
   const [ consoleVisible, showConsole ] = React.useState(false);
 
-  const { clientWidth, clientHeight } = canvasRef.current || { clientWidth: 300, clientHeight: 150 };
+  const { clientWidth, clientHeight } = canvasRef.current || { clientWidth: 1100, clientHeight: 800 };
 
   const width = clientWidth;
   const height = clientHeight;
@@ -144,29 +141,31 @@ function App() {
     context.current = { longitude, latitude };
   }
 
-  if (canvasRef.current && !rendererRef.current) {
-    if (window.Worker &&
-      // @ts-ignore
-      canvasRef.current.transferControlToOffscreen &&
-      localStorage.getItem(WORKER_ENABLED_KEY))
-    {
-      rendererRef.current = new WorkerRender(canvasRef.current);
-    }
-    else {
-      rendererRef.current = new CanvasRender(canvasRef.current);
-    }
-  }
-
   // Refetch/Render map when bbox, or style change
   useDeepCompareEffect(() => {
-    if (rendererRef.current) {
-      // Double pointer to update inside render function scope
-      let current = { currentEffect: true };
+    let renderer;
 
-      render(rules, elementSourceRef.current, rendererRef.current, context, setStatus, setError, setProgress, current);
+    const canvas = canvasRef.current;
 
-      return () => { current.currentEffect = false; };
+    if (!canvas) return;
+
+    if (window.Worker &&
+      // @ts-ignore
+      canvas.transferControlToOffscreen &&
+      localStorage.getItem(WORKER_ENABLED_KEY))
+    {
+      renderer = new WorkerRender(canvas);
     }
+    else {
+      renderer = new CanvasRender(canvas);
+    }
+
+    // Double pointer to update inside render function scope
+    let current = { currentEffect: true };
+
+    render(rules, elementSourceRef.current, renderer, context, setStatus, setError, setProgress, current);
+
+    return () => { current.currentEffect = false; };
   }, [debouncedCentre, debouncedZoom, rules, context, renderPending]);
 
   /**

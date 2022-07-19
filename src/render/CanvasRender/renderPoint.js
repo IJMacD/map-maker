@@ -4,7 +4,7 @@ import { setStrokeFill } from "./setStrokeFill";
 import { applyTransform } from "./transform";
 
 /**
- * @param {CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D} ctx
+ * @param {CanvasRenderingContext2D} ctx
  * @param {StyleRule} rule
  * @param {[number, number]} position
  * @param {OverpassElement?} element
@@ -109,7 +109,7 @@ export function renderPoint(ctx, rule, [x, y], element, context) {
 }
 
 /**
- * @param {CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D} ctx
+ * @param {CanvasRenderingContext2D} ctx
  * @param {string} pathSpec
  */
 function drawPath (ctx, pathSpec, scale) {

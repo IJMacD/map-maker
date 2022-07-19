@@ -14,7 +14,7 @@
  *  fill: rgb(255,0,0);
  *
  * @param {string} value
- * @param {OverpassElement} element
+ * @param {OverpassElement?} element
  * @param {MapContext} context
  * @returns
  */
@@ -42,6 +42,11 @@ export function evaluateValue (value, element, context) {
             out.push(m[1].replace(/\\"/g, `"`).replace(/\\n/g, `\n`));
             index += m[0].length;
             continue;
+        }
+
+        // Following values require an element
+        if (!element) {
+            return c;
         }
 
         // Handle tag() function.

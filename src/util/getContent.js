@@ -2,7 +2,7 @@ import { evaluateValue } from "./evaluate";
 
 /**
  * @param {StyleRule} rule
- * @param {OverpassElement} element
+ * @param {OverpassElement?} element
  * @param {MapContext} context
  */
 export function getContent(rule, element, context) {

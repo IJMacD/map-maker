@@ -37,9 +37,15 @@ export default class MapRenderer {
             case "map": {
                 const points = rectToPoints(0, 0, width, height);
                 if (rule.selector.pseudoElement)
-                    this.renderPseudoElement(context, rule, points, null, null);
+                    this.renderPseudoElement(context, rule, points, null);
                 else
                     this.renderArea(context, rule, points, null);
+                break;
+            }
+            case "centre": {
+                /** @type {OverpassNodeElement} */
+                const dummyElement = { id: -1, type: "node", lon: context.centre[0], lat: context.centre[1], tags: {} };
+                this.renderPoint(context, rule, projection(dummyElement.lon, dummyElement.lat), dummyElement);
                 break;
             }
             case "current": {
@@ -110,8 +116,20 @@ export default class MapRenderer {
         }
     }
 
+    /**
+     * @param {MapContext} context
+     * @param {StyleRule} rule
+     * @param {[number, number]} point
+     * @param {OverpassElement?} element
+     */
     renderPoint (context, rule, point, element=null) {}
 
+    /**
+     * @param {MapContext} context
+     * @param {StyleRule} rule
+     * @param {[number, number][]} points
+     * @param {OverpassElement?} element
+     */
     renderLine (context, rule, points, element=null) {
         this.renderAreaLine(context, rule, points, getMidPoint, element);
     }
@@ -120,7 +138,7 @@ export default class MapRenderer {
      * @param {MapContext} context
      * @param {StyleRule} rule
      * @param {[number, number][]} points
-     * @param {OverpassElement?} points
+     * @param {OverpassElement?} element
      */
     renderArea (context, rule, points, element=null) {
         if (points.length === 0)
@@ -133,16 +151,23 @@ export default class MapRenderer {
         this.renderAreaLine(context, rule, points, getCentrePoint, element);
     }
 
+    /**
+     * @param {MapContext} context
+     * @param {StyleRule} rule
+     * @param {[number, number][]} points
+     * @param {(points: [number,number][]) => [number,number]} getPoint
+     * @param {OverpassElement?} element
+     */
     renderAreaLine (context, rule, points, getPoint, element=null) {}
 
     /**
      * @param {MapContext} context
      * @param {StyleRule} rule
      * @param {[number, number][]} points
-     * @param {OverpassElement?} [element]
+     * @param {OverpassElement?} element
      * @param {OverpassNodeElement[]} [nodes]
      */
-    renderPseudoElement(context, rule, points, element=null, nodes=null) {
+    renderPseudoElement(context, rule, points, element, nodes=[]) {
         switch (rule.selector.pseudoElement) {
             case "centre":
             case "center": {
@@ -160,7 +185,7 @@ export default class MapRenderer {
             case "average-point": {
                 // Average of all points
                 const avgPoint = getAveragePoint(points);
-                this.renderPoint(rule, avgPoint, element, context);
+                this.renderPoint(context, rule, avgPoint, element);
                 break;
             }
             case "start": {
@@ -196,15 +221,17 @@ export default class MapRenderer {
                 else if (rule.selector.type === "area")
                     point = getCentrePoint(points);
 
-                let [ x, y ] = point;
+                if (!element) return;
 
                 const content = getContent(rule, element, context);
 
                 if (!content) return;
 
+                let [ x, y ] = point;
+
                 let width = Number.NEGATIVE_INFINITY;;
                 let top = Number.NaN;
-                let bottom;
+                let bottom = 0;
                 let baseline = y;
                 for (const line of content.split("\n")) {
                     const size = this.measureText(context, rule, line);

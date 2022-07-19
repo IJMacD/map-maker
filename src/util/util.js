@@ -68,8 +68,7 @@ export function mercatorProjection(centre, scale, width, height) {
  */
 export function getAveragePoint(points) {
     const sum = points.reduce((sum, p) => [sum[0] + p[0], sum[1] + p[1]], [0, 0]);
-    /** @type {[number, number]} */
-    const avg = (sum.map(x => x / points.length));
+    const avg = /** @type {[number, number]} */(sum.map(x => x / points.length));
     return avg;
 }
 
