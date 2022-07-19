@@ -1,27 +1,14 @@
 {
   "files": {
-    "main.css": "/map-maker/static/css/main.0090ae9d.chunk.css",
-    "main.js": "/map-maker/static/js/main.0544f4ba.chunk.js",
-    "main.js.map": "/map-maker/static/js/main.0544f4ba.chunk.js.map",
-    "runtime-main.js": "/map-maker/static/js/runtime-main.91e8ba28.js",
-    "runtime-main.js.map": "/map-maker/static/js/runtime-main.91e8ba28.js.map",
-    "static/css/2.bb4479ce.chunk.css": "/map-maker/static/css/2.bb4479ce.chunk.css",
-    "static/js/2.68c28e4d.chunk.js": "/map-maker/static/js/2.68c28e4d.chunk.js",
-    "static/js/2.68c28e4d.chunk.js.map": "/map-maker/static/js/2.68c28e4d.chunk.js.map",
+    "main.css": "/map-maker/static/css/main.6ce5fefd.css",
+    "main.js": "/map-maker/static/js/main.ae801d05.js",
+    "static/js/render-worker.9b56c034.worker.js": "/map-maker/static/js/render-worker.9b56c034.worker.js",
     "index.html": "/map-maker/index.html",
-    "precache-manifest.9b2af3579bc8fbe13fb7399ea895f0fd.js": "/map-maker/precache-manifest.9b2af3579bc8fbe13fb7399ea895f0fd.js",
-    "service-worker.js": "/map-maker/service-worker.js",
-    "static/css/2.bb4479ce.chunk.css.map": "/map-maker/static/css/2.bb4479ce.chunk.css.map",
-    "static/css/main.0090ae9d.chunk.css.map": "/map-maker/static/css/main.0090ae9d.chunk.css.map",
-    "static/js/2.68c28e4d.chunk.js.LICENSE.txt": "/map-maker/static/js/2.68c28e4d.chunk.js.LICENSE.txt",
-    "static/js/render-worker.30a7101a.worker.js": "/map-maker/static/js/render-worker.30a7101a.worker.js",
-    "static/js/render-worker.30a7101a.worker.js.map": "/map-maker/static/js/render-worker.30a7101a.worker.js.map"
+    "main.6ce5fefd.css.map": "/map-maker/static/css/main.6ce5fefd.css.map",
+    "main.ae801d05.js.map": "/map-maker/static/js/main.ae801d05.js.map"
   },
   "entrypoints": [
-    "static/js/runtime-main.91e8ba28.js",
-    "static/css/2.bb4479ce.chunk.css",
-    "static/js/2.68c28e4d.chunk.js",
-    "static/css/main.0090ae9d.chunk.css",
-    "static/js/main.0544f4ba.chunk.js"
+    "static/css/main.6ce5fefd.css",
+    "static/js/main.ae801d05.js"
   ]
 }
