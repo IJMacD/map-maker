@@ -1,4 +1,5 @@
 import { contains } from "../util/bbox";
+import { isOverpassType } from "../util/overpass";
 
 /**
  * @implements {ElementSource}
@@ -77,11 +78,12 @@ export class MemorySource {
 
         const pendingList = [];
 
-        // TODO: optimisation - don't send selectors which aren't cached
-        // directly but are cached as a wildcard down to source
+        // TODO: optimisation - don't send {selectors which aren't cached
+        // directly but are cached as a wildcard} down to source
+        // e.g. way[highway=primary] AND way[highway=*]
 
         for (const selector of selectors) {
-            if (!this.#isAvailable(selector.toString(), bbox)) {
+            if (isOverpassType(selector) && !this.#isAvailable(selector.toString(), bbox)) {
                 pendingList.push(selector);
             }
         }
@@ -94,6 +96,10 @@ export class MemorySource {
             }
         }
 
-        return selectors.map(selector => ({ selector, bbox, elements: this.#getElementsFromCache(selector.toString(), bbox) }));
+        return selectors.map(selector => ({
+            selector,
+            bbox,
+            elements: isOverpassType(selector) ? this.#getElementsFromCache(selector.toString(), bbox) : []
+        }));
     }
 }

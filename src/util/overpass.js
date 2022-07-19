@@ -1,9 +1,5 @@
 import { matchSelector, StyleSelector } from "../Classes/Style";
 
-
-const overpassRe = /^(node|way|rel(?:ation)?|area)/;
-const recurRe = /^(way|rel(?:ation)?|area)/;
-
 /**
  * @param {StyleSelector[]} selectors
  */
@@ -17,7 +13,7 @@ export function getSelectors (selectors) {
 
     // Remove non-overpass selectors
     for (const [key, selector] of Object.entries(set)) {
-        if (!overpassRe.test(selector.type))
+        if (!isOverpassType(selector))
             delete set[key];
     }
 
@@ -26,7 +22,7 @@ export function getSelectors (selectors) {
 
 /** @param {StyleSelector} selector */
 export function mapSelectorForQuery (selector) {
-    const recur = recurRe.test(selector.type) ? ">;" : "";
+    const recur = /^(way|rel(?:ation)?|area)/.test(selector.type) ? ">;" : "";
     return `${mapSelector(selector)};${recur}`;
 }
 
@@ -68,7 +64,7 @@ export function extractElements (selectors, elements) {
     const nodeMap = {};
 
     // Only need node map if way have any rels or ways
-    if (selectors.some(s => s?.type === "relation" || s?.type === "way")) {
+    if (selectors.some(s => s?.type === "relation" || s?.type === "way" || s?.type === "area")) {
         elements.forEach(n => n.type === "node" && (nodeMap[n.id] = n));
     }
 
@@ -127,6 +123,19 @@ export function extractElementsBySelector(selector, elements, nodeMap, wayMap) {
 /**
  * @param {StyleSelector[]} selectors
  */
+export function optimiseDuplicates (selectors) {
+    const map = {};
+
+    for (const selector of selectors) {
+        map[selector.toString()] = selector;
+    }
+
+    return Object.values(map);
+}
+
+/**
+ * @param {StyleSelector[]} selectors
+ */
 export function optimiseWildcardTags (selectors) {
     /** @type {StyleSelector[]} */
     const out = [];
@@ -165,4 +174,16 @@ function isWildcardMatch(selector, testSelector) {
         return false;
 
     return selector.tags[key] === "*";
+}
+
+/**
+ * Checks if selector is for real Overpass element (e.g. node, way, relation,
+ * or area [which is still OK]); or another type of selector (e.g. map,
+ * current, gridlines, dummy, etc.)
+ * Returns `true` for Overpass elements
+ * @note Can be used in `.filter()` so don't add other parameters
+ * @param {StyleSelector} selector
+ */
+export function isOverpassType(selector) {
+    return /^(node|way|rel(?:ation)?|area)/.test(selector.type);
 }

@@ -1,5 +1,5 @@
 import IDBElementDatabase from "../data/database.idb";
-import { mapSelector } from "../util/overpass";
+import { isOverpassType } from "../util/overpass";
 
 /**
  * @implements {ElementSource}
@@ -26,7 +26,10 @@ export class DatabaseSource {
     async fetch (selectors, bbox) {
         console.debug(`[DatabaseSource] Fetching ${selectors.map(s => s.toString()).join(";")};`);
 
-        const dbResults = await Promise.all(selectors.map(s => this.#getElements(s, bbox)));
+        // Remove non-overpass types
+        const filteredSelectors = selectors.filter(isOverpassType);
+
+        const dbResults = await Promise.all(filteredSelectors.map(s => this.#getElements(s, bbox)));
 
         // Make list of selectors to fetch from source
         const pendingList = [];
@@ -49,9 +52,15 @@ export class DatabaseSource {
         }
 
         // Construct result objects
+        let dbIndex = 0;
         let fetchedIndex = 0;
-        return selectors.map((selector, i) => {
-            const dbResult = dbResults[i];
+        return selectors.map(selector => {
+            // No elements for non-overpass types
+            if (!isOverpassType(selector)) {
+                return { selector, bbox, elements: [] };
+            }
+
+            const dbResult = dbResults[dbIndex++];
 
             if (dbResult) {
                 return { selector, bbox, elements: dbResult };

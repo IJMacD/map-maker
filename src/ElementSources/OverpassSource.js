@@ -1,6 +1,6 @@
 import { StyleSelector } from "../Classes/Style";
 import { timeout } from '../util/util';
-import { clampBBox, extractElements, mapSelectorForQuery, optimiseWildcardTags } from "../util/overpass";
+import { clampBBox, extractElements, isOverpassType, mapSelectorForQuery, optimiseDuplicates, optimiseWildcardTags } from "../util/overpass";
 
 const API_ROOT = require("../conf").API_ROOT;
 
@@ -36,7 +36,11 @@ export class OverpassSource {
         if (bbox.split(",").map(p => +p).some(isNaN)) throw Error("Invalid BBox");
 
         // Remove non-overpass types
-        selectors = selectors.filter(s => /^(node|way|rel(?:ation)?|area)/.test(s.type));
+        selectors = selectors.filter(isOverpassType);
+
+        // Optimisation:
+        // Filter duplicates
+        selectors = optimiseDuplicates(selectors);
 
         // Optimisation:
         // No need to fetch specific value if wildcard tag is already selected
