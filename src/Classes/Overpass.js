@@ -2,12 +2,10 @@ import IDBElementDatabase from "../data/database.idb";
 import { contains } from "../util/bbox";
 import { matchSelector } from "./Style";
 import { timeout } from '../util/util';
+import { clampBBox, extractElementsBySelector, mapSelector, mapSelectorForQuery } from "../util/overpass";
 
 
 const API_ROOT = require("../conf").API_ROOT;
-
-const overpassRe = /^(node|way|rel(?:ation)?|area)/;
-const recurRe = /^(way|rel(?:ation)?|area)/;
 
 export class Overpass {
     /** @param {string?} bbox */
@@ -44,21 +42,13 @@ export class Overpass {
             }
 
             // Create set of selectors
-            /** @type {{ [key: string]: StyleSelector }} */
-            const set = {};
-            selectors.forEach(s => set[mapSelector(s)] = s);
-
-            console.debug(`Preloading Elements: ${selectors.length} requested (${Object.keys(set).length} unique)`);
-
-            // Remove non-overpass selectors
-            for (const [key, selector] of Object.entries(set)) {
-                if (!overpassRe.test(selector.type)) delete set[key];
-            }
+            const set = this.getSelectors(selectors);
             console.debug(`Preloading Elements: ${Object.keys(set).length} are Overpass Elements`);
 
             // Remove selectors found in local hash map cache
             for (const key of Object.keys(set)) {
-                if (this.elements.has(key)) delete set[key];
+                if (this.haveElements(key))
+                    delete set[key];
             }
             console.debug(`Preloading Elements: ${Object.keys(set).length} not in HashMap`);
 
@@ -87,34 +77,7 @@ export class Overpass {
             elements.forEach(n => n.type === "way" && (wayMap[n.id] = n));
 
             await Promise.all(Object.values(set).map(selector => {
-                const out = elements.filter(el => matchSelector(selector, el, false));
-
-                if (selector.type === "relation") {
-                    /** @type {OverpassRelElement[]} */
-                    const rels = (out.slice());
-
-                    /** @type {OverpassWayElement[]} */
-                    const ways = [];
-
-                    for (const rel of rels) {
-                        const refs = rel.members.map(m => m.ref);
-                        ways.push(...refs.map(id => wayMap[id]));
-                    }
-
-                    out.push(...ways);
-
-                    for (const way of ways) {
-                        out.push(...way.nodes.map(id => nodeMap[id]));
-                    }
-
-                } else if (selector.type === "way" || selector.type === "area") {
-                    /** @type {OverpassWayElement[]} */
-                    const ways = (out.slice());
-
-                    for (const way of ways) {
-                        out.push(...way.nodes.map(id => nodeMap[id]));
-                    }
-                }
+                const out = extractElementsBySelector(selector, elements, nodeMap, wayMap);
 
                 this.elements.set(mapSelector(selector), Promise.resolve(out));
                 return this.database.saveElements(bbox, mapSelector(selector), { elements: out, cached: Date.now() });
@@ -122,6 +85,13 @@ export class Overpass {
 
             return elements.length;
         });
+    }
+
+    /**
+     * @param {string} key
+     */
+    haveElements (key) {
+        return this.elements.has(key);
     }
 
     /**
@@ -168,7 +138,7 @@ export class Overpass {
      * @returns {Promise<OverpassElement[]>}
      */
     async getElements (selector) {
-        if (!overpassRe.test(selector.type)) return;
+        // if (!overpassRe.test(selector.type)) return;
 
         if (!this.bbox) return;
 
@@ -216,29 +186,4 @@ export class Overpass {
         if (database)
             return this.database.clear();
     }
-}
-
-/** @param {StyleSelector} selector */
-function mapSelectorForQuery (selector) {
-    const recur = recurRe.test(selector.type) ? ">;" : "";
-    return `${mapSelector(selector)};${recur}`;
-}
-
-/** @param {StyleSelector} selector */
-function mapSelector (selector) {
-    const type = selector.type === "area" ? "way" : selector.type;
-    const tags = Object.entries(selector.tags).map(([k,v]) => {
-        if (k.includes(":")) k = `"${k}"`;
-        return (/^[<=>]+/.test(v) || v === "*") ? `[${k}]` : `[${k}=${v}]`;
-    });
-    return `${type}${tags.join("")}`;
-}
-
-function clampBBox (bbox) {
-    const p = bbox.split(",").map(p => +p);
-    return `${clamp(p[0], -180, 180)},${clamp(p[1], -90, 90)},${clamp(p[2], -180, 180)},${clamp(p[3], -90, 90)}`;
-}
-
-function clamp (v, min, max) {
-    return Math.max(min, Math.min(v, max));
 }

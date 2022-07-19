@@ -1,6 +1,5 @@
 .App {
   display: flex;
-  font-size: 18pt;
   height: 100vh;
   overflow: hidden;
 }
@@ -12,6 +11,7 @@
 }
 
 .controls {
+  font-size: 18pt;
   text-align: center;
 }
 

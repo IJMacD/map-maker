@@ -13,8 +13,12 @@ import { makeBBox } from './util/bbox';
 import Textarea from './Components/Textarea';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { Console } from 'app-console';
+import { OverpassStatus } from './Components/OverpassStatus';
 
 import 'app-console/dist/index.css';
+import { MemorySource } from './ElementSources/MemorySource';
+import { OverpassSource } from './ElementSources/OverpassSource';
+import { DatabaseSource } from './ElementSources/DatabaseSource';
 
 const WORKER_ENABLED_KEY = "worker-enabled";
 
@@ -22,27 +26,45 @@ function App() {
   const [ style, setStyle ] = useSavedState("USER_STYLE", "node[amenity=post_box] {\n\tfill: black;\n\tsize: 2;\n}");
   const [ centre, setCentre ] = useSavedState("USER_CENTRE", "7.1,50.7");
   const [ zoom, setZoom ] = useSavedState("USER_SCALE", 14);
+
   const current = useGeolocation();
+
   /** @type {React.MutableRefObject<HTMLCanvasElement?>} */
   const canvasRef = React.useRef(null);
-  /** @type {React.MutableRefObject<Overpass>} */
-  const overpassRef = React.useRef(new Overpass());
+
+  // /** @type {React.MutableRefObject<Overpass>} */
+  // const overpassRef = React.useRef(new Overpass());
+
+  /** @type {React.MutableRefObject<ElementSource>} */
+  // @ts-ignore
+  const elementSourceRef = React.useRef();
+
+  if (!elementSourceRef.current) {
+    const overpassSource = new OverpassSource();
+    const databaseSource = new DatabaseSource(overpassSource);
+    elementSourceRef.current = new MemorySource(databaseSource);
+  }
+
   const [ status, setStatus ] = React.useState(/** @type {string?} */(null));
   const [ error, setError ] = React.useState("");
   const [ downloading, setDownloading ] = React.useState(false);
   const [ progress, setProgress ] = React.useState(0);
+
   /** @type {React.MutableRefObject<MapRenderer?>} */
   const rendererRef = React.useRef(null);
+
   const shellContextRef = React.useRef({
     executables: {
       "clear-cache": () => {
-        if (overpassRef.current) {
-          overpassRef.current.clearCache(true);
-        }
+        // if (overpassRef.current) {
+        //   overpassRef.current.clearCache(true);
+        // }
       },
     },
   });
   const [ renderPending, forceRender ] = useForceRender();
+
+  // Console side effects
   React.useEffect(() => {
     const { current: { executables } } = shellContextRef;
     executables.render = forceRender;
@@ -66,6 +88,7 @@ function App() {
       window.location.reload();
     };
   }, [ forceRender, centre, zoom, setCentre, setZoom, current ]);
+
   const [ consoleVisible, showConsole ] = React.useState(false);
 
   const { clientWidth, clientHeight } = canvasRef.current || { clientWidth: 300, clientHeight: 150 };
@@ -82,7 +105,7 @@ function App() {
 
   const parsedStyle = React.useMemo(() => parseStyle(debouncedStyle), [debouncedStyle]);
 
-  React.useEffect(() => overpassRef.current.setBBox(bbox), [bbox]);
+  // React.useEffect(() => overpassRef.current.setBBox(bbox), [bbox]);
 
   /** @type {[number, number]} */
   const centrePoint = (debouncedCentre.split(",").map(p => +p));
@@ -116,7 +139,7 @@ function App() {
     else if (shiftKey) setZoom(zoom - dz);
   }
 
-  if (rules.some(r => r.selector?.type === "current")) {
+  if (rules.some(r => r.selector.type === "current")) {
     const { coords: { longitude, latitude } } = current || { coords: {} };
     context.current = { longitude, latitude };
   }
@@ -140,7 +163,7 @@ function App() {
       // Double pointer to update inside render function scope
       let current = { currentEffect: true };
 
-      render(rules, overpassRef.current, rendererRef.current, context, setStatus, setError, setProgress, current);
+      render(rules, elementSourceRef.current, rendererRef.current, context, setStatus, setError, setProgress, current);
 
       return () => { current.currentEffect = false; };
     }
@@ -172,7 +195,7 @@ function App() {
           downloadPNG(canvasRef.current, cb);
         }
       } else {
-        downloadSVG(context, parsedStyle, overpassRef.current, cb);
+        // downloadSVG(context, parsedStyle, overpassRef.current, cb);
       }
     }
   }
@@ -195,6 +218,7 @@ function App() {
         <label>Zoom <input type="number" value={zoom} onChange={e => setZoom(+e.target.value)} /></label>
         <Textarea value={style} onChange={setStyle} style={{flex:1}} spellCheck={false} />
         <div className="status-area">
+          {/* <OverpassStatus overpass={overpassRef.current} rules={rules} /> */}
           { status && <p>{status}</p> }
           { progress > 0 && <progress value={progress} />}
           { error && <p style={{color:"red"}}>{error}</p> }
@@ -280,7 +304,7 @@ function useForceRender () {
 
 /**
  * @param {StyleRule[]} rules
- * @param {Overpass} overpass
+ * @param {ElementSource} elementSource
  * @param {MapRenderer} renderer
  * @param {MapContext} context
  * @param {(arg0: string?) => void} setStatus
@@ -288,29 +312,14 @@ function useForceRender () {
  * @param {(arg0: number) => void} setProgress
  * @param {{ currentEffect: any; }} current
  */
-async function render (rules, overpass, renderer, context, setStatus, setError, setProgress, current) {
+async function render (rules, elementSource, renderer, context, setStatus, setError, setProgress, current) {
   setStatus("Fetching...");
   setError("");
 
   try {
-    const count = await overpass.preLoadElements(rules.map(r => r.selector));
+    setStatus(`Rendering...`);
 
-    if (!current.currentEffect) return;
-
-    // Check if we're already preloading something
-    if (count < 0) return;
-
-    if (count === 0)
-      setStatus(`Rendering...`);
-    else
-      setStatus(`Rendering ${count} elements...`);
-
-    const map = rules.map(rule => {
-      return {
-        rule,
-        promise: renderer instanceof WorkerRender ? Promise.resolve() : overpass.getElements(rule.selector),
-      }
-    });
+    const results = await elementSource.fetch(rules.map(r => r.selector), context.bbox);
 
     CollisionSystem.getCollisionSystem().clear();
 
@@ -319,22 +328,24 @@ async function render (rules, overpass, renderer, context, setStatus, setError, 
 
       renderer.clear(context);
 
-      let count = 0;
+      let index = 0;
       // setProgress(0);
 
-      for (const item of map) {
-        const prefix = `${++count}/${map.length}`;
+      for (const result of results) {
+        const prefix = `Rule ${index}: `;
 
-        console.debug(`${prefix} Loading elements for ${item.rule.selector}`);
-        const elements = await item.promise;
+        // console.debug(`${prefix} Loading elements for ${item.rule.selector}`);
+        const { elements } = result;
 
-        if (!current.currentEffect) return;
+        // if (!current.currentEffect) return;
 
-        console.debug(`${prefix} Rendering ${item.rule.selector}`);
+        console.debug(`${prefix} Rendering ${result.selector}`);
 
-        renderer.renderRule(context, item.rule, elements);
+        renderer.renderRule(context, rules[index], elements);
 
         // setProgress(count/map.length);
+
+        index++;
       }
       // setProgress(0);
 

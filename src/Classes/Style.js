@@ -100,6 +100,10 @@ StyleSelector.parseMultiple = function (text) {
     return text.split(",").map(StyleSelector.parse).filter(x => x);
 }
 
+StyleSelector.clone = function (/** @type {StyleSelector} */ other) {
+  return new StyleSelector(other.type, other.tags, other.pseudoClasses, other.pseudoElement);
+}
+
 /**
  *
  * @param {{ rules: StyleRule[] }} style
