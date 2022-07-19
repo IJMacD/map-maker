@@ -36,7 +36,8 @@ export async function render(rules, elementSource, renderer, context, setStatus,
     renderer.clear(context);
 
     let index = 0;
-    // setProgress(0);
+    setProgress(0);
+
     for (const result of results) {
       const prefix = `Rule ${index}: `;
 
@@ -48,10 +49,15 @@ export async function render(rules, elementSource, renderer, context, setStatus,
 
       renderer.renderRule(context, rules[index], elements);
 
-      // setProgress(count/map.length);
+      setProgress(index/rules.length);
+
+      // Render looks cooler but takes twice as long with microtask breaks
+      await microtaskBreak();
+
       index++;
     }
-    // setProgress(0);
+
+    setProgress(0);
     console.timeEnd("Rendering");
 
     setStatus(null);

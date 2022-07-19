@@ -7,7 +7,6 @@ import { parseStyle, filterRules } from './Classes/Style';
 import { Overpass } from './Classes/Overpass';
 import CollisionSystem from './Classes/CollisionSystem';
 import CanvasRender from './render/CanvasRender';
-import WorkerRender from './render/WorkerRenderer';
 import SVGRender from './render/SVGRender';
 import { makeBBox } from './util/bbox';
 import Textarea from './Components/Textarea';
@@ -22,8 +21,6 @@ import { DatabaseSource } from './ElementSources/DatabaseSource';
 import { render } from './render/render';
 import { useForceRender } from './hooks/useForceRender';
 import { cleanup, cleanupPoint, interpolateBox, parseBBox } from './util/util';
-
-const WORKER_ENABLED_KEY = "worker-enabled";
 
 function App() {
   const [ style, setStyle ] = useSavedState("USER_STYLE", "node[amenity=post_box] {\n\tfill: black;\n\tsize: 2;\n}");
@@ -78,14 +75,6 @@ function App() {
       if (name === "centre") { setCentre(value); return true; }
       if (name === "zoom") { setZoom(value); return true; }
       return false;
-    };
-    executables["enable-worker"] = () => {
-      localStorage.setItem(WORKER_ENABLED_KEY, "on");
-      window.location.reload();
-    };
-    executables["disable-worker"] = () => {
-      localStorage.removeItem(WORKER_ENABLED_KEY);
-      window.location.reload();
     };
   }, [ forceRender, centre, zoom, setCentre, setZoom, current ]);
 
@@ -146,22 +135,11 @@ function App() {
 
   // Refetch/Render map when bbox, or style change
   useDeepCompareEffect(() => {
-    let renderer;
-
     const canvas = canvasRef.current;
 
     if (!canvas) return;
 
-    if (window.Worker &&
-      // @ts-ignore
-      canvas.transferControlToOffscreen &&
-      localStorage.getItem(WORKER_ENABLED_KEY))
-    {
-      renderer = new WorkerRender(canvas);
-    }
-    else {
-      renderer = new CanvasRender(canvas);
-    }
+    const renderer = new CanvasRender(canvas);
 
     // Double pointer to update inside render function scope
     let current = { currentEffect: true };
