@@ -18,10 +18,11 @@ export function renderPoint(ctx, rule, [x, y], element, context) {
     setStrokeFill(ctx, rule, element, context);
 
     if (rule.declarations["position"] === "absolute") {
-        x = (parseFloat(rule.declarations["left"]) || 0) * scale;
-        y = (parseFloat(rule.declarations["top"]) || 0) * scale;
+        x = parseFloat(rule.declarations["left"]) || 0;
+        y = parseFloat(rule.declarations["top"]) || 0;
     }
-    ctx.translate(x, y);
+
+    ctx.translate(x * scale, y * scale);
 
     applyTransform(ctx, rule, scale);
 

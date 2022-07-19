@@ -14,10 +14,10 @@ export default class CanvasRender extends MapRenderer {
     }
 
     clear (context) {
-        const { width, height } = context;
+        const { width, height, scale } = context;
 
-        this.canvas.width = width * devicePixelRatio;
-        this.canvas.height = height * devicePixelRatio;
+        this.canvas.width = width * scale;
+        this.canvas.height = height * scale;
 
         this.canvas.style.width = `${width}px`;
         this.canvas.style.height = `${height}px`;

@@ -5,7 +5,7 @@ import { getBoundingBox } from "../../util/util";
 import CollisionSystem from "../../Classes/CollisionSystem";
 
 /**
- * @param {CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D} ctx
+ * @param {CanvasRenderingContext2D} ctx
  * @param {StyleRule} rule
  * @param {[number, number][]} points
  * @param {(points: [number, number][]) => [number, number]} getPoint
@@ -51,6 +51,8 @@ export function renderAreaLine(ctx, rule, points, getPoint, element = null, cont
     let offsetX = 0;
     let offsetY = 0;
 
+    const { scale } = context;
+
     if (rule.declarations["transform"]) {
         // Extra work required if we're transforming
 
@@ -65,13 +67,14 @@ export function renderAreaLine(ctx, rule, points, getPoint, element = null, cont
         ctx.translate(offsetX, offsetY);
 
         // Apply the transformation
-        applyTransform(ctx, rule, context.scale);
+        applyTransform(ctx, rule, scale);
     }
 
     ctx.beginPath();
-    ctx.moveTo(points[0][0] - offsetX, points[0][1] - offsetY);
-    for (let i = 1; i < points.length; i++) {
-        ctx.lineTo(points[i][0] - offsetX, points[i][1] - offsetY);
+    for (let i = 0; i < points.length; i++) {
+        let x = points[i][0] - offsetX;
+        let y = points[i][1] - offsetY;
+        ctx.lineTo(x * scale, y * scale);
     }
 
     rule.declarations["fill"] && ctx.fill();
