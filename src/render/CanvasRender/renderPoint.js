@@ -27,11 +27,32 @@ export function renderPoint(ctx, rule, [x, y], element, context) {
     applyTransform(ctx, rule, scale);
 
     if (rule.declarations["size"]) {
+        const shape = rule.declarations["shape"] ?? "circle";
+
         ctx.beginPath();
 
         const r = +evaluateValue(rule.declarations["size"], element, context) * scale;
 
-        ctx.ellipse(0, 0, r, r, 0, 0, Math.PI * 2);
+        if (shape === "square") {
+            ctx.moveTo(-r, -r);
+            ctx.lineTo(r, -r);
+            ctx.lineTo(r, r);
+            ctx.lineTo(-r, r);
+            ctx.closePath();
+        }
+        else if (shape === "triangle") {
+            const t = Math.cos(30/180*Math.PI);
+            ctx.moveTo(-r, r*t*0.5);
+            ctx.lineTo(0, -r/t);
+            ctx.lineTo(r, r*t*0.5);
+            ctx.closePath();
+        }
+        else if (shape === "ellipse") {
+            ctx.ellipse(0, 0, 2 * r, r, 0, 0, Math.PI * 2);
+        }
+        else {
+            ctx.ellipse(0, 0, r, r, 0, 0, Math.PI * 2);
+        }
 
         rule.declarations["fill"] && ctx.fill();
         rule.declarations["stroke"] && ctx.stroke();
