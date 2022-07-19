@@ -25,6 +25,9 @@ export async function render(rules, elementSource, renderer, context, setStatus,
 
     console.time("Rendering");
 
+    // Yield to let react update UI before heavy rendering process
+    await microtaskBreak();
+
     CollisionSystem.getCollisionSystem().clear();
 
     if (!current.currentEffect)
@@ -58,3 +61,5 @@ export async function render(rules, elementSource, renderer, context, setStatus,
     console.log(e);
   }
 }
+
+const microtaskBreak = () => new Promise(resolve => setTimeout(resolve, 0));
