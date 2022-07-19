@@ -88,16 +88,6 @@ way[natural=coastline] {
         stroke: blue;
         stroke-width: 2;
     }
-    way[highway=motrway]::content-box {
-        stroke: blue;
-        stroke-width: 1.5;
-        fill: white;
-        text-color: blue;
-        content: tag(ref);
-        padding: 4px;
-        collision-set: road-labels;
-        collision-size: 300%;
-    }
 }
 @match (zoom >= 8) {
     way[highway=trunk],
@@ -110,16 +100,6 @@ way[natural=coastline] {
         stroke: green;
         stroke-width: 1;
     }
-    way[highway=trunk]::content-box {
-        stroke: green;
-        stroke-width: 1.5;
-        fill: white;
-        text-color: green;
-        content: tag(ref);
-        padding: 4px;
-        collision-set: road-labels;
-        collision-size: 300%;
-    }
 }
 @match (zoom >= 9) {
     way[highway=primary],
@@ -127,31 +107,11 @@ way[natural=coastline] {
         stroke: #D00000;
         stroke-width: 1.5;
     }
-    way[highway=primary]::content-box {
-        stroke: #D00000;
-        stroke-width: 1.5;
-        fill: white;
-        text-color: #d00000;
-        content: tag(ref);
-        padding: 4px;
-        collision-set: road-labels;
-        collision-size: 200%;
-    }
 }
 @match (zoom >= 10) {
     way[highway=secondary] {
         stroke: darkorange;
         stroke-width: 1;
-    }
-    way[highway=secondary]::content-box {
-        stroke: darkorange;
-        stroke-width: 1.5;
-        fill: white;
-        text-color: orange;
-        content: tag(ref);
-        padding: 4px;
-        collision-set: road-labels;
-        collision-size: 200%;
     }
 }
 @match (zoom >= 11) {
@@ -318,6 +278,54 @@ way[railway=rail] {
         font-size: 10px;
         font-weight: bold;
         collision-set: labels;
+    }
+}
+@match (zoom >= 8) {
+    way[highway=motorway]::content-box {
+        stroke: blue;
+        stroke-width: 1.5;
+        fill: white;
+        text-color: blue;
+        content: tag(ref);
+        padding: 4px;
+        collision-set: road-labels;
+        collision-size: 300%;
+    }
+}
+@match (zoom >= 8) {
+    way[highway=trunk]::content-box {
+        stroke: green;
+        stroke-width: 1.5;
+        fill: white;
+        text-color: green;
+        content: tag(ref);
+        padding: 4px;
+        collision-set: road-labels;
+        collision-size: 300%;
+    }
+}
+@match (zoom >= 9) {
+    way[highway=primary]::content-box {
+        stroke: #D00000;
+        stroke-width: 1.5;
+        fill: white;
+        text-color: #d00000;
+        content: tag(ref);
+        padding: 4px;
+        collision-set: road-labels;
+        collision-size: 200%;
+    }
+}
+@match (zoom >= 10) {
+    way[highway=secondary]::content-box {
+        stroke: darkorange;
+        stroke-width: 1.5;
+        fill: white;
+        text-color: orange;
+        content: tag(ref);
+        padding: 4px;
+        collision-set: road-labels;
+        collision-size: 200%;
     }
 }
 current {

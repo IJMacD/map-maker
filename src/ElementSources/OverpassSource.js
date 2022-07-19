@@ -60,11 +60,10 @@ export class OverpassSource {
         }
 
         this.#inProgress[url] = fetch(url.toString())
-            .then(r => r.ok ? r.json() : Promise.reject(r.status))
-            .then(r => {
+            .then(r => r.ok ? /** @type {Promise<{ elements: OverpassElement[] }>} */(r.json()) : Promise.reject(r.status))
+            .then(r => r.elements)
+            .finally(() => {
                 delete this.#inProgress[url];
-
-                return r.elements;
             });
 
         return this.#inProgress[url];
@@ -78,8 +77,10 @@ export class OverpassSource {
      * @returns {Promise<OverpassElement[]>}
      */
     #tryQuery (selectors, bbox, tries=10) {
+        const retryErrors = [ 429, 504 ];
+
         return this.#query(selectors, bbox).catch(e => {
-            if (e !== 429) throw Error("Bad Response");
+            if (!retryErrors.includes(e)) throw Error("Bad Response");
 
             if (tries > 0) {
                 return timeout(10000).then(() => this.#tryQuery(selectors, bbox, tries - 1));

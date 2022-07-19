@@ -73,8 +73,9 @@ export default class CanvasRender extends MapRenderer {
             throw Error("Can't get canvas context");
         }
 
-        const { scale } = context;
-        setFont(ctx, rule, scale);
+        // Measurements must be non-scaled so they can be scaled as appropriate
+        // later.
+        setFont(ctx, rule, 1);
         const size = ctx.measureText(text);
         const { width, actualBoundingBoxDescent: descending, actualBoundingBoxAscent: ascending } = size;
 

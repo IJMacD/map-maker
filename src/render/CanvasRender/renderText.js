@@ -2,7 +2,7 @@ import { setStrokeFill } from "./setStrokeFill";
 import { getContent } from "../../util/getContent";
 
 /**
- * @param {CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D} ctx
+ * @param {CanvasRenderingContext2D} ctx
  * @param {StyleRule} rule
  * @param {[number, number]} param2
  * @param {OverpassElement?} element
@@ -21,7 +21,7 @@ export function renderText(ctx, rule, [x, y], element = null, context) {
 }
 
 /**
- * @param {CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D} ctx
+ * @param {CanvasRenderingContext2D} ctx
  * @param {StyleRule} rule
  * @param {string} content
  * @param {number} x
@@ -62,7 +62,7 @@ function renderLine(ctx, rule, content, x, y, context) {
 }
 
 /**
- * @param {CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D} ctx
+ * @param {CanvasRenderingContext2D} ctx
  * @param {StyleRule} rule
  * @param {number} scale
  */

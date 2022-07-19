@@ -1,4 +1,4 @@
-import { matchSelector, StyleSelector } from "../Classes/Style";
+import { matchSelector } from "../Classes/Style";
 
 /**
  * @param {StyleSelector[]} selectors
@@ -55,10 +55,20 @@ export function clamp (v, min, max) {
 }
 
 /**
+ * Given a list of elements and a list of selectors; for each selector extract
+ * the matching elements (including dependent elements e.g. nodes for ways)
  * @param {StyleSelector[]} selectors
  * @param {OverpassElement[]} elements
  */
 export function extractElements (selectors, elements) {
+    // Optimisation:
+    // Hopefully safe. If there's only one selector then we might assume the
+    // elements are already correct (an not over supplied)
+    if (selectors.length === 1) {
+        console.debug("[Overpass] Assumption: elements are already matching")
+        return [elements];
+    }
+
     // Prepare node map
     /** @type {{ [id: number]: OverpassNodeElement }} */
     const nodeMap = {};
@@ -107,6 +117,9 @@ export function extractElementsBySelector(selector, elements, nodeMap, wayMap) {
         out.push(...ways);
 
         for (const way of ways) {
+            if (!way) {
+                throw Error("[Overpass] missing way from waymap");
+            }
             out.push(...way.nodes.map(id => nodeMap[id]));
         }
 

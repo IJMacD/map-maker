@@ -116,3 +116,38 @@ export function getBoundingBox(points) {
         minMax[3] - minMax[1],
     ];
 }
+
+
+/**
+ * @param {string} bbox
+ */
+export function parseBBox (bbox) {
+    return bbox.split(",").map(s => +s);
+}
+
+
+/**
+ * @param {{ x: number, y: number }} param0
+ * @param {[number, number, number, number]} from
+ * @param {[number, number, number, number]} to
+ */
+export function interpolateBox ({x, y}, from, to) {
+    const fx = (x - from[0]) / (from[2] - from[0]);
+    const fy = (y - from[1]) / (from[3] - from[1]);
+
+    const tw = to[2] - to[0];
+    const th = to[3] - to[1];
+
+    return { x: fx * tw + to[0], y: fy * th+ to[1] };
+}
+
+/**
+ * @param {number} n
+ */
+export function cleanup (n) {
+    return n.toFixed(5).replace(/^0+|0+$/g, "");
+}
+
+export function cleanupPoint (x, y) {
+    return `${cleanup(x)},${cleanup(y)}`;
+}

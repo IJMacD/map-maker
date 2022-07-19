@@ -19,6 +19,9 @@ import 'app-console/dist/index.css';
 import { MemorySource } from './ElementSources/MemorySource';
 import { OverpassSource } from './ElementSources/OverpassSource';
 import { DatabaseSource } from './ElementSources/DatabaseSource';
+import { render } from './render/render';
+import { useForceRender } from './hooks/useForceRender';
+import { cleanup, cleanupPoint, interpolateBox, parseBBox } from './util/util';
 
 const WORKER_ENABLED_KEY = "worker-enabled";
 
@@ -282,102 +285,4 @@ function blobDownload (blob, filename) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-}
-
-/**
- * @param {number} n
- */
-function cleanup (n) {
-  return n.toFixed(5).replace(/^0+|0+$/g, "");
-}
-
-function cleanupPoint (x, y) {
-  return `${cleanup(x)},${cleanup(y)}`;
-}
-
-function useForceRender () {
-  const [ counter, setCounter ] = React.useState(0);
-
-  return [ counter, () => setCounter(c => c + 1) ];
-}
-
-/**
- * @param {StyleRule[]} rules
- * @param {ElementSource} elementSource
- * @param {MapRenderer} renderer
- * @param {MapContext} context
- * @param {(arg0: string?) => void} setStatus
- * @param {(arg0: string) => void} setError
- * @param {(arg0: number) => void} setProgress
- * @param {{ currentEffect: any; }} current
- */
-async function render (rules, elementSource, renderer, context, setStatus, setError, setProgress, current) {
-  setStatus("Fetching...");
-  setError("");
-
-  try {
-    setStatus(`Rendering...`);
-
-    const results = await elementSource.fetch(rules.map(r => r.selector), context.bbox);
-
-    CollisionSystem.getCollisionSystem().clear();
-
-    if (renderer) {
-      if (!current.currentEffect) return;
-
-      renderer.clear(context);
-
-      let index = 0;
-      // setProgress(0);
-
-      for (const result of results) {
-        const prefix = `Rule ${index}: `;
-
-        // console.debug(`${prefix} Loading elements for ${item.rule.selector}`);
-        const { elements } = result;
-
-        // if (!current.currentEffect) return;
-
-        console.debug(`${prefix} Rendering ${result.selector}`);
-
-        renderer.renderRule(context, rules[index], elements);
-
-        // setProgress(count/map.length);
-
-        index++;
-      }
-      // setProgress(0);
-
-      console.debug(`Rendered!`);
-    }
-
-    setStatus(null);
-  } catch (e) {
-    setError("Error Fetching");
-    setStatus(null);
-    console.log(e);
-  }
-}
-
-/**
- * @param {string} bbox
- */
-function parseBBox (bbox) {
-  return bbox.split(",").map(s => +s);
-}
-
-
-/**
- * @param {{ x: number, y: number }} param0
- * @param {[number, number, number, number]} from
- * @param {[number, number, number, number]} to
- */
-function interpolateBox ({x, y}, from, to) {
-  const fx = (x - from[0]) / (from[2] - from[0]);
-  const fy = (y - from[1]) / (from[3] - from[1]);
-
-  const tw = to[2] - to[0];
-  const th = to[3] - to[1];
-
-  return { x: fx * tw + to[0], y: fy * th+ to[1] };
 }
