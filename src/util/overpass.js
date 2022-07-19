@@ -68,7 +68,7 @@ export function extractElements (selectors, elements) {
     const nodeMap = {};
 
     // Only need node map if way have any rels or ways
-    if (selectors.some(s => s?.type === "rel" || s?.type === "way")) {
+    if (selectors.some(s => s?.type === "relation" || s?.type === "way")) {
         elements.forEach(n => n.type === "node" && (nodeMap[n.id] = n));
     }
 
@@ -77,7 +77,7 @@ export function extractElements (selectors, elements) {
     const wayMap = {};
 
     // Only need way map if way have any rels
-    if (selectors.some(s => s?.type === "rel")) {
+    if (selectors.some(s => s?.type === "relation")) {
         elements.forEach(n => n.type === "way" && (wayMap[n.id] = n));
     }
 

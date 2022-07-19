@@ -73,4 +73,4 @@ type ElementContext = {
 
 type ElementSource = { fetch: (selectors: StyleSelector[], bbox: string) => Promise<ElementSourceResult[]>; };
 
-type ElementSourceResult = { selector: string; bbox: string; elements: OverpassElement[]; };
+type ElementSourceResult = { selector: StyleSelector; bbox: string; elements: OverpassElement[]; };

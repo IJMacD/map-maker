@@ -16,8 +16,9 @@ import { Console } from 'app-console';
 import { OverpassStatus } from './Components/OverpassStatus';
 
 import 'app-console/dist/index.css';
-import { ElementCachePromise } from './Classes/ElementCachePromise';
-import { OverpassSource } from './Classes/OverpassSource';
+import { MemorySource } from './ElementSources/MemorySource';
+import { OverpassSource } from './ElementSources/OverpassSource';
+import { DatabaseSource } from './ElementSources/DatabaseSource';
 
 const WORKER_ENABLED_KEY = "worker-enabled";
 
@@ -40,7 +41,8 @@ function App() {
 
   if (!elementSourceRef.current) {
     const overpassSource = new OverpassSource();
-    elementSourceRef.current = new ElementCachePromise(overpassSource);
+    const databaseSource = new DatabaseSource(overpassSource);
+    elementSourceRef.current = new MemorySource(databaseSource);
   }
 
   const [ status, setStatus ] = React.useState(/** @type {string?} */(null));

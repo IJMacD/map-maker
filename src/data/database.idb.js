@@ -55,10 +55,11 @@ export default class IDBElementDatabase {
     }
 
     /**
-     *
+     * If there is an *exact* match for selector/bbox then this method returns
+     * those elements.
      * @param {string} bbox
      * @param {string} selector
-     * @returns {Promise<{ elements: OverpassElement[] }>}
+     * @returns {Promise<{ elements: OverpassElement[] }|undefined>}
      */
     getElements (bbox, selector) {
         const key = makeKey(bbox, selector);
@@ -66,25 +67,25 @@ export default class IDBElementDatabase {
     }
 
     /**
-     *
+     * Get the elements for a given database key
      * @param {string} key
-     * @returns {Promise<{ elements: OverpassElement[] }>}
+     * @returns {Promise<{ elements: OverpassElement[] }|undefined>}
      */
     async getElementsByKey (key) {
         const db = await this.db;
         return new Promise((resolve, reject) => {
             const objectStore = db.transaction("elements", "readonly").objectStore("elements");
             const request = objectStore.get(key);
-            request.addEventListener("success", e => resolve(request.result));
+            request.addEventListener("success", () => resolve(request.result));
             request.addEventListener("error", reject);
         });
     }
 
     /**
-     *
+     * Returns the key for a query which will cover the selector/bbox
      * @param {string} bbox
      * @param {string} selector
-     * @returns {Promise<string>}
+     * @returns {Promise<string?>}
      */
     async searchElements (bbox, selector) {
         const db = await this.db;
@@ -95,8 +96,12 @@ export default class IDBElementDatabase {
             const range = IDBKeyRange.bound([selector,0,"0"], [selector,Number.MAX_VALUE,"999999999999999999"]);
             const request = index.openKeyCursor(range);
             let count = 0;
+
+            // Area can be larger than reequested but we don't want the area
+            // to be *too* big. This sets the upper limit.
             const bboxOversizeArea = getArea(bbox) * 9;
-            request.addEventListener("success", e => {
+
+            request.addEventListener("success", () => {
                 const cursor = request.result;
 
                 if (cursor) {

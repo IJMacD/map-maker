@@ -1,6 +1,9 @@
 import { contains } from "../util/bbox";
 
-export class ElementCachePromise {
+/**
+ * @implements {ElementSource}
+ */
+export class MemorySource {
     /** @type {{ [selector: string]: { [bbox: string]: OverpassElement[] }}} */
     #cache = {};
 
@@ -70,6 +73,8 @@ export class ElementCachePromise {
      * @param {string} bbox
      */
     async fetch (selectors, bbox) {
+        console.debug(`[MemorySource] Fetching ${selectors.map(s => s.toString()).join(";")};`);
+
         const pendingList = [];
 
         // TODO: optimisation - don't send selectors which aren't cached
@@ -85,7 +90,7 @@ export class ElementCachePromise {
             const results = await this.#source.fetch(pendingList, bbox);
 
             for (const result of results) {
-                this.#addToCache(result.selector, result.bbox, result.elements);
+                this.#addToCache(result.selector.toString(), result.bbox, result.elements);
             }
         }
 

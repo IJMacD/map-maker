@@ -1,9 +1,12 @@
-import { StyleSelector } from "./Style";
+import { StyleSelector } from "../Classes/Style";
 import { timeout } from '../util/util';
 import { clampBBox, extractElements, mapSelectorForQuery, optimiseWildcardTags } from "../util/overpass";
 
 const API_ROOT = require("../conf").API_ROOT;
 
+/**
+ * @implements {ElementSource}
+ */
 export class OverpassSource {
     /** @type {Promise<ElementSourceResult[]>[]} */
     #inProgress = [];
@@ -15,11 +18,13 @@ export class OverpassSource {
      * @returns {Promise<ElementSourceResult[]>}
      */
     async fetch (selectors, bbox) {
+        console.debug(`[OverpassSource] Fetching ${selectors.map(s => s.toString()).join(";")};`);
+
         const elements = await this.#tryQuery(selectors, bbox);
 
         const extracted = extractElements(selectors, elements);
 
-        return selectors.map((selector, i) => ({ selector: selector.toString(), bbox, elements: extracted[i] }));
+        return selectors.map((selector, i) => ({ selector, bbox, elements: extracted[i] }));
     }
 
     /**
@@ -30,14 +35,19 @@ export class OverpassSource {
     #query (selectors, bbox) {
         if (bbox.split(",").map(p => +p).some(isNaN)) throw Error("Invalid BBox");
 
+        // Remove non-overpass types
+        selectors = selectors.filter(s => /^(node|way|rel(?:ation)?|area)/.test(s.type));
+
         // Optimisation:
         // No need to fetch specific value if wildcard tag is already selected
         // e.g. [highway=primary] when [highway] or [highway=*] is already selected
         selectors = optimiseWildcardTags(selectors);
 
-        const sMap = selectors.map(mapSelectorForQuery);
+        const selectorListString = selectors.map(mapSelectorForQuery).join("");
 
-        const query = `[out:json][bbox];\n(${sMap.join("")}\n);\nout;`
+        console.debug(`[Overpass] Querying: ${selectorListString}`)
+
+        const query = `[out:json][bbox];\n(${selectorListString}\n);\nout;`
 
         const url = `${API_ROOT}?data=${query.replace(/\s/,"")}&bbox=${clampBBox(bbox)}`;
 
