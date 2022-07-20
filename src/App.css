@@ -29,11 +29,6 @@ label {
   display: block;
 }
 
-textarea {
-  min-width: 400px;
-  min-height: 200px;
-}
-
 .status-area {
   padding: 4px 8px;
 }

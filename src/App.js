@@ -9,12 +9,14 @@ import CollisionSystem from './Classes/CollisionSystem';
 import CanvasRender from './render/CanvasRender';
 import SVGRender from './render/SVGRender';
 import { makeBBox } from './util/bbox';
-import Textarea from './Components/Textarea';
+import Editor from 'react-simple-code-editor';
+import Prism from 'prismjs';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { Console } from 'app-console';
 import { OverpassStatus } from './Components/OverpassStatus';
 
 import 'app-console/dist/index.css';
+import 'prismjs/themes/prism.css';
 import { MemorySource } from './ElementSources/MemorySource';
 import { OverpassSource } from './ElementSources/OverpassSource';
 import { DatabaseSource } from './ElementSources/DatabaseSource';
@@ -90,7 +92,7 @@ function App() {
 
   const bbox = React.useMemo(() => makeBBox(debouncedCentre.split(",").map(p => +p), debouncedZoom, [clientWidth, clientHeight]), [debouncedCentre, debouncedZoom, clientWidth, clientHeight]);
 
-  const debouncedStyle = useDebounce(style, 500);
+  const debouncedStyle = useDebounce(style, 1000);
 
   const parsedStyle = React.useMemo(() => parseStyle(debouncedStyle), [debouncedStyle]);
 
@@ -196,7 +198,9 @@ function App() {
         </div>
         <label>Centre <input value={centre} onChange={e => setCentre(e.target.value)} /></label>
         <label>Zoom <input type="number" value={zoom} onChange={e => setZoom(+e.target.value)} /></label>
-        <Textarea value={style} onChange={setStyle} style={{flex:1}} spellCheck={false} />
+        <div style={{flex:1,overflowY:"auto",width:400}}>
+          <Editor value={style} onValueChange={setStyle} highlight={v => Prism.highlight(v, Prism.languages.css, "css")} padding={10} />
+        </div>
         <div className="status-area">
           {/* <OverpassStatus overpass={overpassRef.current} rules={rules} /> */}
           { status && <p>{status}</p> }
