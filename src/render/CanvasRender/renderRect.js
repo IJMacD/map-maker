@@ -3,6 +3,7 @@ import { applyTransform } from "./transform";
 import { setStrokeFill } from "./setStrokeFill";
 import { handleCollisionProperties, hasPointProperties } from "../util";
 import { rectToPoints } from "../../util/geometry";
+import { roundedRect } from "./roundedRect";
 
 /**
  * @param {CanvasRenderingContext2D} ctx
@@ -54,8 +55,13 @@ export function renderRect(ctx, rule, bounding, origin, element = null, context)
         applyTransform(ctx, rule, scale);
     }
 
-    ctx.beginPath();
-    ctx.rect((x - offsetX) * scale, (y - offsetY) * scale, width * scale, height * scale);
+    if (rule.declarations["corner-radius"]) {
+        roundedRect(ctx, (x - offsetX) * scale, (y - offsetY) * scale, width * scale, height * scale, +rule.declarations["corner-radius"] * scale);
+    }
+    else {
+        ctx.beginPath();
+        ctx.rect((x - offsetX) * scale, (y - offsetY) * scale, width * scale, height * scale);
+    }
 
     rule.declarations["fill"] && ctx.fill();
     rule.declarations["stroke"] && ctx.stroke();

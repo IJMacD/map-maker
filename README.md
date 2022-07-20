@@ -300,9 +300,12 @@ way[railway=rail][frequency>0] {
 
 #### Wildcard Tags
 
-*Also not supported yet. Again hopefully soon.*
+Wildcards are supported. The following examples are equivelant.
 
 ```css
+way[highway] {
+    stroke: 0.1px black;
+}
 way[highway=*] {
     stroke: 0.1px black;
 }
@@ -534,10 +537,47 @@ node[place=town]::content-box {
 
 Analogous to media queries in CSS but use the keyword `@match` instead.
 
-## Declarations
+## Declarations / Properties
+
+These define what is rendered and in some cases *how* it is rendered.
+
+### Common
+
+* `position` - Possible values are `relative` and `absolute`
+* `left` - Pixels to move horizontally
+* `top` - Pixels to move vertically
+* `transform` - A more capable alternative to above. `translate(10, 10) scale(2.5) skew(10) skew(10, 10) rotate(10 deg) rotate(0.25 turn) matrix(1, 0, 0, 0, 1, 0)`
+* `opacity` - Opacity of rendered feature
 
 ### Point
 
+* `content` - Text content rendered at a point. Can be literal text (e.g. `"Hello 😀"`) or values from tags (e.g. `tag(ref)`) or a combination which get concatenated (e.g. `"hello, " tag(name)`).
+* `font` - Shorthand for following font properties.
+* `font-family`
+* `font-size`
+* `font-weight`
+* `text-align` - Where text is anchored relative to point
+* `text-color` - Text colour if not specified it defaults to `fill` colour.
+* `text-stroke` - Alternative spelling to above
+* `icon` - Render an image at the point with an optional size. `url(https://ijmacd.github.io/map-maker/logo192.png) 96px`
+* `path` - Render a path at point using SVG path syntax. `M 0 -20 L 0 20 M -20 0 L 20 0`
+* `stroke` - *For use with path.*
+* `stroke-dash` - *For use with path.*
+* `stroke-width` - *For use with path.*
+* `shape` - Simple shapes can be drawn. `circle`, `square`, `triangle`
+* `size` - Size when drawing shape. (e.g. `2`)
+
 ### Line
 
+* `stroke` - Sets colour for line drawing.
+* `stroke-width` - Sets width of stroke. (e.g. `3`)
+* `stroke-dash` - Sets a dash array. (e.g. `4 4`)
+
 ### Area
+
+* `fill` - Colour to fill area. (e.g. `red`, `#FF0000`, `rgba(255, 0, 0, 0.5)`)
+* `collision-set` - The name for a collision set to add this area to. (e.g. `labels`) If a later element is to be rendered in the same collision set with a colliding bounding box then the specified policy will be applied.
+* `collision-policy`- Only value recognised at the moment is default policy: `hide`
+* `collision-size` - Collision box size can be specified. Percentage is relative to bounding box (e.g. `150%`)
+* `corner-radius` - For the special case of rectangles a corner radius can be specified. (e.g. `5`)
+* `padding` - Padding can be added to rectangles to enlarge them. (e.g. `2`)

@@ -1,5 +1,6 @@
 area[building=yes]::bounding-box {
     fill: lightblue;
+    corner-radius: 4;
 }
 area[building=yes]:is(self-closing) {
     fill: pink;

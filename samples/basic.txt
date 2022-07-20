@@ -15,6 +15,9 @@ way[natural=coastline] {
     way[landuse=forest] {
         fill: rgba(0,128,0,0.2);
     }
+    way[natural=tree_row] {
+       stroke: #008000;
+    }
     way[natural=grassland],
     way[landuse=grass],
     way[landuse=meadow] {
@@ -38,6 +41,9 @@ way[natural=coastline] {
     }
     way[natural=beach] {
         fill: #FFFFCC;
+    }
+    way[natural=cliff] {
+        stroke: #999;
     }
 }
 @match (zoom >= 14) {
@@ -196,12 +202,18 @@ way[railway=rail] {
     way[barrier=wall],
     way[barrier=fence],
     way[barrier=retaining_wall] {
-        stroke: black
+        stroke: black;
+        stroke-width: 0.5px;
     }
 }
 @match (zoom > 13) {
-    node[amenity=post_box] {
+    node[amenity=post_box]::content-box {
         content: "📮" tag(ref);
+        fill: white;
+        stroke: #999;
+        text-color: red;
+        padding: 1;
+        corner-radius: 4;
     }
     node[amenity=telephone] {
         fill: black;
@@ -286,8 +298,10 @@ way[railway=rail] {
         stroke-width: 1.5;
         fill: white;
         text-color: blue;
+        font-weight: bold;
         content: tag(ref);
-        padding: 4px;
+        padding: 2px;
+        corner-radius: 5;
         collision-set: road-labels;
         collision-size: 300%;
     }
@@ -298,8 +312,10 @@ way[railway=rail] {
         stroke-width: 1.5;
         fill: white;
         text-color: green;
+        font-weight: bold;
         content: tag(ref);
-        padding: 4px;
+        padding: 2px;
+        corner-radius: 5;
         collision-set: road-labels;
         collision-size: 300%;
     }
@@ -310,8 +326,10 @@ way[railway=rail] {
         stroke-width: 1.5;
         fill: white;
         text-color: #d00000;
+        font-weight: bold;
         content: tag(ref);
-        padding: 4px;
+        padding: 2px;
+        corner-radius: 5;
         collision-set: road-labels;
         collision-size: 200%;
     }
@@ -327,10 +345,6 @@ way[railway=rail] {
         collision-set: road-labels;
         collision-size: 200%;
     }
-}
-current {
-    size: 4;
-    fill: black;
 }
 current {
     content: "📌";
