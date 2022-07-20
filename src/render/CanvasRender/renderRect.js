@@ -2,20 +2,28 @@ import { renderPoint } from "./renderPoint";
 import { applyTransform } from "./transform";
 import { setStrokeFill } from "./setStrokeFill";
 import { handleCollisionProperties, hasPointProperties } from "../util";
+import { rectToPoints } from "../../util/geometry";
 
 /**
  * @param {CanvasRenderingContext2D} ctx
  * @param {StyleRule} rule
- * @param {Point[]} points
+ * @param {BoundingBox} bounding [x, y, width, height] [x, y] is top left
  * @param {Point|((points: Point[]) => Point)} origin Can be a function for lazy evaluation
  * @param {OverpassElement?} element
  * @param {MapContext} context
  */
-export function renderAreaLine(ctx, rule, points, origin, element = null, context) {
-    if (points.length === 0)
-        return;
+export function renderRect(ctx, rule, bounding, origin, element = null, context) {
+    let [x, y, width, height] = bounding;
+    const { scale } = context;
 
-    if (!handleCollisionProperties(rule, points)) {
+    const padding = rule.declarations["padding"] ? parseFloat(rule.declarations["padding"]) * scale : 0;
+
+    x -= padding;
+    y -= padding;
+    width += padding * 2;
+    height += padding * 2;
+
+    if (!handleCollisionProperties(rule, [x, y, width, height])) {
         return;
     }
 
@@ -23,18 +31,15 @@ export function renderAreaLine(ctx, rule, points, origin, element = null, contex
 
     setStrokeFill(ctx, rule, element, context);
 
-    ctx.lineCap = "square";
-
     let offsetX = 0;
     let offsetY = 0;
-
-    const { scale } = context;
 
     if (rule.declarations["transform"]) {
         // Extra work required if we're transforming
 
         // First get transform origin;
         if (origin instanceof Function) {
+            const points = rectToPoints(x, y, width, height);
             origin = origin(points);
         }
 
@@ -50,11 +55,7 @@ export function renderAreaLine(ctx, rule, points, origin, element = null, contex
     }
 
     ctx.beginPath();
-    for (let i = 0; i < points.length; i++) {
-        let x = points[i][0] - offsetX;
-        let y = points[i][1] - offsetY;
-        ctx.lineTo(x * scale, y * scale);
-    }
+    ctx.rect((x - offsetX) * scale, (y - offsetY) * scale, width * scale, height * scale);
 
     rule.declarations["fill"] && ctx.fill();
     rule.declarations["stroke"] && ctx.stroke();
@@ -65,6 +66,7 @@ export function renderAreaLine(ctx, rule, points, origin, element = null, contex
     if (hasPointProperties(rule)) {
         ctx.save();
         if (origin instanceof Function) {
+            const points = rectToPoints(x, y, width, height);
             origin = origin(points);
         }
         renderPoint(ctx, rule, origin, element, context);

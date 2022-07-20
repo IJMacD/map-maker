@@ -130,10 +130,14 @@ function App() {
     else if (shiftKey) setZoom(zoom - dz);
   }
 
-  if (rules.some(r => r.selector.type === "current")) {
-    const { coords: { longitude, latitude } } = current || { coords: {} };
-    context.current = { longitude, latitude };
-  }
+  // debounce in the morning!!!
+  //
+  //
+  //
+  // if (rules.some(r => r.selector.type === "current")) {
+  //   const { coords: { longitude, latitude } } = current || { coords: {} };
+  //   context.current = { longitude, latitude };
+  // }
 
   // Refetch/Render map when bbox, or style change
   useDeepCompareEffect(() => {

@@ -5,6 +5,9 @@ import { getContent } from "../util/getContent";
 import { makeBBox } from "../util/bbox";
 import { matchSelector } from "../Classes/Style";
 
+/**
+ * @abstract
+ */
 export default class MapRenderer {
 
     /**
@@ -24,7 +27,7 @@ export default class MapRenderer {
 
         const { centre, zoom, width, height } = context;
 
-        /** @type {(lon: number, lat: number) => [number, number]} */
+        /** @type {(lon: number, lat: number) => Point} */
         const projection = mercatorProjection(centre, zoom, width, height);
 
         // Set up global context options
@@ -119,7 +122,7 @@ export default class MapRenderer {
     /**
      * @param {MapContext} context
      * @param {StyleRule} rule
-     * @param {[number, number]} point
+     * @param {Point} point
      * @param {OverpassElement?} element
      */
     renderPoint (context, rule, point, element=null) {}
@@ -127,7 +130,7 @@ export default class MapRenderer {
     /**
      * @param {MapContext} context
      * @param {StyleRule} rule
-     * @param {[number, number][]} points
+     * @param {Point[]} points
      * @param {OverpassElement?} element
      */
     renderLine (context, rule, points, element=null) {
@@ -137,7 +140,7 @@ export default class MapRenderer {
     /**
      * @param {MapContext} context
      * @param {StyleRule} rule
-     * @param {[number, number][]} points
+     * @param {Point[]} points
      * @param {OverpassElement?} element
      */
     renderArea (context, rule, points, element=null) {
@@ -152,18 +155,48 @@ export default class MapRenderer {
     }
 
     /**
+     * There are certain things possible with rectangles such as padding or corner-radius
+     * Default implementation just implements padding and passes to `renderAreaLine()`
      * @param {MapContext} context
      * @param {StyleRule} rule
-     * @param {[number, number][]} points
-     * @param {(points: [number,number][]) => [number,number]} getPoint
+     * @param {BoundingBox} bounding [x, y, width, height] [x, y] is top left
+     * @param {Point|((points: [number,number][]) => [number,number])} origin
      * @param {OverpassElement?} element
      */
-    renderAreaLine (context, rule, points, getPoint, element=null) {}
+    renderRect (context, rule, [ x, y, width, height ], origin, element=null) {
+        const { scale } = context;
+
+        const padding = rule.declarations["padding"] ? parseFloat(rule.declarations["padding"]) * scale : 0;
+
+        // TODO: Check for correctness
+
+        /** @type {Point[]} */
+        const points = [
+            [ x - padding,           y - height - padding ],    // Top Left
+            [ x - padding,           y + padding ],             // Bottom left
+            [ x + width + padding,   y + padding ],             // Bottom right
+            [ x + width + padding,   y - height - padding ],    // Top Right
+        ];
+
+        // Self-close
+        points.push(points[0]);
+
+        this.renderAreaLine(context, rule, points, origin, element);
+    }
 
     /**
      * @param {MapContext} context
      * @param {StyleRule} rule
-     * @param {[number, number][]} points
+     * @param {Point[]} points
+     * @param {Point|((points: [number,number][]) => [number,number])} origin
+     * @param {OverpassElement?} element
+     */
+    renderAreaLine (context, rule, points, origin, element=null) {}
+
+    /**
+     * @param {MapContext} context
+     * @param {StyleRule} rule
+     * @param {Point[]} points
      * @param {OverpassElement?} element
      * @param {OverpassNodeElement[]} [nodes]
      */
@@ -205,15 +238,21 @@ export default class MapRenderer {
                 break;
             }
             case "bounding-box": {
+                /**
+                 * Box around topmost, leftmost, rightmost, and bottommost
+                 * points.
+                 */
                 const bounding = getBoundingBox(points);
 
-                const boundingPoints = rectToPoints(...bounding);
-
-                this.renderArea(context, rule, boundingPoints, element);
+                this.renderRect(context, rule, bounding, getCentrePoint, element);
                 break;
             }
             case "content-box": {
-                const { scale } = context;
+                /**
+                 * ContentBox is the box around text content specified by
+                 * `content` property.
+                 * This allows styling borders/background for content.
+                 */
                 let point = points[0];
 
                 if (rule.selector.type === "way")
@@ -245,8 +284,6 @@ export default class MapRenderer {
                     baseline += size.height;
                 }
 
-                const padding = rule.declarations["padding"] ? parseFloat(rule.declarations["padding"]) * scale : 0;
-
                 if (rule.declarations["text-align"] === "center" || rule.declarations["text-align"] === "centre") {
                     x -= width / 2;
                 }
@@ -254,21 +291,19 @@ export default class MapRenderer {
                     x -= width;
                 }
 
-                /** @type {[number, number][]} */
-                const boundPoints = [
-                    [ x - padding,           top - padding ],     // Top Left
-                    [ x - padding,           bottom + padding ],    // Bottom left
-                    [ x + width + padding,   bottom + padding ],    // Bottom right
-                    [ x + width + padding,   top - padding ],     // Top Right
-                ];
+                /** @type {BoundingBox} */
+                const bounding = [ x, top, width, bottom - top ];
 
-                // Close self
-                boundPoints.push(boundPoints[0]);
-
-                this.renderAreaLine(context, rule, boundPoints, () => point, element);
+                this.renderRect(context, rule, bounding, point, element);
                 break;
             }
             case "decimate": {
+                /**
+                 * Very crude method of simplifying ways.
+                 * Uses the alternative definition of "decimate".
+                 * This method keeps first and last point, then every 10th
+                 * point in between. i.e. only *keeps* 10%.
+                 */
                 if (rule.selector.type === "way") {
                     const l = points.length - 1;
                     const decimatedPoints = points.filter((p, i) => i % 10 === 0 || i === l);

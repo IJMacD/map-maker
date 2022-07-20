@@ -2,6 +2,7 @@ import MapRenderer from "../MapRenderer";
 import { renderPoint } from "./renderPoint";
 import { setFont } from "./renderText";
 import { renderAreaLine } from "./renderAreaLine";
+import { renderRect } from "./renderRect";
 
 export default class CanvasRender extends MapRenderer {
 
@@ -59,10 +60,31 @@ export default class CanvasRender extends MapRenderer {
         }
     }
 
-    renderAreaLine (context, rule, points, getPoint, element=null) {
+    /**
+     * @param {StyleRule} rule
+     * @param {Point[]} points
+     * @param {Point|((points: Point[]) => Point)} origin Can be a function for lazy evaluation
+     * @param {OverpassElement?} element
+     * @param {MapContext} context
+     */
+    renderAreaLine (context, rule, points, origin, element=null) {
         const ctx = this.canvas.getContext("2d");
         if (ctx) {
-            renderAreaLine(ctx, rule, points, getPoint, element, context);
+            renderAreaLine(ctx, rule, points, origin, element, context);
+        }
+    }
+
+    /**
+     * @param {StyleRule} rule
+     * @param {BoundingBox} bounding [x, y, width, height] [x, y] is top left
+     * @param {Point|((points: Point[]) => Point)} origin Can be a function for lazy evaluation
+     * @param {OverpassElement?} element
+     * @param {MapContext} context
+     */
+    renderRect (context, rule, bounding, origin, element=null) {
+        const ctx = this.canvas.getContext("2d");
+        if (ctx) {
+            renderRect(ctx, rule, bounding, origin, element, context);
         }
     }
 

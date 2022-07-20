@@ -3,7 +3,7 @@ export default class CollisionSystem {
     static singleton;
 
     constructor () {
-        /** @type {{ [name: string]: [number, number, number, number][] }} */
+        /** @type {{ [name: string]: BoundingBox[] }} */
         this.sets = {}
     }
 
@@ -12,9 +12,13 @@ export default class CollisionSystem {
     }
 
     /**
-     *
+     * Checks if there is a collision between the new box and any previous
+     * boxes in the collision set.
+     * If there is no collision the new box is added.
      * @param {string} set
-     * @param {[number, number, number, number]} box
+     * @param {BoundingBox} box
+     * @returns {boolean} Result of adding the box. `true` if successful,
+     * or `false` if there is a collision.
      */
     add (set, box) {
         if (!this.sets[set]) this.sets[set] = [];
@@ -40,8 +44,8 @@ export default class CollisionSystem {
 
 /**
  * Checks whether two bounding boxes intersect
- * @param {[number, number, number, number]} boxA [x , y, width, height]
- * @param {[number, number, number, number]} boxB [x , y, width, height]
+ * @param {BoundingBox} boxA [x , y, width, height]
+ * @param {BoundingBox} boxB [x , y, width, height]
  */
 function intersects (boxA, boxB) {
     const ax1 = boxA[0];

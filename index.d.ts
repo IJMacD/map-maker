@@ -3,6 +3,13 @@ type MapRenderer = import("./src/render/MapRenderer").default;
 
 type StyleSelector = import("./src/Classes/Style").StyleSelector;
 
+type Point = [number, number];
+
+/**
+ * [x, y, width, height]
+ */
+type BoundingBox = [number, number, number, number];
+
 type StyleRule = {
     type: "rule";
     selector: StyleSelector;

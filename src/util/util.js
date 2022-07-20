@@ -97,7 +97,7 @@ export function getMidPoint(points) {
 
 /**
  * @param {[number, number][]} points
- * @returns {[number, number, number, number]} (x, y, width, height)
+ * @returns {BoundingBox} [x, y, width, height] [x,y] is top left
  */
 export function getBoundingBox(points) {
     const minMax = points.reduce((minMax, point) => {
@@ -128,8 +128,8 @@ export function parseBBox (bbox) {
 
 /**
  * @param {{ x: number, y: number }} param0
- * @param {[number, number, number, number]} from
- * @param {[number, number, number, number]} to
+ * @param {BoundingBox} from
+ * @param {BoundingBox} to
  */
 export function interpolateBox ({x, y}, from, to) {
     const fx = (x - from[0]) / (from[2] - from[0]);
