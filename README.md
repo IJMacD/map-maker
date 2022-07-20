@@ -558,7 +558,7 @@ These define what is rendered and in some cases *how* it is rendered.
 * `font-weight`
 * `text-align` - Where text is anchored relative to point
 * `text-color` - Text colour if not specified it defaults to `fill` colour.
-* `text-stroke` - Alternative spelling to above
+* `text-stroke` - Colour for text stroke (border around text)
 * `icon` - Render an image at the point with an optional size. `url(https://ijmacd.github.io/map-maker/logo192.png) 96px`
 * `path` - Render a path at point using SVG path syntax. `M 0 -20 L 0 20 M -20 0 L 20 0`
 * `stroke` - *For use with path.*

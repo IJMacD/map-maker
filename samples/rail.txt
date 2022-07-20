@@ -54,7 +54,8 @@ way[railway=subway] {
     }
     node[railway=station],
     area[railway=station] {
-        stroke: 2px red;
+        stroke: red;
+        stroke-width: 2;
         text-color: black;
     }
 }

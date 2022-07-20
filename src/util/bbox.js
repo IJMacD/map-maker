@@ -52,7 +52,7 @@ export function makeBBox (centre, zoom, size) {
     const [ width, height ] = size;
 
     const tileCount = Math.pow(2, zoom)
-    const xSpan = 180 / tileCount;
+    const xSpan = 360 / tileCount;
     const ySpan = 180 / tileCount;
 
     const hTileCount = width / baseTileSize;

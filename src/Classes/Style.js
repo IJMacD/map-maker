@@ -365,3 +365,27 @@ const COMPARE = {
   "and": (a,b) => a && b,
   "or": (a,b) => a || b,
 }
+
+/**
+ * @param {StyleRule} rule
+ */
+export function ruleToString (rule) {
+  const declarations = Object.entries(rule.declarations).map(([property, value]) => `\t${property}: ${value};`).join("\n");
+
+  return `${selectorToString(rule.selector)} {\n${declarations}\n}`;
+}
+
+/**
+ * @param {StyleSelector} selector
+ */
+function selectorToString (selector) {
+  const { type } = selector;
+
+  const tags = Object.entries(selector.tags).map(([key, value]) => `[${key}=${value}]`).join("");
+
+  const pseudoClasses = selector.pseudoClasses.map(pc => `:${pc.name}${pc.params.length>0?`(${pc.params.join(", ")})`:""}`).join("");
+
+  const pseudoElement = selector.pseudoElement ? `::${selector.pseudoElement}` : "";
+
+  return `${type}${tags}${pseudoClasses}${pseudoElement}`;
+}

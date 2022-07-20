@@ -21,11 +21,11 @@ import { OverpassSource } from './ElementSources/OverpassSource';
 import { DatabaseSource } from './ElementSources/DatabaseSource';
 import { useForceRender } from './hooks/useForceRender';
 import { cleanup, cleanupPoint, interpolateBox, parseBBox } from './util/util';
-import { MapCanvas } from './Components/MapCanvas';
+import { MapMultiCanvas } from './Components/MapMultiCanvas';
 
 function App() {
   const [ style, setStyle ] = useSavedState("USER_STYLE", "node[amenity=post_box] {\n\tfill: black;\n\tsize: 2;\n}");
-  const [ centre, setCentre ] = useSavedState("USER_CENTRE", "7.1,50.7");
+  const [ centreString, setCentre ] = useSavedState("USER_CENTRE", "7.1,50.7");
   const [ zoom, setZoom ] = useSavedState("USER_SCALE", 14);
 
   const current = useGeolocation();
@@ -67,7 +67,7 @@ function App() {
     const { current: { executables } } = shellContextRef;
     executables.render = forceRender;
     executables.get = name => {
-      if (name === "centre") return centre;
+      if (name === "centre") return centreString;
       if (name === "zoom") return zoom;
       if (name === "myPos") return `${current.coords.longitude},${current.coords.latitude}`;
       return void 0;
@@ -77,13 +77,13 @@ function App() {
       if (name === "zoom") { setZoom(value); return true; }
       return false;
     };
-  }, [ forceRender, centre, zoom, setCentre, setZoom, current ]);
+  }, [ forceRender, centreString, zoom, setCentre, setZoom, current ]);
 
   const [ consoleVisible, showConsole ] = React.useState(false);
 
   const { clientWidth: width, clientHeight: height } = containerRef.current || { clientWidth: 1100, clientHeight: 800 };
 
-  const debouncedCentre = useDebounce(centre, 500);
+  const debouncedCentre = useDebounce(centreString, 500);
   const debouncedZoom = useDebounce(zoom, 500);
 
   const debouncedStyle = useDebounce(style, 1000);
@@ -182,7 +182,7 @@ function App() {
           <button onClick={() => handleDownload("png")} disabled={downloading}>⭳ PNG</button>
           <button onClick={() => handleDownload("svg")} disabled={downloading}>⭳ SVG</button>
         </div>
-        <label>Centre <input value={centre} onChange={e => setCentre(e.target.value)} /></label>
+        <label>Centre <input value={centreString} onChange={e => setCentre(e.target.value)} /></label>
         <label>Zoom <input type="number" value={zoom} onChange={e => setZoom(+e.target.value)} /></label>
         <div style={{flex:1,overflowY:"auto",width:400}}>
           <Editor value={style} onValueChange={setStyle} highlight={v => Prism.highlight(v, Prism.languages.css, "css")} padding={10} />
@@ -196,10 +196,10 @@ function App() {
         { consoleVisible && <Console context={shellContextRef.current} style={{ maxHeight: 200 }} /> }
       </div>
       <div ref={containerRef} className="MapContainer">
-        <MapCanvas
+        <MapMultiCanvas
           rules={rules}
           elementSource={elementSourceRef.current}
-          centre={debouncedCentre}
+          centre={centrePoint}
           zoom={debouncedZoom}
           width={width}
           height={height}
