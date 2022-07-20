@@ -122,7 +122,7 @@ export function getBoundingBox(points) {
  * @param {string} bbox
  */
 export function parseBBox (bbox) {
-    return bbox.split(",").map(s => +s);
+    return /** @type {BoundingBox} */(bbox.split(",").map(s => +s));
 }
 
 

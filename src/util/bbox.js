@@ -63,3 +63,10 @@ export function makeBBox (centre, zoom, size) {
 
     return [ lon - dLon, lat - dLat, lon + dLon, lat + dLat ].map(p => p.toFixed(3)).join(",");
 }
+
+/**
+ * @param {MapContext} context
+ */
+export function makeBBoxFromContext (context) {
+    return makeBBox(context.centre, context.zoom, [context.width, context.height]);
+}

@@ -31,7 +31,6 @@ type Predicate = {
 type MapContext = {
     centre: [number, number];
     zoom: number;
-    bbox: string;
     current?: { longitude: number, latitude: number };
     width: number;
     height: number;

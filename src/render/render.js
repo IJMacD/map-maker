@@ -1,4 +1,5 @@
 import CollisionSystem from '../Classes/CollisionSystem';
+import { makeBBoxFromContext } from '../util/bbox';
 
 /**
  * @param {StyleRule[]} rules
@@ -17,7 +18,9 @@ export async function render(rules, elementSource, renderer, context, setStatus,
   try {
     console.time("Fetching");
 
-    const results = await elementSource.fetch(rules.map(r => r.selector), context.bbox);
+    const bbox = makeBBoxFromContext(context);
+
+    const results = await elementSource.fetch(rules.map(r => r.selector), bbox);
 
     console.timeEnd("Fetching");
 

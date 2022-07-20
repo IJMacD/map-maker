@@ -11,7 +11,6 @@ import SVGRender from './render/SVGRender';
 import { makeBBox } from './util/bbox';
 import Editor from 'react-simple-code-editor';
 import Prism from 'prismjs';
-import useDeepCompareEffect from 'use-deep-compare-effect';
 import { Console } from 'app-console';
 import { OverpassStatus } from './Components/OverpassStatus';
 
@@ -20,9 +19,9 @@ import 'prismjs/themes/prism.css';
 import { MemorySource } from './ElementSources/MemorySource';
 import { OverpassSource } from './ElementSources/OverpassSource';
 import { DatabaseSource } from './ElementSources/DatabaseSource';
-import { render } from './render/render';
 import { useForceRender } from './hooks/useForceRender';
 import { cleanup, cleanupPoint, interpolateBox, parseBBox } from './util/util';
+import { MapCanvas } from './Components/MapCanvas';
 
 function App() {
   const [ style, setStyle ] = useSavedState("USER_STYLE", "node[amenity=post_box] {\n\tfill: black;\n\tsize: 2;\n}");
@@ -33,9 +32,6 @@ function App() {
 
   /** @type {React.MutableRefObject<HTMLDivElement?>} */
   const containerRef = React.useRef(null);
-
-  /** @type {React.MutableRefObject<HTMLCanvasElement?>} */
-  const canvasRef = React.useRef(null);
 
   // /** @type {React.MutableRefObject<Overpass>} */
   // const overpassRef = React.useRef(new Overpass());
@@ -85,15 +81,10 @@ function App() {
 
   const [ consoleVisible, showConsole ] = React.useState(false);
 
-  const { clientWidth, clientHeight } = containerRef.current || { clientWidth: 1100, clientHeight: 800 };
-
-  const width = clientWidth;
-  const height = clientHeight;
+  const { clientWidth: width, clientHeight: height } = containerRef.current || { clientWidth: 1100, clientHeight: 800 };
 
   const debouncedCentre = useDebounce(centre, 500);
   const debouncedZoom = useDebounce(zoom, 500);
-
-  const bbox = React.useMemo(() => makeBBox(debouncedCentre.split(",").map(p => +p), debouncedZoom, [clientWidth, clientHeight]), [debouncedCentre, debouncedZoom, clientWidth, clientHeight]);
 
   const debouncedStyle = useDebounce(style, 1000);
 
@@ -101,11 +92,12 @@ function App() {
 
   // React.useEffect(() => overpassRef.current.setBBox(bbox), [bbox]);
 
-  /** @type {[number, number]} */
+  /** @type {Point} */
   const centrePoint = (debouncedCentre.split(",").map(p => +p));
 
   /** @type {MapContext} */
-  const context = { centre: centrePoint, zoom: debouncedZoom, bbox, scale: devicePixelRatio, width, height };
+  const context = { centre: centrePoint, zoom: debouncedZoom, scale: devicePixelRatio, width, height };
+
   const rules = filterRules(parsedStyle.rules, context);
 
   React.useEffect(() => {
@@ -123,9 +115,10 @@ function App() {
   function handleDoubleClick (e) {
     const { offsetX: x, offsetY: y, ctrlKey, shiftKey, altKey } = e.nativeEvent;
 
+    const bbox = makeBBox(centrePoint, zoom, [width, height]);
+
     // Flip client height so y-axis is negative
-    // @ts-ignore
-    const { x: lon, y: lat } = interpolateBox({ x, y }, [0, clientHeight, clientWidth, 0], parseBBox(bbox));
+    const { x: lon, y: lat } = interpolateBox({ x, y }, [0, width, height, 0], parseBBox(bbox));
     setCentre(cleanupPoint(lon, lat));
 
     const dz = altKey ? 3 : 1;
@@ -142,21 +135,6 @@ function App() {
   //   context.current = { longitude, latitude };
   // }
 
-  // Refetch/Render map when bbox, or style change
-  useDeepCompareEffect(() => {
-    const canvas = canvasRef.current;
-
-    if (!canvas) return;
-
-    const renderer = new CanvasRender(canvas);
-
-    // Double pointer to update inside render function scope
-    let current = { currentEffect: true };
-
-    render(rules, elementSourceRef.current, renderer, context, setStatus, setError, setProgress, current);
-
-    return () => { current.currentEffect = false; };
-  }, [debouncedCentre, debouncedZoom, rules, context, renderPending]);
 
   /**
    * @param {number} dX
@@ -165,6 +143,7 @@ function App() {
   function move (dX, dY) {
     /** @type {[number, number]} */
     const centrePoint = (debouncedCentre.split(",").map(p => +p));
+    const bbox = makeBBox(centrePoint, zoom, [width, height]);
     const bb = bbox.split(",").map(p => +p);
     const stepSizeX = (bb[2] - bb[0]) / 2;
     const stepSizeY = (bb[3] - bb[1]) / 2;
@@ -176,17 +155,17 @@ function App() {
    * @param {string} type
    */
   function handleDownload (type) {
-    if (!downloading) {
-      setDownloading(true);
-      const cb = () => setDownloading(false);
-      if (type === "png") {
-        if (canvasRef.current) {
-          downloadPNG(canvasRef.current, cb);
-        }
-      } else {
-        // downloadSVG(context, parsedStyle, overpassRef.current, cb);
-      }
-    }
+    // if (!downloading) {
+    //   setDownloading(true);
+    //   const cb = () => setDownloading(false);
+    //   if (type === "png") {
+    //     if (canvasRef.current) {
+    //       downloadPNG(canvasRef.current, cb);
+    //     }
+    //   } else {
+    //     // downloadSVG(context, parsedStyle, overpassRef.current, cb);
+    //   }
+    // }
   }
 
   return (
@@ -217,7 +196,19 @@ function App() {
         { consoleVisible && <Console context={shellContextRef.current} style={{ maxHeight: 200 }} /> }
       </div>
       <div ref={containerRef} className="MapContainer">
-        <canvas ref={canvasRef} onDoubleClick={handleDoubleClick} />
+        <MapCanvas
+          rules={rules}
+          elementSource={elementSourceRef.current}
+          centre={debouncedCentre}
+          zoom={debouncedZoom}
+          width={width}
+          height={height}
+          scale={devicePixelRatio}
+          setStatus={setStatus}
+          setProgress={setProgress}
+          setError={setError}
+          onDoubleClick={handleDoubleClick}
+        />
       </div>
     </div>
   );
