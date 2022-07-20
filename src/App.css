@@ -19,10 +19,11 @@
   padding: 12px;
 }
 
-canvas {
+.MapContainer {
   flex: 4;
   height: 100vh;
   user-select: none;
+  overflow: hidden;
 }
 
 label {

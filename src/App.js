@@ -31,6 +31,9 @@ function App() {
 
   const current = useGeolocation();
 
+  /** @type {React.MutableRefObject<HTMLDivElement?>} */
+  const containerRef = React.useRef(null);
+
   /** @type {React.MutableRefObject<HTMLCanvasElement?>} */
   const canvasRef = React.useRef(null);
 
@@ -82,7 +85,7 @@ function App() {
 
   const [ consoleVisible, showConsole ] = React.useState(false);
 
-  const { clientWidth, clientHeight } = canvasRef.current || { clientWidth: 1100, clientHeight: 800 };
+  const { clientWidth, clientHeight } = containerRef.current || { clientWidth: 1100, clientHeight: 800 };
 
   const width = clientWidth;
   const height = clientHeight;
@@ -213,7 +216,9 @@ function App() {
         </div>
         { consoleVisible && <Console context={shellContextRef.current} style={{ maxHeight: 200 }} /> }
       </div>
-      <canvas ref={canvasRef} onDoubleClick={handleDoubleClick} />
+      <div ref={containerRef} className="MapContainer">
+        <canvas ref={canvasRef} onDoubleClick={handleDoubleClick} />
+      </div>
     </div>
   );
 }
