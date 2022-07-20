@@ -48,6 +48,8 @@ export function renderAreaLine(ctx, rule, points, getPoint, element = null, cont
 
     setStrokeFill(ctx, rule, element, context);
 
+    ctx.lineCap = "square";
+
     let offsetX = 0;
     let offsetY = 0;
 

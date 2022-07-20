@@ -162,6 +162,11 @@ export function parseStyle (styleText) {
   /** @type {{ rules: (StyleRule|MediaQuery)[] }} */
   const out = { rules: [] };
 
+  // Remove comments
+  // Can't have `# ...` comments because of hex colours
+  // styleText = styleText.replace(/\#[^\n]*/g, "");
+  styleText = styleText.replace(/\/\*.*?\*\//gs, "");
+
   let length = styleText.length;
 
   while (length > 0) {

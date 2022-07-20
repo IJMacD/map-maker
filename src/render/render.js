@@ -39,6 +39,12 @@ export async function render(rules, elementSource, renderer, context, setStatus,
     setProgress(0);
 
     for (const result of results) {
+
+      // Becuase we have micro tasks, we need to check we're still current at
+      // each iteration.
+      if (!current.currentEffect)
+        return;
+
       const prefix = `Rule ${index}: `;
 
       // console.debug(`${prefix} Loading elements for ${item.rule.selector}`);
@@ -52,6 +58,10 @@ export async function render(rules, elementSource, renderer, context, setStatus,
       setProgress(index/rules.length);
 
       // Render looks cooler but takes twice as long with microtask breaks
+      // Pro: Looks better when waiting for render
+      // Pro: Gives more immediate feedback
+      // Con: When re-rendering (without user action; e.g. current location change)
+      //      it spends longer with no map visible
       await microtaskBreak();
 
       index++;
