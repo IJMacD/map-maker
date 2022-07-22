@@ -1,3 +1,4 @@
+import { reverseMercatorProjection } from "./util";
 
 /**
  * Can the string be considered a valid bbox?
@@ -40,28 +41,32 @@ export function getArea (bbox) {
 }
 
 /**
- *
- * @param {[number, number]} centre
+ * Returns a stable string for comparison
+ * @param {Point} centre
  * @param {number} zoom
  * @param {[number, number]} size
+ * @returns {string} "minLon,minLat,maxLon,maxLat"
  */
-export function makeBBox (centre, zoom, size) {
-    const baseTileSize = 256;
+ export function makeBBox (centre, zoom, size) {
+    return makeBBoxArray(centre, zoom, size).map(n => n.toFixed(3)).join(",");
+}
 
-    const [ lon, lat ] = centre;
-    const [ width, height ] = size;
+/**
+ * Returns bounding box in {min, max}{lon,lat}
+ * @param {Point} centre
+ * @param {number} zoom
+ * @param {[number, number]} size
+ * @returns {[number,number,number,number]} [minLon, minLat, maxLon, maxLat]
+ */
+export function makeBBoxArray (centre, zoom, [width, height]) {
+    const projection = reverseMercatorProjection(centre, zoom, width, height);
 
-    const tileCount = Math.pow(2, zoom)
-    const xSpan = 180 / tileCount;
-    const ySpan = 180 / tileCount;
+    // min, min
+    const bl = projection(0, height);
+    // max, max
+    const tr = projection(width, 0);
 
-    const hTileCount = width / baseTileSize;
-    const vTileCount = height / baseTileSize;
-
-    const dLon = xSpan * hTileCount;
-    const dLat = ySpan * vTileCount;
-
-    return [ lon - dLon, lat - dLat, lon + dLon, lat + dLat ].map(p => p.toFixed(3)).join(",");
+    return [bl[0], bl[1], tr[0], tr[1]];
 }
 
 /**

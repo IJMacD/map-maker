@@ -23,8 +23,16 @@ import { useForceRender } from './hooks/useForceRender';
 import { cleanup, cleanupPoint, interpolateBox, parseBBox } from './util/util';
 import { MapCanvas } from './Components/MapCanvas';
 
+const defaultStyle = `way[natural=coastline] {
+  stroke: grey;
+}
+
+way[highway] {
+  stroke: black;
+}`;
+
 function App() {
-  const [ style, setStyle ] = useSavedState("USER_STYLE", "node[amenity=post_box] {\n\tfill: black;\n\tsize: 2;\n}");
+  const [ style, setStyle ] = useSavedState("USER_STYLE", defaultStyle);
   const [ centre, setCentre ] = useSavedState("USER_CENTRE", "7.1,50.7");
   const [ zoom, setZoom ] = useSavedState("USER_SCALE", 14);
 

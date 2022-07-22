@@ -2,7 +2,7 @@ import { mercatorProjection, getCentrePoint, getMidPoint, getAveragePoint, getBo
 import { rectToPoints, isSelfClosing } from "../util/geometry";
 import { matchPseudoClasses } from "../util/matchPseudoClasses";
 import { getContent } from "../util/getContent";
-import { makeBBox } from "../util/bbox";
+import { makeBBoxArray } from "../util/bbox";
 import { matchSelector } from "../Classes/Style";
 
 /**
@@ -64,6 +64,17 @@ export default class MapRenderer {
             }
             case "dummy": {
                 this.renderPoint(context, rule, [0, 0]);
+                break;
+            }
+            case "bbox": {
+                // Mainly for debugging purposes. `mercatorProjection` can be
+                // configured to overscan. This allows bbox inspection
+                const size = /** @type {[number,number]} */([context.width, context.height]);
+                const bbox = makeBBoxArray(context.centre, context.zoom, size);
+                const [x1, y1] = projection(bbox[0], bbox[1]);
+                const [x2, y2] = projection(bbox[2], bbox[3]);
+                const centre = projection(context.centre[0], context.centre[1]);
+                this.renderRect(context, rule, [x1, y1, x2 - x1, y2 - y1], centre);
                 break;
             }
             default:
@@ -320,8 +331,7 @@ export default class MapRenderer {
 
         const { width, height, centre, zoom } = context;
 
-        const bbox = makeBBox(centre, zoom, [width, height]);
-        const parts = bbox.split(",");
+        const bbox = makeBBoxArray(centre, zoom, [width, height]);
 
         if (vertical) {
             const step = parseFloat(vertical.params[0]);
@@ -330,10 +340,10 @@ export default class MapRenderer {
 
             const sigFigs = Math.ceil(Math.log10(round));
 
-            const xmin = Math.floor(+parts[0] * round) / round;
-            const xmax = Math.ceil(+parts[2] * round) / round;
-            const ymin = Math.floor(+parts[1] * round) / round;
-            const ymax = Math.ceil(+parts[3] * round) / round;
+            const xmin = Math.floor(bbox[0] * round) / round;
+            const xmax = Math.ceil(bbox[2] * round) / round;
+            const ymin = Math.floor(bbox[1] * round) / round;
+            const ymax = Math.ceil(bbox[3] * round) / round;
 
             for (let i = xmin; i <= xmax; i += step) {
                 const points = [ projection(i, ymin),  projection(i, (ymin + ymax) / 2), projection(i, ymax) ];
@@ -348,10 +358,10 @@ export default class MapRenderer {
 
             const sigFigs = Math.ceil(Math.log10(round));
 
-            const xmin = Math.floor(+parts[0] * round) / round;
-            const xmax = Math.ceil(+parts[2] * round) / round;
-            const ymin = Math.floor(+parts[1] * round) / round;
-            const ymax = Math.ceil(+parts[3] * round) / round;
+            const xmin = Math.floor(bbox[0] * round) / round;
+            const xmax = Math.ceil(bbox[2] * round) / round;
+            const ymin = Math.floor(bbox[1] * round) / round;
+            const ymax = Math.ceil(bbox[3] * round) / round;
 
             for (let j = ymin; j <= ymax; j += step) {
                 const points = [ projection(xmin, j), projection((xmin + xmax) / 2, j), projection(xmax, j) ];

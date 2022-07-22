@@ -23,14 +23,20 @@ export function flatProjection(minLon, minLat, maxLon, maxLat, width, height) {
 }
 
 /**
- * @param {[number, number]} centre
+ * Returns a function to convert (lon,lat) => [x,y]
+ * @param {Point} centre [lon, lat]
  * @param {number} scale
  * @param {number} width
  * @param {number} height
- * @returns {(lon: number, lat: number) => [number, number]}
+ * @returns {(lon: number, lat: number) => Point}
  */
 export function mercatorProjection(centre, scale, width, height) {
     const baseTileSize = 256;
+
+    // Can be adjusted to "overscan" for debugging purposes
+    // Set to 1.1 to shrink output, thus drawing 10% overscan to inspect
+    // area outside bounding box.
+    const OVERSCAN = 1;
 
     const [cLon, cLat] = centre;
 
@@ -58,7 +64,61 @@ export function mercatorProjection(centre, scale, width, height) {
         const dX = dLon * hPixelsPerDeg;
         const dY = dLat * vPixelsPerDeg;
 
-        return [cX + dX, cY - dY];
+        return [cX + dX/OVERSCAN, cY - dY/OVERSCAN];
+    };
+}
+
+/**
+ * Returns a function to convert (x,y) => [lon,lat]
+ * @param {Point} centre [lon, lat]
+ * @param {number} scale
+ * @param {number} width
+ * @param {number} height
+ * @returns {(x: number, y: number) => Point} [x,y] => [lon, lat]
+ */
+export function reverseMercatorProjection(centre, scale, width, height) {
+    const baseTileSize = 256;
+
+    const [cLon, cLat] = centre;
+
+    const tileCount = Math.pow(2, scale);
+    const degPerTileH = 180 / tileCount;
+    const degPerTileV = 180 / tileCount;
+
+    const hPixelsPerDeg = baseTileSize / degPerTileH;
+    const vPixelsPerDeg = baseTileSize / degPerTileV;
+
+    const QUARTER_PI = Math.PI / 4;
+
+    const cX = width / 2;
+    const cY = height / 2;
+
+    const cLatPrime = Math.log(Math.tan(QUARTER_PI + (cLat / 180 * Math.PI) / 2)) * 180 / Math.PI;
+
+    return (x, y) => {
+        const dX = x - cX;
+        const dY = cY - y;
+
+        const dLon = dX / hPixelsPerDeg;
+        const dLat = dY / vPixelsPerDeg;
+
+        const E = dLon + cLon;
+        const N = dLat + cLatPrime;
+
+        const lon = E;
+
+        // Algebra
+        // const N = Math.log(Math.tan(QUARTER_PI + (lat / 180 * Math.PI) / 2)) * 180 / Math.PI;
+        // Math.log(Math.tan(QUARTER_PI + (lat / 180 * Math.PI) / 2)) * 180 / Math.PI = N;
+        // Math.log(Math.tan(QUARTER_PI + (lat / 180 * Math.PI) / 2)) = N * Math.PI / 180;
+        // Math.tan(QUARTER_PI + (lat / 180 * Math.PI) / 2) = Math.exp(N * Math.PI / 180);
+        // QUARTER_PI + (lat / 180 * Math.PI) / 2 = Math.atan(Math.exp(N * Math.PI / 180));
+        // (lat / 180 * Math.PI) / 2 = Math.atan(Math.exp(N * Math.PI / 180)) - QUARTER_PI;
+        // lat / 180 * Math.PI = (Math.atan(Math.exp(N * Math.PI / 180)) - QUARTER_PI) * 2;
+        // lat = (Math.atan(Math.exp(N * Math.PI / 180)) - QUARTER_PI) * 2 / Math.PI * 180;
+        const lat = (Math.atan(Math.exp(N * Math.PI / 180)) - QUARTER_PI) * 2 / Math.PI * 180;
+
+        return [lon, lat];
     };
 }
 

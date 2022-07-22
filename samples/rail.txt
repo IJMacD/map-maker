@@ -27,7 +27,6 @@ way[railway=subway] {
 }
 @match (zoom >= 13) {
     way[railway=funicular],
-    way[railway=light_rail],
     way[railway=miniature],
     way[railway=narrow_gauge] {
         stroke: black;
@@ -64,6 +63,10 @@ way[railway=subway] {
         size: 4;
         fill: red;
     }
+    way[railway=light_rail]{
+        stroke: black;
+        stroke-width: 0.5;
+    }
 }
 @match (zoom > 13) {
     node[railway=station]::content-box,
@@ -77,6 +80,20 @@ way[railway=subway] {
         collision-set: labels;
     }
 }
+way[boundary=administrative][admin_level=2] {
+  stroke: purple;
+  stroke-width: 2;
+}
+way[boundary=administrative][admin_level=3] {
+  stroke: purple;
+  stroke-width: 2;
+  stroke-dash: 8 8 2 8;
+}
+way[boundary=administrative][admin_level=4] {
+  stroke: purple;
+  stroke-width: 2;
+  stroke-dash: 16 16;
+}
 @match (zoom >= 11) {
     gridlines:vertical(0.01deg),
     gridlines:horizontal(0.01deg) {
@@ -84,10 +101,28 @@ way[railway=subway] {
     }
 }
 @match (zoom >= 9) {
-    gridlines:vertical(0.1deg),
+    gridlines:vertical(0.1deg){
+        fill: rgba(128,64,0,0.5);
+        content: tag(name);
+        transform: rotate(0.25 turn);
+        position: relative;
+        left: 2;
+        top: 2;
+    }
+    gridlines:vertical(0.1deg){
+        stroke: rgba(128,64,0,0.2);
+        stroke-width: 1.25;
+    }
     gridlines:horizontal(0.1deg) {
         stroke: rgba(128,64,0,0.2);
         stroke-width: 1.25;
+    }
+    gridlines:horizontal(0.1deg) {
+        content: tag(name);
+        text-color: rgba(128,64,0,0.5);
+        position: relative;
+        left: 2;
+        top: -2;
     }
 }
 @match (zoom < 9) {
@@ -95,6 +130,21 @@ way[railway=subway] {
     gridlines:horizontal(1deg) {
         stroke: rgba(128,64,0,0.2);
         stroke-width: 1;
+    }
+    gridlines:vertical(1deg){
+        fill: rgba(128,64,0,0.5);
+        content: tag(name);
+        transform: rotate(0.25 turn);
+        position: relative;
+        left: 2;
+        top: 2;
+    }
+    gridlines:horizontal(1deg) {
+        content: tag(name);
+        text-color: rgba(128,64,0,0.5);
+        position: relative;
+        left: 2;
+        top: -2;
     }
 }
 @match (zoom >= 9) {

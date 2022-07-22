@@ -5,10 +5,10 @@
  * @param {number} y Left edge of rect
  * @param {number} width
  * @param {number} height
- * @returns {[number, number][]}
+ * @returns {Point[]}
  */
 export function rectToPoints(x, y, width, height) {
-    /** @type {[number, number][]} */
+    /** @type {Point[]} */
     return [
         [x, y],                     // Top Left
         [x + width, y],             // Top Right
@@ -20,7 +20,7 @@ export function rectToPoints(x, y, width, height) {
 
 /**
  * @see http://paulbourke.net/geometry/polygonmesh/#clockwise
- * @param {[number, number][]} points
+ * @param {Point[]} points
  */
 export function getCrossProductArea (points) {
     let sum = 0;
@@ -31,14 +31,14 @@ export function getCrossProductArea (points) {
 }
 
 /**
- * @param {[number, number][]} points
+ * @param {Point[]} points
  */
 export function getArea (points) {
     return Math.abs(getCrossProductArea(points));
 }
 
 /**
- * @param {[number, number][]} points
+ * @param {Point[]} points
  */
 export function isAntiClockwise (points) {
     return getCrossProductArea(points) > 0;
@@ -46,7 +46,7 @@ export function isAntiClockwise (points) {
 
 /**
  * @see http://paulbourke.net/geometry/polygonmesh/#clockwise
- * @param {[number, number][]} points
+ * @param {Point[]} points
  */
 export function isConvex (points) {
     const l = points.length;
@@ -69,7 +69,7 @@ export function isConvex (points) {
 
 
 /**
- * @param {[number, number][]} points
+ * @param {Point[]} points
  */
 export function isSelfClosing (points) {
     const f = points[0];
@@ -78,7 +78,7 @@ export function isSelfClosing (points) {
 }
 
 /**
- * @param {[number, number][]} points
+ * @param {Point[]} points
  */
 export function getLength (points) {
     let sum = 0;

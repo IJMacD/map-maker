@@ -44,10 +44,6 @@ export function evaluateValue (value, element, context) {
             continue;
         }
 
-        // Following values require an element
-        if (!element) {
-            return c;
-        }
 
         // Handle tag() function.
         // Evaluates to the value of a tag, or optionally a default constant.
@@ -56,7 +52,14 @@ export function evaluateValue (value, element, context) {
         //  tag(size, 3);
         m = /^tag\(([^),]+)(?:,\s*([^),]+))?\s*\)/.exec(c);
         if (m) {
-            out.push(element.tags[m[1]] || m[2]?.replace(/^"|"$/g, "") || "");
+            // Element required for `tag()`
+            if (element) {
+                out.push(element.tags[m[1]] || m[2]?.replace(/^"|"$/g, "") || "");
+            }
+            else {
+                out.push("NO_ELEMENT");
+            }
+
             index += m[0].length;
             continue;
         }
@@ -64,13 +67,20 @@ export function evaluateValue (value, element, context) {
         // Handle debug() function
         m = /^debug\(([^)]+)\)/.exec(c);
         if (m) {
-            if (m[1] === "type") out.push(element.type);
-            else if (m[1] === "tags") out.push(Object.entries(element.tags).map(([key, value]) => `[${key}=${value}]`).join("\n"));
-            else if (m[1] === "location" && element.type === "node") out.push(`(${element.lon},${element.lat})`);
-            else if (m[1] === "node_count" && (element.type === "way" || element.type === "area")) out.push(element.nodes.length.toString());
-            // else if (m[1] === "length" && (element.type === "way" || element.type === "area")) out.push(getLength(element.).toString())
-            // else if (m[1] === "area" && (element.type === "way" || element.type === "area")) out.push(getArea(element.).toString())
-            else if (m[1] === "scale") out.push(context.scale.toString());
+            // Elemennt required for `debug()`
+            if (element) {
+                if (m[1] === "type") out.push(element.type);
+                else if (m[1] === "tags") out.push(Object.entries(element.tags).map(([key, value]) => `[${key}=${value}]`).join("\n"));
+                else if (m[1] === "location" && element.type === "node") out.push(`(${element.lon},${element.lat})`);
+                else if (m[1] === "node_count" && (element.type === "way" || element.type === "area")) out.push(element.nodes.length.toString());
+                // else if (m[1] === "length" && (element.type === "way" || element.type === "area")) out.push(getLength(element.).toString())
+                // else if (m[1] === "area" && (element.type === "way" || element.type === "area")) out.push(getArea(element.).toString())
+                else if (m[1] === "scale") out.push(context.scale.toString());
+            }
+            else {
+                out.push("NO_ELEMENT");
+            }
+
             index += m[0].length;
             continue;
         }
