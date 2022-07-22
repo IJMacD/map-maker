@@ -25,12 +25,12 @@ export function flatProjection(minLon, minLat, maxLon, maxLat, width, height) {
 /**
  * Returns a function to convert (lon,lat) => [x,y]
  * @param {Point} centre [lon, lat]
- * @param {number} scale
+ * @param {number} zoom
  * @param {number} width
  * @param {number} height
  * @returns {(lon: number, lat: number) => Point}
  */
-export function mercatorProjection(centre, scale, width, height) {
+export function mercatorProjection(centre, zoom, width, height) {
     const baseTileSize = 256;
 
     // Can be adjusted to "overscan" for debugging purposes
@@ -40,7 +40,7 @@ export function mercatorProjection(centre, scale, width, height) {
 
     const [cLon, cLat] = centre;
 
-    const tileCount = Math.pow(2, scale);
+    const tileCount = Math.pow(2, zoom);
     const degPerTileH = 180 / tileCount;
     const degPerTileV = 180 / tileCount;
 
@@ -71,17 +71,17 @@ export function mercatorProjection(centre, scale, width, height) {
 /**
  * Returns a function to convert (x,y) => [lon,lat]
  * @param {Point} centre [lon, lat]
- * @param {number} scale
+ * @param {number} zoom
  * @param {number} width
  * @param {number} height
  * @returns {(x: number, y: number) => Point} [x,y] => [lon, lat]
  */
-export function reverseMercatorProjection(centre, scale, width, height) {
+export function reverseMercatorProjection(centre, zoom, width, height) {
     const baseTileSize = 256;
 
     const [cLon, cLat] = centre;
 
-    const tileCount = Math.pow(2, scale);
+    const tileCount = Math.pow(2, zoom);
     const degPerTileH = 180 / tileCount;
     const degPerTileV = 180 / tileCount;
 
