@@ -26,7 +26,7 @@ console.debug = () => void 0;
 run();
 
 async function run() {
-    const styleFilename = getArg("-s");
+    const styleFilename = getArg("-f");
     // @ts-ignore
     // Arg is required so result cannot be null
     const style = fs.readFileSync(styleFilename, { encoding: "utf8" });
@@ -41,8 +41,10 @@ async function run() {
     const centreOption = getArg("-c");
     const widthOption = getArg("-w");
     const heightOption = getArg("-h");
+    const tileXOption = getArg("-x");
+    const tileYOption = getArg("-y");
 
-    const scale = +(getArg("-x") ?? 1);
+    const scale = +(getArg("-s") ?? 1);
 
     /** @type {MapContext[]} */
     const contexts = [];
@@ -66,6 +68,19 @@ async function run() {
             for (let i = 0; i < zooms.length; i++) {
                 const zoom = zooms[i];
                 contexts.push(makeContextFromCentreZoomWidthHeight(centre, zoom, +widthOption * (2 ** i), +heightOption * (2 ** i), scale));
+            }
+        }
+        else if (tileXOption && tileYOption) {
+            const left = tile2long(+tileXOption, zooms[0]);         // min
+            const top = tile2lat(+tileYOption, zooms[0]);           // max
+            const right = tile2long(+tileXOption + 1, zooms[0]);    // max
+            const bottom = tile2lat(+tileYOption + 1, zooms[0]);    // min
+
+            /** @type {[number,number,number,number]} */
+            const bounds = [left, bottom, right, top];
+
+            for (const zoom of zooms) {
+                contexts.push(makeContextFromBoundsZoom(bounds, zoom, scale));
             }
         }
     }
@@ -164,13 +179,15 @@ function printUsage (stream = process.stdout) {
     node export.js -s style.txt -b 7.095,50.695,7.105,50.705 -z 10
 
 Options:
-    -s filename for style text
+    -f filename for style text
     -b bounds as minLon,minLat,maxLon,maxLat
     -z zoom, if zoom is a range (e.g. 12-16) then multiple images will be produced
     -c centre as lon,lat
+    -s image scale
     -w image width
     -h image height
-    -x image scale`);
+    -x tile X
+    -y tile Y`);
 }
 
 function getArg (flag) {
@@ -229,4 +246,26 @@ function makeContextFromCentreZoomWidthHeight(centre, zoom, width, height, scale
 function range (start, end) {
     const length = end - start + 1;
     return Array.from({length}).map((_, i) => start + i);
+}
+
+
+/**
+ * Gives north-west corner
+ * @see https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
+ * @param {number} x
+ * @param {number} z
+ */
+function tile2long(x,z) {
+    return (x/Math.pow(2,z)*360-180);
+}
+
+/**
+ * Gives north-west corner
+ * @see https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames
+ * @param {number} y
+ * @param {number} z
+ */
+function tile2lat(y,z) {
+    var n=Math.PI-2*Math.PI*y/Math.pow(2,z);
+    return (180/Math.PI*Math.atan(0.5*(Math.exp(n)-Math.exp(-n))));
 }
