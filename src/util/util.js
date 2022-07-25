@@ -204,10 +204,14 @@ export function interpolateBox ({x, y}, from, to) {
 /**
  * @param {number} n
  */
-export function cleanup (n) {
+export function numberToStableString (n) {
     return n.toFixed(5).replace(/^0+|0+$/g, "");
 }
 
-export function cleanupPoint (x, y) {
-    return `${cleanup(x)},${cleanup(y)}`;
+/**
+ * @param {number} x
+ * @param {number} y
+ */
+export function pointToStableString (x, y) {
+    return `${numberToStableString(x)},${numberToStableString(y)}`;
 }

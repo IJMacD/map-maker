@@ -20,7 +20,7 @@ import { MemorySource } from './ElementSources/MemorySource';
 import { OverpassSource } from './ElementSources/OverpassSource';
 import { DatabaseSource } from './ElementSources/DatabaseSource';
 import { useForceRender } from './hooks/useForceRender';
-import { cleanup, cleanupPoint, interpolateBox, parseBBox } from './util/util';
+import { numberToStableString, pointToStableString, reverseMercatorProjection } from './util/util';
 import { MapCanvas } from './Components/MapCanvas';
 
 const defaultStyle = `way[natural=coastline] {
@@ -123,11 +123,10 @@ function App() {
   function handleDoubleClick (e) {
     const { offsetX: x, offsetY: y, ctrlKey, shiftKey, altKey } = e.nativeEvent;
 
-    const bbox = makeBBox(centrePoint, zoom, [width, height]);
+    const reverseprojection = reverseMercatorProjection(centrePoint, zoom, width, height);
+    const [lon, lat] = reverseprojection(x, y);
 
-    // Flip client height so y-axis is negative
-    const { x: lon, y: lat } = interpolateBox({ x, y }, [0, width, height, 0], parseBBox(bbox));
-    setCentre(cleanupPoint(lon, lat));
+    setCentre(pointToStableString(lon, lat));
 
     const dz = altKey ? 3 : 1;
     if (ctrlKey) setZoom(zoom + dz);
@@ -155,7 +154,7 @@ function App() {
     const bb = bbox.split(",").map(p => +p);
     const stepSizeX = (bb[2] - bb[0]) / 2;
     const stepSizeY = (bb[3] - bb[1]) / 2;
-    const newCentre = cleanupPoint(centrePoint[0] + dX * stepSizeX, centrePoint[1] + dY * stepSizeY);
+    const newCentre = pointToStableString(centrePoint[0] + dX * stepSizeX, centrePoint[1] + dY * stepSizeY);
     setCentre(newCentre);
   }
 
@@ -184,8 +183,8 @@ function App() {
           <button onClick={() => move(1,0)}>⏵</button>
           <button onClick={() => move(0,1)}>⏶</button>
           <button onClick={() => move(0,-1)}>⏷</button>
-          <button onClick={() => setZoom(+cleanup(zoom + 1))}>➕</button>
-          <button onClick={() => setZoom(+cleanup(zoom - 1))}>➖</button>
+          <button onClick={() => setZoom(+numberToStableString(zoom + 1))}>➕</button>
+          <button onClick={() => setZoom(+numberToStableString(zoom - 1))}>➖</button>
           { current && <button onClick={() => setCentre(`${current.coords.longitude},${current.coords.latitude}`)}>📍</button> }
           <button onClick={() => handleDownload("png")} disabled={downloading}>⭳ PNG</button>
           <button onClick={() => handleDownload("svg")} disabled={downloading}>⭳ SVG</button>
