@@ -36,6 +36,31 @@ export function matchPseudoClasses(rule, points, element, nodes) {
             return false;
     }
 
+    if (includesPseudoClass(selector, "not", "convex")) {
+        if (isConvex(points))
+            return false;
+    }
+
+    if (includesPseudoClass(selector, "not", "concave")) {
+        if (!isConvex(points))
+            return false;
+    }
+
+    if (includesPseudoClass(selector, "not", "clockwise")) {
+        if (!isAntiClockwise(points))
+            return false;
+    }
+
+    if (includesPseudoClass(selector, "not", "anti-clockwise")) {
+        if (isAntiClockwise(points))
+            return false;
+    }
+
+    if (includesPseudoClass(selector, "not", "self-closing")) {
+        if (nodes && nodes[0] === nodes[points.length - 1])
+            return false;
+    }
+
     const hasPseudoClasses = selector.pseudoClasses.filter(c => c.name === "has");
 
     for (const pc of hasPseudoClasses) {

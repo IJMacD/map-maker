@@ -1,5 +1,5 @@
 map {
-    fill: white;
+    fill: lightblue;
 }
 way[natural=coastline] {
     fill: white;
@@ -76,7 +76,7 @@ way[natural=coastline] {
     }
 }
 way[natural=coastline] {
-    stroke: black;
+    stroke: grey;
     stroke-width: 1;
 }
 @match (zoom < 8) {

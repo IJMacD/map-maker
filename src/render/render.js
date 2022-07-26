@@ -51,10 +51,10 @@ export async function render(rules, elementSource, renderer, context, setStatus,
       const prefix = `Rule ${index}: `;
 
       // console.debug(`${prefix} Loading elements for ${item.rule.selector}`);
-      const { elements } = result;
+      const { selector, elements } = result;
 
       // if (!current.currentEffect) return;
-      console.debug(`${prefix} Rendering ${result.selector}`);
+      console.debug(`${prefix} Rendering ${selector}`);
 
       renderer.renderRule(context, rules[index], elements);
 

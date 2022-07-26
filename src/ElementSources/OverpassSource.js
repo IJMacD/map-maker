@@ -22,9 +22,9 @@ export class OverpassSource {
 
         const elements = await this.#tryQuery(selectors, bbox);
 
-        const extracted = extractElements(selectors, elements);
+        const extractedElements = extractElements(selectors, elements);
 
-        return selectors.map((selector, i) => ({ selector, bbox, elements: extracted[i] }));
+        return selectors.map((selector, i) => ({ selector, bbox, elements: extractedElements[i] }));
     }
 
     /**

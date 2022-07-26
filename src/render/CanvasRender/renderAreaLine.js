@@ -49,15 +49,32 @@ export function renderAreaLine(ctx, rule, points, origin, element = null, contex
         applyTransform(ctx, rule, scale);
     }
 
-    ctx.beginPath();
-    for (let i = 0; i < points.length; i++) {
-        let x = points[i][0] - offsetX;
-        let y = points[i][1] - offsetY;
-        ctx.lineTo(x * scale, y * scale);
-    }
 
-    rule.declarations["fill"] && ctx.fill();
-    rule.declarations["stroke"] && ctx.stroke();
+    if (rule.declarations["stroke"] === "rainbow") {
+        for (let i = 1; i < points.length; i++) {
+            ctx.beginPath();
+            let x1 = points[i-1][0] - offsetX;
+            let y1 = points[i-1][1] - offsetY;
+            ctx.moveTo(x1 * scale, y1 * scale);
+            let x2 = points[i][0] - offsetX;
+            let y2 = points[i][1] - offsetY;
+            ctx.lineTo(x2 * scale, y2 * scale);
+
+            ctx.strokeStyle = `hsl(${i%360}, 100%, 50%)`;
+            ctx.stroke();
+        }
+    }
+    else if (rule.declarations["fill"] || rule.declarations["stroke"]) {
+        ctx.beginPath();
+        for (let i = 0; i < points.length; i++) {
+            let x = points[i][0] - offsetX;
+            let y = points[i][1] - offsetY;
+            ctx.lineTo(x * scale, y * scale);
+        }
+
+        rule.declarations["fill"] && ctx.fill(/** @type {CanvasFillRule} */(rule.declarations["fill-rule"] ?? "evenodd"));
+        rule.declarations["stroke"] && ctx.stroke();
+    }
 
     ctx.restore();
 

@@ -22,6 +22,7 @@ import { DatabaseSource } from './ElementSources/DatabaseSource';
 import { useForceRender } from './hooks/useForceRender';
 import { numberToStableString, pointToStableString, reverseMercatorProjection } from './util/util';
 import { MapCanvas } from './Components/MapCanvas';
+import { CoastlineSource } from './ElementSources/CoastlineSource';
 
 const defaultStyle = `way[natural=coastline] {
   stroke: grey;
@@ -50,7 +51,8 @@ function App() {
 
   if (!elementSourceRef.current) {
     const overpassSource = new OverpassSource();
-    const databaseSource = new DatabaseSource(overpassSource);
+    const coastlineSource = new CoastlineSource(overpassSource);
+    const databaseSource = new DatabaseSource(coastlineSource);
     elementSourceRef.current = new MemorySource(databaseSource);
   }
 
@@ -189,6 +191,7 @@ function App() {
           <button onClick={() => handleDownload("png")} disabled={downloading}>⭳ PNG</button>
           <button onClick={() => handleDownload("svg")} disabled={downloading}>⭳ SVG</button>
         </div>
+        {/* { zoom >= 16 && <a href={`https://www.openstreetmap.org/edit?editor=id#map=${zoom}/${centrePoint[1]}/${centrePoint[0]}`} target="_blank">iD Editor</a> } */}
         <label>Centre <input value={centre} onChange={e => setCentre(e.target.value)} /></label>
         <label>Zoom <input type="number" value={zoom} onChange={e => setZoom(+e.target.value)} /></label>
         <div style={{flex:1,overflowY:"auto",width:400}}>

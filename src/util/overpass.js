@@ -200,3 +200,90 @@ function isWildcardMatch(selector, testSelector) {
 export function isOverpassType(selector) {
     return /^(node|way|rel(?:ation)?|area)/.test(selector.type);
 }
+
+/**
+ * Given a list of elements, take all ways in the list and try to joing them
+ * into one long way by matching start/end nodes.
+ * This is designed to join coastlines into one continuous line so they can be
+ * rendered correctly.
+ * The result is an array of elements containing all continuous ways which can
+ * be found as well as all nodes. The ways will have an arbritary set of tags.
+ * @note not optimal but seems to work
+ * @param {OverpassElement[]} elements
+ * @returns {OverpassElement[]}
+ */
+export function mergeWays (elements) {
+    const ways = /** @type {OverpassWayElement[]} */(elements.filter(e => e.type === "way"));
+    const nodes = elements.filter(e => e.type === "node");
+
+    /** @type {OverpassWayElement[]} */
+    const selfClosedWays = [];
+
+    /** @type {OverpassWayElement[]} */
+    let toProcess = [];
+
+    // Prepare way hashmaps
+    for (const way of ways) {
+        if (isSelfClosingWay(way)) {
+            // For self closing ways don't even bother further processing
+            selfClosedWays.push(way);
+        }
+        else {
+            toProcess.push(way);
+        }
+    }
+
+    let prevCount = 0;
+
+    // Iteratively process list until two successive iterations result in the
+    // same number of ways
+    while (prevCount !== toProcess.length) {
+        prevCount = toProcess.length;
+
+        /** @type {{ [lastNodeID: number ]: OverpassWayElement[] }} */
+        toProcess = _mergeIteration(toProcess);
+
+        toProcess.reverse();
+
+        toProcess = _mergeIteration(toProcess);
+    }
+
+    console.log(`Found ${selfClosedWays.length} self-closed; ${toProcess.length} connected; `);
+
+    return [ ...selfClosedWays, ...toProcess, ...nodes ];
+}
+
+function _mergeIteration(toProcess) {
+    console.debug(`Starting with ${toProcess.length} open ways`);
+
+    const heads = {};
+
+    for (const way of toProcess) {
+        const firstNode = way.nodes[0];
+        const lastNode = way.nodes[way.nodes.length - 1];
+
+        // Check if our first node matches the last node of a head chain
+        if (heads[firstNode]) {
+            // If there is a match then append ourself to that chain
+            const chain = heads[firstNode];
+            chain.push(way);
+
+            // We need to update the location of the chain since it has a
+            // new last node.
+            delete heads[firstNode];
+            heads[lastNode] = chain;
+        }
+        else {
+            heads[lastNode] = [way];
+        }
+    }
+
+    return Object.values(heads).map(chain => ({ ...chain[0], nodes: chain.map(w => w.nodes).flat() }));
+}
+
+/**
+ * @param {OverpassWayElement} way
+ */
+function isSelfClosingWay (way) {
+    return way.nodes[0] === way.nodes[way.nodes.length - 1];
+}

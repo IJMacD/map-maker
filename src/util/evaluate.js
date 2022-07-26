@@ -1,3 +1,6 @@
+
+const LARGE_PRIME = 54727;
+
 /**
  * Evaluate right-hand-side in following usage examples:
  *
@@ -22,6 +25,11 @@ export function evaluateValue (value, element, context) {
 
     if (!value) {
         return "";
+    }
+
+    // Gives (deterministic) random colour
+    if (value === "random") {
+        return `hsl(${((element?.id ?? 0) * LARGE_PRIME)%360}, 100%, 50%)`;
     }
 
     let index = 0;
@@ -70,6 +78,7 @@ export function evaluateValue (value, element, context) {
             // Elemennt required for `debug()`
             if (element) {
                 if (m[1] === "type") out.push(element.type);
+                else if (m[1] === "id") out.push(element.id.toString());
                 else if (m[1] === "tags") out.push(Object.entries(element.tags).map(([key, value]) => `[${key}=${value}]`).join("\n"));
                 else if (m[1] === "location" && element.type === "node") out.push(`(${element.lon},${element.lat})`);
                 else if (m[1] === "node_count" && (element.type === "way" || element.type === "area")) out.push(element.nodes.length.toString());
