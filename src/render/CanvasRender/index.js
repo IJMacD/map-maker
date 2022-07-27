@@ -3,6 +3,7 @@ import { renderPoint } from "./renderPoint";
 import { setFont } from "./renderText";
 import { renderAreaLine } from "./renderAreaLine";
 import { renderRect } from "./renderRect";
+import { commonProperties } from "./util";
 
 export default class CanvasRender extends MapRenderer {
 
@@ -25,70 +26,64 @@ export default class CanvasRender extends MapRenderer {
     }
 
     /**
+     *
      * @param {MapContext} context
-     * @param {StyleRule} rule
-     * @param {OverpassElement[]} elements
+     * @param {{ [property: string]: string }} declarations
+     * @param {Point} point
+     * @param {OverpassElement?} [element]
      */
-    renderRule (context, rule, elements=[]) {
+    renderPoint (context, declarations, point, element=null) {
         const ctx = this.canvas.getContext("2d");
         if (ctx) {
             ctx.save();
-            super.renderRule(context, rule, elements);
+            commonProperties(ctx, context, declarations);
+            renderPoint(ctx, declarations, point, element, context);
             ctx.restore();
         }
     }
 
-    globalSetup({ scale }, rule) {
-        const ctx = this.canvas.getContext("2d");
-        if (ctx) {
-            if (rule.declarations["opacity"])
-                ctx.globalAlpha = +rule.declarations["opacity"];
-
-            if (rule.declarations["position"] === "relative") {
-                const top = (parseFloat(rule.declarations["top"]) || 0) * scale;
-                const left = (parseFloat(rule.declarations["left"]) || 0) * scale;
-
-                ctx.translate(left, top);
-            }
-        }
-    }
-
-    renderPoint (context, rule, point, element=null) {
-        const ctx = this.canvas.getContext("2d");
-        if (ctx) {
-            renderPoint(ctx, rule, point, element, context);
-        }
-    }
-
     /**
-     * @param {StyleRule} rule
+     * @param {{ [property: string]: string }} declarations
      * @param {Point[]} points
      * @param {Point|((points: Point[]) => Point)} origin Can be a function for lazy evaluation
      * @param {OverpassElement?} element
      * @param {MapContext} context
      */
-    renderAreaLine (context, rule, points, origin, element=null) {
+    renderAreaLine (context, declarations, points, origin, element=null) {
         const ctx = this.canvas.getContext("2d");
         if (ctx) {
-            renderAreaLine(ctx, rule, points, origin, element, context);
+            ctx.save();
+            commonProperties(ctx, context, declarations);
+            renderAreaLine(ctx, declarations, points, origin, element, context);
+            ctx.restore();
         }
     }
 
     /**
-     * @param {StyleRule} rule
+     * @param {{ [property: string]: string }} declarations
      * @param {BoundingBox} bounding [x, y, width, height] [x, y] is top left
      * @param {Point|((points: Point[]) => Point)} origin Can be a function for lazy evaluation
      * @param {OverpassElement?} element
      * @param {MapContext} context
      */
-    renderRect (context, rule, bounding, origin, element=null) {
+    renderRect (context, declarations, bounding, origin, element=null) {
         const ctx = this.canvas.getContext("2d");
         if (ctx) {
-            renderRect(ctx, rule, bounding, origin, element, context);
+            ctx.save();
+            commonProperties(ctx, context, declarations);
+            renderRect(ctx, declarations, bounding, origin, element, context);
+            ctx.restore();
         }
     }
 
-    measureText (context, rule, text) {
+    /**
+     *
+     * @param {MapContext} context
+     * @param {{ [property: string]: string }} declarations
+     * @param {string} text
+     * @returns
+     */
+    measureText (context, declarations, text) {
         const ctx = this.canvas.getContext("2d");
 
         if (!ctx) {
@@ -97,7 +92,7 @@ export default class CanvasRender extends MapRenderer {
 
         // Measurements must be non-scaled so they can be scaled as appropriate
         // later.
-        setFont(ctx, rule, 1);
+        setFont(ctx, declarations, 1);
         const size = ctx.measureText(text);
         const { width, actualBoundingBoxDescent: descending, actualBoundingBoxAscent: ascending } = size;
 

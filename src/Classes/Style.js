@@ -24,7 +24,7 @@ StyleSelector.parse = /**
  * @param {string} text
  */
 function (text) {
-    const re = /^\s*([a-z]+)/;
+    const re = /^\s*([a-z]+|\*)/;
     const m = re.exec(text);
 
     if (!m) return null;
@@ -123,7 +123,7 @@ export function matchRule (style, element) {
  * @param {OverpassElement} element
  */
 export function matchSelector (selector, element, inequalities=true) {
-  if (element.type !== selector.type && !(selector.type === "area" && element.type === "way")) return false;
+  if (element.type !== selector.type && !(selector.type === "area" && element.type === "way") && selector.type !== "*") return false;
 
   const entries = Object.entries(selector.tags);
   if (entries.length && typeof element.tags === "undefined") return false;

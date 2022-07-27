@@ -4,15 +4,15 @@ import { getBoundingBox } from "../util/util";
 /**
  * Shared logic for `collision-*` properties
  * @note Only `collision-policy: hide` is implemented at the moment.
- * @param {StyleRule} rule
+ * @param {{ [property: string]: string }} declarations
  * @param {BoundingBox} box [x, y, width, height] [x, y] is top left
  * @returns {boolean} `false` if there is a collision and rendering should abort
  */
-export function handleCollisionProperties(rule, box) {
-    if (rule.declarations["collision-set"]) {
+export function handleCollisionProperties(declarations, box) {
+    if (declarations["collision-set"]) {
 
-        if (rule.declarations["collision-size"]) {
-            const s = /(\d+\.?\d*)%/.exec(rule.declarations["collision-size"]);
+        if (declarations["collision-size"]) {
+            const s = /(\d+\.?\d*)%/.exec(declarations["collision-size"]);
 
             const scaleFactor = +s[1] / 100;
             const w = box[2];
@@ -26,8 +26,8 @@ export function handleCollisionProperties(rule, box) {
 
         const collisionSystem = CollisionSystem.getCollisionSystem();
 
-        if (!collisionSystem.add(rule.declarations["collision-set"], box)) {
-            const policy = rule.declarations["collision-policy"] || "hide";
+        if (!collisionSystem.add(declarations["collision-set"], box)) {
+            const policy = declarations["collision-policy"] || "hide";
 
             if (policy === "hide") {
                 return false;
@@ -38,6 +38,11 @@ export function handleCollisionProperties(rule, box) {
     return true;
 }
 
-export function hasPointProperties(rule) {
-    return rule.declarations["content"] || rule.declarations["size"] || rule.declarations["path"] || rule.declarations["icon"];
+/**
+ *
+ * @param {{ [property: string]: string }} declarations
+ * @returns
+ */
+export function hasPointProperties(declarations) {
+    return declarations["content"] || declarations["size"] || declarations["path"] || declarations["icon"];
 }

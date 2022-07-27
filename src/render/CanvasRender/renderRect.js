@@ -7,35 +7,35 @@ import { roundedRect } from "./roundedRect";
 
 /**
  * @param {CanvasRenderingContext2D} ctx
- * @param {StyleRule} rule
+ * @param {{ [property: string]: string }} declarations
  * @param {BoundingBox} bounding [x, y, width, height] [x, y] is top left
  * @param {Point|((points: Point[]) => Point)} origin Can be a function for lazy evaluation
  * @param {OverpassElement?} element
  * @param {MapContext} context
  */
-export function renderRect(ctx, rule, bounding, origin, element = null, context) {
+export function renderRect(ctx, declarations, bounding, origin, element = null, context) {
     let [x, y, width, height] = bounding;
     const { scale } = context;
 
-    const padding = rule.declarations["padding"] ? parseFloat(rule.declarations["padding"]) * scale : 0;
+    const padding = declarations["padding"] ? parseFloat(declarations["padding"]) * scale : 0;
 
     x -= padding;
     y -= padding;
     width += padding * 2;
     height += padding * 2;
 
-    if (!handleCollisionProperties(rule, [x, y, width, height])) {
+    if (!handleCollisionProperties(declarations, [x, y, width, height])) {
         return;
     }
 
     ctx.save();
 
-    setStrokeFill(ctx, rule, element, context);
+    setStrokeFill(ctx, declarations, element, context);
 
     let offsetX = 0;
     let offsetY = 0;
 
-    if (rule.declarations["transform"]) {
+    if (declarations["transform"]) {
         // Extra work required if we're transforming
 
         // First get transform origin;
@@ -52,30 +52,30 @@ export function renderRect(ctx, rule, bounding, origin, element = null, context)
         ctx.translate(offsetX, offsetY);
 
         // Apply the transformation
-        applyTransform(ctx, rule, scale);
+        applyTransform(ctx, declarations, scale);
     }
 
-    if (rule.declarations["corner-radius"]) {
-        roundedRect(ctx, (x - offsetX) * scale, (y - offsetY) * scale, width * scale, height * scale, +rule.declarations["corner-radius"] * scale);
+    if (declarations["corner-radius"]) {
+        roundedRect(ctx, (x - offsetX) * scale, (y - offsetY) * scale, width * scale, height * scale, +declarations["corner-radius"] * scale);
     }
     else {
         ctx.beginPath();
         ctx.rect((x - offsetX) * scale, (y - offsetY) * scale, width * scale, height * scale);
     }
 
-    rule.declarations["fill"] && ctx.fill();
-    rule.declarations["stroke"] && ctx.stroke();
+    declarations["fill"] && ctx.fill();
+    declarations["stroke"] && ctx.stroke();
 
     ctx.restore();
 
     // Text Handling, Icons etc.
-    if (hasPointProperties(rule)) {
+    if (hasPointProperties(declarations)) {
         ctx.save();
         if (origin instanceof Function) {
             const points = rectToPoints(x, y, width, height);
             origin = origin(points);
         }
-        renderPoint(ctx, rule, origin, element, context);
+        renderPoint(ctx, declarations, origin, element, context);
         ctx.restore();
     }
 }

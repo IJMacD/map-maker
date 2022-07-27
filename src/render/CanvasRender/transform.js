@@ -1,13 +1,13 @@
 /**
  * @param {CanvasRenderingContext2D} ctx
- * @param {StyleRule} rule
+ * @param {{ [property: string]: string }} declarations
  * @param {number} scale
  */
-export function applyTransform(ctx, rule, scale) {
+export function applyTransform(ctx, declarations, scale) {
 
-    if (rule.declarations["transform"]) {
+    if (declarations["transform"]) {
         const r = /\s*([a-z]+)\(([^)]*)\)\s*/g;
-        const t = rule.declarations["transform"];
+        const t = declarations["transform"];
         let m;
         while (m = r.exec(t)) {
             const trans = m[1];

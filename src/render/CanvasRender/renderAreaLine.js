@@ -5,23 +5,23 @@ import { handleCollisionProperties, hasPointProperties } from "../util";
 
 /**
  * @param {CanvasRenderingContext2D} ctx
- * @param {StyleRule} rule
+ * @param {{ [property: string]: string }} declarations
  * @param {Point[]} points
  * @param {Point|((points: Point[]) => Point)} origin Can be a function for lazy evaluation
  * @param {OverpassElement?} element
  * @param {MapContext} context
  */
-export function renderAreaLine(ctx, rule, points, origin, element = null, context) {
+export function renderAreaLine(ctx, declarations, points, origin, element = null, context) {
     if (points.length === 0)
         return;
 
-    if (!handleCollisionProperties(rule, points)) {
+    if (!handleCollisionProperties(declarations, points)) {
         return;
     }
 
     ctx.save();
 
-    setStrokeFill(ctx, rule, element, context);
+    setStrokeFill(ctx, declarations, element, context);
 
     ctx.lineCap = "square";
 
@@ -30,7 +30,7 @@ export function renderAreaLine(ctx, rule, points, origin, element = null, contex
 
     const { scale } = context;
 
-    if (rule.declarations["transform"]) {
+    if (declarations["transform"]) {
         // Extra work required if we're transforming
 
         // First get transform origin;
@@ -46,11 +46,11 @@ export function renderAreaLine(ctx, rule, points, origin, element = null, contex
         ctx.translate(offsetX, offsetY);
 
         // Apply the transformation
-        applyTransform(ctx, rule, scale);
+        applyTransform(ctx, declarations, scale);
     }
 
 
-    if (rule.declarations["stroke"] === "rainbow") {
+    if (declarations["stroke"] === "rainbow") {
         for (let i = 1; i < points.length; i++) {
             ctx.beginPath();
             let x1 = points[i-1][0] - offsetX;
@@ -64,7 +64,7 @@ export function renderAreaLine(ctx, rule, points, origin, element = null, contex
             ctx.stroke();
         }
     }
-    else if (rule.declarations["fill"] || rule.declarations["stroke"]) {
+    else if (declarations["fill"] || declarations["stroke"]) {
         ctx.beginPath();
         for (let i = 0; i < points.length; i++) {
             let x = points[i][0] - offsetX;
@@ -72,19 +72,19 @@ export function renderAreaLine(ctx, rule, points, origin, element = null, contex
             ctx.lineTo(x * scale, y * scale);
         }
 
-        rule.declarations["fill"] && ctx.fill(/** @type {CanvasFillRule} */(rule.declarations["fill-rule"] ?? "evenodd"));
-        rule.declarations["stroke"] && ctx.stroke();
+        declarations["fill"] && ctx.fill(/** @type {CanvasFillRule} */(declarations["fill-rule"] ?? "evenodd"));
+        declarations["stroke"] && ctx.stroke();
     }
 
     ctx.restore();
 
     // Text Handling, Icons etc.
-    if (hasPointProperties(rule)) {
+    if (hasPointProperties(declarations)) {
         ctx.save();
         if (origin instanceof Function) {
             origin = origin(points);
         }
-        renderPoint(ctx, rule, origin, element, context);
+        renderPoint(ctx, declarations, origin, element, context);
         ctx.restore();
     }
 }

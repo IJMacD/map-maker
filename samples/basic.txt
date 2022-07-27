@@ -184,6 +184,10 @@ way[natural=coastline] {
         stroke-width: 0.5;
     }
 }
+*[tunnel=yes] {
+    opacity: 0.15;
+    stroke-dash: 4 4;
+}
 way[railway=rail] {
     stroke: black;
     stroke-width: 1;

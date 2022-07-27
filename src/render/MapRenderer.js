@@ -13,9 +13,10 @@ export default class MapRenderer {
     /**
      * @param {MapContext} context
      * @param {StyleRule} rule
-     * @param {OverpassElement[]} elements
+     * @param {OverpassElement[]} [elements]
+     * @param {StyleRule[]} [wildcardRules]
      */
-    renderRule (context, rule, elements=[]) {
+    renderRule (context, rule, elements=[], wildcardRules=[]) {
         // Prepare node map
         /** @type {{ [id: number]: OverpassNodeElement }} */
         const nodeMap = {};
@@ -30,40 +31,37 @@ export default class MapRenderer {
         /** @type {(lon: number, lat: number) => Point} */
         const projection = mercatorProjection(centre, zoom, width, height);
 
-        // Set up global context options
-        this.globalSetup(context, rule);
-
-        const { type } = rule.selector;
+        const { selector, declarations } = rule;
 
         // Non-Overpass Types first
-        switch (type) {
+        switch (selector.type) {
             case "map": {
                 const points = rectToPoints(0, 0, width, height);
                 if (rule.selector.pseudoElement)
-                    this.renderPseudoElement(context, rule, points, null);
+                    this.renderPseudoElement(context, selector, declarations, points, null);
                 else
-                    this.renderArea(context, rule, points, null);
+                    this.renderArea(context, declarations, points, null);
                 break;
             }
             case "centre": {
                 /** @type {OverpassNodeElement} */
                 const dummyElement = { id: -1, type: "node", lon: context.centre[0], lat: context.centre[1], tags: {} };
-                this.renderPoint(context, rule, projection(dummyElement.lon, dummyElement.lat), dummyElement);
+                this.renderPoint(context, declarations, projection(dummyElement.lon, dummyElement.lat), dummyElement);
                 break;
             }
             case "current": {
                 if (context.current) {
                     const coords = context.current;
-                    this.renderPoint(context, rule, projection(coords.longitude, coords.latitude));
+                    this.renderPoint(context, declarations, projection(coords.longitude, coords.latitude));
                 }
                 break;
             }
             case "gridlines": {
-                this.renderGridlines(context, rule, projection);
+                this.renderGridlines(context, rule, declarations, projection);
                 break;
             }
             case "dummy": {
-                this.renderPoint(context, rule, [0, 0]);
+                this.renderPoint(context, declarations, [0, 0]);
                 break;
             }
             case "bbox": {
@@ -74,7 +72,7 @@ export default class MapRenderer {
                 const [x1, y1] = projection(bbox[0], bbox[1]);
                 const [x2, y2] = projection(bbox[2], bbox[3]);
                 const centre = projection(context.centre[0], context.centre[1]);
-                this.renderRect(context, rule, [x1, y1, x2 - x1, y2 - y1], centre);
+                this.renderRect(context, declarations, [x1, y1, x2 - x1, y2 - y1], centre);
                 break;
             }
             default:
@@ -82,17 +80,21 @@ export default class MapRenderer {
                 for (const el of elements) {
                     if (!matchSelector(rule.selector, el)) continue;
 
-                    switch (type) {
+                    const ruleDeclarations = rule.declarations;
+                    const wildcardDeclarations = Object.assign({}, ...wildcardRules.filter(rule => matchSelector(rule.selector, el)).map(rule => rule.declarations));
+                    const declarations = { ...ruleDeclarations, ...wildcardDeclarations };
+
+                    switch (selector.type) {
                         case "node": {
                             if (el.type !== "node") continue;
 
                             const point = projection(el.lon, el.lat);
 
                             if (rule.selector.pseudoElement) {
-                                this.renderPseudoElement(context, rule, [point], el, [el]);
+                                this.renderPseudoElement(context, selector, declarations, [point], el, [el]);
                             }
                             else {
-                                this.renderPoint(context, rule, point, el);
+                                this.renderPoint(context, declarations, point, el);
                             }
                             break;
                         }
@@ -107,14 +109,14 @@ export default class MapRenderer {
                             if (!matchPseudoClasses(rule, points, el, nodes)) continue;
 
                             if (rule.selector.pseudoElement) {
-                                this.renderPseudoElement(context, rule, points, el, nodes);
+                                this.renderPseudoElement(context, selector, declarations, points, el, nodes);
                             }
                             else {
                                 // Render actual way/area
-                                if (type === "area") {
-                                    this.renderArea(context, rule, points, el);
+                                if (selector.type === "area") {
+                                    this.renderArea(context, declarations, points, el);
                                 } else {
-                                    this.renderLine(context, rule, points, el);
+                                    this.renderLine(context, declarations, points, el);
                                 }
                             }
                             break;
@@ -132,29 +134,29 @@ export default class MapRenderer {
 
     /**
      * @param {MapContext} context
-     * @param {StyleRule} rule
+     * @param {{ [property: string]: string }} declarations
      * @param {Point} point
      * @param {OverpassElement?} element
      */
-    renderPoint (context, rule, point, element=null) {}
+    renderPoint (context, declarations, point, element=null) {}
 
     /**
      * @param {MapContext} context
-     * @param {StyleRule} rule
+     * @param {{ [property: string]: string }} declarations
      * @param {Point[]} points
      * @param {OverpassElement?} element
      */
-    renderLine (context, rule, points, element=null) {
-        this.renderAreaLine(context, rule, points, getMidPoint, element);
+    renderLine (context, declarations, points, element=null) {
+        this.renderAreaLine(context, declarations, points, getMidPoint, element);
     }
 
     /**
      * @param {MapContext} context
-     * @param {StyleRule} rule
+     * @param {{ [property: string]: string }} declarations
      * @param {Point[]} points
      * @param {OverpassElement?} element
      */
-    renderArea (context, rule, points, element=null) {
+    renderArea (context, declarations, points, element=null) {
         if (points.length === 0)
             return;
 
@@ -162,22 +164,22 @@ export default class MapRenderer {
             points = [ ...points, points[0] ];
         }
 
-        this.renderAreaLine(context, rule, points, getCentrePoint, element);
+        this.renderAreaLine(context, declarations, points, getCentrePoint, element);
     }
 
     /**
      * There are certain things possible with rectangles such as padding or corner-radius
      * Default implementation just implements padding and passes to `renderAreaLine()`
      * @param {MapContext} context
-     * @param {StyleRule} rule
+     * @param {{ [property: string]: string }} declarations
      * @param {BoundingBox} bounding [x, y, width, height] [x, y] is top left
      * @param {Point|((points: [number,number][]) => [number,number])} origin
      * @param {OverpassElement?} element
      */
-    renderRect (context, rule, [ x, y, width, height ], origin, element=null) {
+    renderRect (context, declarations, [ x, y, width, height ], origin, element=null) {
         const { scale } = context;
 
-        const padding = rule.declarations["padding"] ? parseFloat(rule.declarations["padding"]) * scale : 0;
+        const padding = declarations["padding"] ? parseFloat(declarations["padding"]) * scale : 0;
 
         // TODO: Check for correctness
 
@@ -192,60 +194,61 @@ export default class MapRenderer {
         // Self-close
         points.push(points[0]);
 
-        this.renderAreaLine(context, rule, points, origin, element);
+        this.renderAreaLine(context, declarations, points, origin, element);
     }
 
     /**
      * @param {MapContext} context
-     * @param {StyleRule} rule
+     * @param {{ [property: string]: string }} declarations
      * @param {Point[]} points
      * @param {Point|((points: [number,number][]) => [number,number])} origin
      * @param {OverpassElement?} element
      */
-    renderAreaLine (context, rule, points, origin, element=null) {}
+    renderAreaLine (context, declarations, points, origin, element=null) {}
 
     /**
      * @param {MapContext} context
-     * @param {StyleRule} rule
+     * @param {StyleSelector} selector
+     * @param {{ [property: string]: string }} declarations
      * @param {Point[]} points
      * @param {OverpassElement?} element
      * @param {OverpassNodeElement[]} [nodes]
      */
-    renderPseudoElement(context, rule, points, element, nodes=[]) {
-        switch (rule.selector.pseudoElement) {
+    renderPseudoElement(context, selector, declarations, points, element, nodes=[]) {
+        switch (selector.pseudoElement) {
             case "centre":
             case "center": {
                 // Centre of bounding box
                 const centrePoint = getCentrePoint(points);
-                this.renderPoint(context, rule, centrePoint, element);
+                this.renderPoint(context, declarations, centrePoint, element);
                 break;
             }
             case "mid-point": {
                 // N/2th point (median point)
                 const midPoint = getMidPoint(points);
-                this.renderPoint(context, rule, midPoint, element);
+                this.renderPoint(context, declarations, midPoint, element);
                 break;
             }
             case "average-point": {
                 // Average of all points
                 const avgPoint = getAveragePoint(points);
-                this.renderPoint(context, rule, avgPoint, element);
+                this.renderPoint(context, declarations, avgPoint, element);
                 break;
             }
             case "start": {
                 // First point
-                this.renderPoint(context, rule, points[0], element);
+                this.renderPoint(context, declarations, points[0], element);
                 break;
             }
             case "end": {
                 // Last point
-                this.renderPoint(context, rule, points[points.length - 1], element);
+                this.renderPoint(context, declarations, points[points.length - 1], element);
                 break;
             }
             case "centre-of-mass": {
                 // TODO: calculate centre-of-mass
                 // const avgPoint = getCOMPoint(points);
-                // renderPoint(ctx, rule, avgPoint, element);
+                // renderPoint(ctx, declarations, avgPoint, element);
                 break;
             }
             case "bounding-box": {
@@ -255,7 +258,7 @@ export default class MapRenderer {
                  */
                 const bounding = getBoundingBox(points);
 
-                this.renderRect(context, rule, bounding, getCentrePoint, element);
+                this.renderRect(context, declarations, bounding, getCentrePoint, element);
                 break;
             }
             case "content-box": {
@@ -266,14 +269,14 @@ export default class MapRenderer {
                  */
                 let point = points[0];
 
-                if (rule.selector.type === "way")
+                if (selector.type === "way")
                     point = getMidPoint(points);
-                else if (rule.selector.type === "area")
+                else if (selector.type === "area")
                     point = getCentrePoint(points);
 
                 if (!element) return;
 
-                const content = getContent(rule, element, context);
+                const content = getContent(declarations, element, context);
 
                 if (!content) return;
 
@@ -284,7 +287,7 @@ export default class MapRenderer {
                 let bottom = 0;
                 let baseline = y;
                 for (const line of content.split("\n")) {
-                    const size = this.measureText(context, rule, line);
+                    const size = this.measureText(context, declarations, line);
 
                     width = Math.max(width, size.width);
 
@@ -295,17 +298,17 @@ export default class MapRenderer {
                     baseline += size.height;
                 }
 
-                if (rule.declarations["text-align"] === "center" || rule.declarations["text-align"] === "centre") {
+                if (declarations["text-align"] === "center" || declarations["text-align"] === "centre") {
                     x -= width / 2;
                 }
-                else if (rule.declarations["text-align"] === "right") {
+                else if (declarations["text-align"] === "right") {
                     x -= width;
                 }
 
                 /** @type {BoundingBox} */
                 const bounding = [ x, top, width, bottom - top ];
 
-                this.renderRect(context, rule, bounding, point, element);
+                this.renderRect(context, declarations, bounding, point, element);
                 break;
             }
             case "decimate": {
@@ -315,17 +318,24 @@ export default class MapRenderer {
                  * This method keeps first and last point, then every 10th
                  * point in between. i.e. only *keeps* 10%.
                  */
-                if (rule.selector.type === "way") {
+                if (selector.type === "way") {
                     const l = points.length - 1;
                     const decimatedPoints = points.filter((p, i) => i % 10 === 0 || i === l);
-                    this.renderLine(context, rule, decimatedPoints, element);
+                    this.renderLine(context, declarations, decimatedPoints, element);
                 }
                 break;
             }
         }
     }
 
-    renderGridlines (context, rule, projection) {
+    /**
+     *
+     * @param {MapContext} context
+     * @param {StyleRule} rule
+     * @param {{ [property: string]: string }} declarations
+     * @param {(lon: number, lat: number) => [number, number]} projection
+     */
+    renderGridlines (context, rule, declarations, projection) {
         const vertical = rule.selector.pseudoClasses.find(p => p.name === "vertical");
         const horizontal = rule.selector.pseudoClasses.find(p => p.name === "horizontal");
 
@@ -347,7 +357,7 @@ export default class MapRenderer {
 
             for (let i = xmin; i <= xmax; i += step) {
                 const points = [ projection(i, ymin),  projection(i, (ymin + ymax) / 2), projection(i, ymax) ];
-                this.renderLine(context, rule, points, { type: "way", id: 0, nodes: [], tags: { name: i.toFixed(sigFigs) }});
+                this.renderLine(context, declarations, points, { type: "way", id: 0, nodes: [], tags: { name: i.toFixed(sigFigs) }});
             }
         }
 
@@ -365,23 +375,21 @@ export default class MapRenderer {
 
             for (let j = ymin; j <= ymax; j += step) {
                 const points = [ projection(xmin, j), projection((xmin + xmax) / 2, j), projection(xmax, j) ];
-                this.renderLine(context, rule, points, { type: "way", id: 0, nodes: [], tags: { name: j.toFixed(sigFigs) }});
+                this.renderLine(context, declarations, points, { type: "way", id: 0, nodes: [], tags: { name: j.toFixed(sigFigs) }});
             }
         }
     }
 
     clear (context) {}
 
-    globalSetup (context, rule) { }
-
     /**
      *
      * @param {MapContext} context
-     * @param {StyleRule} rule
+     * @param {{ [property: string]: string }} declarations
      * @param {string} text
      * @return {{ width: number, ascending: number, descending: number, height: number }}
      */
-    measureText (context, rule, text) {
+    measureText (context, declarations, text) {
         return { width: 0, ascending: 0, descending: 0, height: 0 };
     }
 }

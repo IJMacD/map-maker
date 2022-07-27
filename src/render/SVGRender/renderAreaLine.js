@@ -4,23 +4,23 @@ import CollisionSystem from "../../Classes/CollisionSystem";
 
 /**
  * @param {{ elements: { type: string, [key: string]: string }[] }} layer
- * @param {StyleRule} rule
+ * @param {{ [property: string]: string }} declarations
  * @param {[number, number][]} points
  * @param {(points: [number, number][]) => [number, number]} getPoint
- * @param {OverpassElement} element
+ * @param {OverpassElement?} element
  */
-export function renderAreaLine(layer, rule, points, getPoint, element = null, context = {}) {
+export function renderAreaLine(layer, declarations, points, getPoint, element = null, context = {}) {
     if (points.length === 0)
         return;
 
 
-    if (rule.declarations["collision-set"]) {
+    if (declarations["collision-set"]) {
         const box = getBoundingBox(points);
 
         const collisionSystem = CollisionSystem.getCollisionSystem();
 
-        if (!collisionSystem.add(rule.declarations["collision-set"], box)) {
-            const policy = rule.declarations["collision-policy"] || "hide";
+        if (!collisionSystem.add(declarations["collision-set"], box)) {
+            const policy = declarations["collision-policy"] || "hide";
 
             if (policy === "hide") {
                 return;
@@ -33,7 +33,7 @@ export function renderAreaLine(layer, rule, points, getPoint, element = null, co
     let offsetX = 0;
     let offsetY = 0;
 
-    if (rule.declarations["transform"]) {
+    if (declarations["transform"]) {
         // Extra work required if we're transforming
 
         // First get transform origin;
@@ -49,7 +49,7 @@ export function renderAreaLine(layer, rule, points, getPoint, element = null, co
         // Apply the transformation
         // applyTransform(path, rule);
 
-        path.transform = rule.declarations["transform"];
+        path.transform = declarations["transform"];
     }
 
     const d = [];
@@ -64,7 +64,7 @@ export function renderAreaLine(layer, rule, points, getPoint, element = null, co
     layer.elements.push(path);
 
     // Text Handling, Icons etc.
-    if (rule.declarations["content"] || rule.declarations["size"] || rule.declarations["path"] || rule.declarations["icon"]) {
+    if (declarations["content"] || declarations["size"] || declarations["path"] || declarations["icon"]) {
         // this.renderPoint(context, rule, getPoint(points), element);
     }
 }

@@ -1,12 +1,12 @@
 import { evaluateValue } from "./evaluate";
 
 /**
- * @param {StyleRule} rule
+ * @param {{ [property: string]: string }} declarations
  * @param {OverpassElement?} element
  * @param {MapContext} context
  */
-export function getContent(rule, element, context) {
-    let content = rule.declarations["content"];
+export function getContent(declarations, element, context) {
+    let content = declarations["content"];
 
     if (!content)
         return "";

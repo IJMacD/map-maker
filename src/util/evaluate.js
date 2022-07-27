@@ -1,5 +1,5 @@
 
-const LARGE_PRIME = 54727;
+const SHIFT_REGISTER_VALUE = 473;
 
 /**
  * Evaluate right-hand-side in following usage examples:
@@ -29,7 +29,7 @@ export function evaluateValue (value, element, context) {
 
     // Gives (deterministic) random colour
     if (value === "random") {
-        return `hsl(${((element?.id ?? 0) * LARGE_PRIME)%360}, 100%, 50%)`;
+        return `hsl(${((element?.id ?? 0) * SHIFT_REGISTER_VALUE)%360}, 100%, 50%)`;
     }
 
     let index = 0;

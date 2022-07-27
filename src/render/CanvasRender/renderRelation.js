@@ -2,17 +2,17 @@
 
 /**
  * @param {CanvasRenderingContext2D} ctx
- * @param {StyleRule} rule
+ * @param {{ [property: string]: string }} declarations
  * @param {OverpassRelElement} element
  * @param {{ [id: string]: OverpassWayElement; }} wayMap
  * @param {{ [id: string]: OverpassNodeElement; }} nodeMap
  * @param { (lon: number, lat: number) => [number, number] } projection
  */
-export function renderRelation(ctx, rule, element, wayMap, nodeMap, projection, context = {}) {
+export function renderRelation(ctx, declarations, element, wayMap, nodeMap, projection, context = {}) {
     const { scale } = context;
-    ctx.fillStyle = rule.declarations["fill"];
-    ctx.strokeStyle = rule.declarations["stroke"];
-    ctx.lineWidth = +rule.declarations["stroke-width"] * scale;
+    ctx.fillStyle = declarations["fill"];
+    ctx.strokeStyle = declarations["stroke"];
+    ctx.lineWidth = +declarations["stroke-width"] * scale;
 
     // As long as outer ways go anti-clockwise and inner rings go clockwise
     // (or possibly vice-versa) then the CanvasRenderingContext2D can handle
@@ -50,6 +50,6 @@ export function renderRelation(ctx, rule, element, wayMap, nodeMap, projection, 
 
     // ctx.closePath();
 
-    rule.declarations["fill"] && ctx.fill();
-    rule.declarations["stroke"] && ctx.stroke();
+    declarations["fill"] && ctx.fill();
+    declarations["stroke"] && ctx.stroke();
 }

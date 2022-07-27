@@ -15,12 +15,15 @@ export async function render(rules, elementSource, renderer, context, setStatus,
   setStatus("Fetching...");
   setError("");
 
+  const realRules = rules.filter(rule => rule.selector.type !== "*");
+  const wildcardRules = rules.filter(rule => rule.selector.type === "*");
+
   try {
     console.time("Fetching");
 
     const bbox = makeBBoxFromContext(context);
 
-    const results = await elementSource.fetch(rules.map(r => r.selector), bbox);
+    const results = await elementSource.fetch(realRules.map(r => r.selector), bbox);
 
     console.timeEnd("Fetching");
 
@@ -56,9 +59,9 @@ export async function render(rules, elementSource, renderer, context, setStatus,
       // if (!current.currentEffect) return;
       console.debug(`${prefix} Rendering ${selector}`);
 
-      renderer.renderRule(context, rules[index], elements);
+      renderer.renderRule(context, realRules[index], elements, wildcardRules);
 
-      setProgress(index/rules.length);
+      setProgress(index/realRules.length);
 
       // Render looks cooler but takes twice as long with microtask breaks
       // Pro: Looks better when waiting for render

@@ -27,7 +27,7 @@ export default class SVGRender extends MapRenderer {
     renderRule (context, rule, elements=[]) {
         this.currentLayer = { elements };
 
-        const colours = parseStrokeFill(rule, elements[0], context);
+        const colours = parseStrokeFill(rule.declarations, elements[0], context);
 
         this.currentLayer.stroke = colours.strokeStyle;
         this.currentLayer.fill = colours.fillStyle || "none";

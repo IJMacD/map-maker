@@ -154,16 +154,19 @@ async function render (rules, elementSource, renderer, context) {
     console.log(`${rules.length} rules to render`);
     const bbox = makeBBoxFromContext(context);
 
+    const renderRules = rules.filter(rule => rule.selector.type !== "*");
+    const wildcardRules = rules.filter(rule => rule.selector.type === "*");
+
     console.log("Fetching data");
-    const results = await elementSource.fetch(rules.map(r => r.selector), bbox);
+    const results = await elementSource.fetch(renderRules.map(r => r.selector), bbox);
     console.log("Data fetched");
 
 
     let index = 0;
-    for (const rule of rules) {
+    for (const rule of renderRules) {
       const { elements } = results[index];
 
-      renderer.renderRule(context, rule, elements);
+      renderer.renderRule(context, rule, elements, wildcardRules);
 
       index++;
     }

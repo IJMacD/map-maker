@@ -3,57 +3,57 @@ import { getContent } from "../../util/getContent";
 
 /**
  * @param {CanvasRenderingContext2D} ctx
- * @param {StyleRule} rule
+ * @param {{ [property: string]: string }} declarations
  * @param {[number, number]} param2
  * @param {OverpassElement?} element
  * @param {MapContext} context
  */
-export function renderText(ctx, rule, [x, y], element = null, context) {
-    setStrokeFill(ctx, rule, element, context);
+export function renderText(ctx, declarations, [x, y], element = null, context) {
+    setStrokeFill(ctx, declarations, element, context);
 
-    let content = getContent(rule, element, context);
+    let content = getContent(declarations, element, context);
 
-    setFont(ctx, rule, context.scale);
+    setFont(ctx, declarations, context.scale);
 
     for (const line of content.split("\n")) {
-        y += renderLine(ctx, rule, line, x, y, context);
+        y += renderLine(ctx, declarations, line, x, y, context);
     }
 }
 
 /**
  * @param {CanvasRenderingContext2D} ctx
- * @param {StyleRule} rule
+ * @param {{ [property: string]: string }} declarations
  * @param {string} content
  * @param {number} x
  * @param {number} y
  * @param {MapContext} context
  */
-function renderLine(ctx, rule, content, x, y, context) {
+function renderLine(ctx, declarations, content, x, y, context) {
     const size = ctx.measureText(content);
 
-    if (rule.declarations["text-align"]) {
+    if (declarations["text-align"]) {
         const textWidth = size.width;
 
-        if (rule.declarations["text-align"] === "center" || rule.declarations["text-align"] === "centre") {
+        if (declarations["text-align"] === "center" || declarations["text-align"] === "centre") {
             x -= textWidth / 2;
         }
-        else if (rule.declarations["text-align"] === "right") {
+        else if (declarations["text-align"] === "right") {
             x -= textWidth;
         }
     }
 
-    if (rule.declarations["stroke-width"]) {
-        ctx.lineWidth = parseFloat(rule.declarations["stroke-width"]) * context.scale;
+    if (declarations["stroke-width"]) {
+        ctx.lineWidth = parseFloat(declarations["stroke-width"]) * context.scale;
     }
 
-    if (rule.declarations["text-stroke"]) {
+    if (declarations["text-stroke"]) {
         // Todo: parse `2px red`
-        ctx.strokeStyle = rule.declarations["text-stroke"];
+        ctx.strokeStyle = declarations["text-stroke"];
         ctx.strokeText(content, x, y);
     }
 
-    if (rule.declarations["text-color"] || !rule.declarations["text-stroke"]) {
-        ctx.fillStyle = rule.declarations["text-color"];
+    if (declarations["text-color"] || !declarations["text-stroke"]) {
+        ctx.fillStyle = declarations["text-color"];
         ctx.fillText(content, x, y);
     }
 
@@ -63,30 +63,30 @@ function renderLine(ctx, rule, content, x, y, context) {
 
 /**
  * @param {CanvasRenderingContext2D} ctx
- * @param {StyleRule} rule
+ * @param {{ [property: string]: string }} declarations
  * @param {number} scale
  */
-export function setFont(ctx, rule, scale) {
+export function setFont(ctx, declarations, scale) {
     let fontSize = `${10 * scale}px`;
     let fontWeight = "normal";
     let fontFamily = "sans-serif";
 
-    if (rule.declarations["font"]) {
+    if (declarations["font"]) {
         // It would be nice for the specific properties to override the
         // shorthand, but it would complicate things a bit.
-        ctx.font = rule.declarations["font"].replace(/\d+(?:\.\d+)?/, s => `${+s * scale}`);
+        ctx.font = declarations["font"].replace(/\d+(?:\.\d+)?/, s => `${+s * scale}`);
     }
     else {
-        if (rule.declarations["font-size"]) {
-            fontSize = rule.declarations["font-size"].replace(/^\d[\d.]*/, m => `${+m * scale}`);
+        if (declarations["font-size"]) {
+            fontSize = declarations["font-size"].replace(/^\d[\d.]*/, m => `${+m * scale}`);
         }
 
-        if (rule.declarations["font-weight"]) {
-            fontWeight = rule.declarations["font-weight"];
+        if (declarations["font-weight"]) {
+            fontWeight = declarations["font-weight"];
         }
 
-        if (rule.declarations["font-family"]) {
-            fontFamily = rule.declarations["font-family"];
+        if (declarations["font-family"]) {
+            fontFamily = declarations["font-family"];
         }
 
         ctx.font = `${fontWeight} ${fontSize} ${fontFamily}`;

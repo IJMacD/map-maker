@@ -5,33 +5,33 @@ import { applyTransform } from "./transform";
 
 /**
  * @param {CanvasRenderingContext2D} ctx
- * @param {StyleRule} rule
+ * @param {{ [property: string]: string }} declarations
  * @param {[number, number]} position
  * @param {OverpassElement?} element
  * @param {MapContext} context
  */
-export function renderPoint(ctx, rule, [x, y], element, context) {
+export function renderPoint(ctx, declarations, [x, y], element, context) {
     ctx.save();
 
     const { scale } = context;
 
-    setStrokeFill(ctx, rule, element, context);
+    setStrokeFill(ctx, declarations, element, context);
 
-    if (rule.declarations["position"] === "absolute") {
-        x = parseFloat(rule.declarations["left"]) || 0;
-        y = parseFloat(rule.declarations["top"]) || 0;
+    if (declarations["position"] === "absolute") {
+        x = parseFloat(declarations["left"]) || 0;
+        y = parseFloat(declarations["top"]) || 0;
     }
 
     ctx.translate(x * scale, y * scale);
 
-    applyTransform(ctx, rule, scale);
+    applyTransform(ctx, declarations, scale);
 
-    if (rule.declarations["size"]) {
-        const shape = rule.declarations["shape"] ?? "circle";
+    if (declarations["size"]) {
+        const shape = declarations["shape"] ?? "circle";
 
         ctx.beginPath();
 
-        const r = +evaluateValue(rule.declarations["size"], element, context) * scale;
+        const r = +evaluateValue(declarations["size"], element, context) * scale;
 
         if (shape === "square") {
             ctx.moveTo(-r, -r);
@@ -54,25 +54,25 @@ export function renderPoint(ctx, rule, [x, y], element, context) {
             ctx.ellipse(0, 0, r, r, 0, 0, Math.PI * 2);
         }
 
-        rule.declarations["fill"] && ctx.fill();
-        rule.declarations["stroke"] && ctx.stroke();
+        declarations["fill"] && ctx.fill();
+        declarations["stroke"] && ctx.stroke();
     }
 
-    if (rule.declarations["path"]) {
+    if (declarations["path"]) {
         ctx.beginPath();
 
-        drawPath(ctx, rule.declarations["path"], scale);
+        drawPath(ctx, declarations["path"], scale);
 
-        rule.declarations["fill"] && ctx.fill();
-        rule.declarations["stroke"] && ctx.stroke();
+        declarations["fill"] && ctx.fill();
+        declarations["stroke"] && ctx.stroke();
     }
 
     // Syntax:
     //  url(<URL>) [<width> [<height>]]
     //  url(https://ijmacd.github.io/map-maker/logo192.png) 90px 120px;
     const urlRe = /url\(([^)]+)\)(?:\s+([^\s]+)(?:\s+([^\s]+))?)?/;
-    if (urlRe.test(rule.declarations["icon"])) {
-        const m = urlRe.exec(rule.declarations["icon"]);
+    if (urlRe.test(declarations["icon"])) {
+        const m = urlRe.exec(declarations["icon"]);
         const url = m[1];
         const img = new Image();
         img.src = url;
@@ -83,11 +83,11 @@ export function renderPoint(ctx, rule, [x, y], element, context) {
         img.addEventListener("load", () => {
             // The image is drawn in a callback so the render context state is lost
             ctx.save();
-            // globalSetup(ctx, rule);
+            // globalSetup(ctx, declarations);
 
             ctx.translate(x, y);
 
-            // applyTransform(ctx, rule);
+            // applyTransform(ctx, declarations);
 
             if (w) {
                 const height = !isNaN(h) ? h : img.height * (w / img.width);
@@ -101,8 +101,8 @@ export function renderPoint(ctx, rule, [x, y], element, context) {
         });
     }
 
-    if (rule.declarations["content"]) {
-        renderText(ctx, rule, [0, 0], element, context);
+    if (declarations["content"]) {
+        renderText(ctx, declarations, [0, 0], element, context);
     }
 
     ctx.restore();

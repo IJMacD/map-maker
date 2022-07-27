@@ -42,7 +42,7 @@ The contents and style of a generated map are specified in a bespoke style scrip
 
 It's important to note however, that in direct opposition to the notorious Cascading Style Sheets this script is not cascading.
 
-Every rule specifies zero or more new drawing instructions. It's not possible to set up some shared property near the beginning of the script and expect it to still be in effect for a matching element later. Each rule is isolated with its own state which is reset between rules.
+Every rule specifies zero or more new drawing instructions. It's not possible to set up some shared property near the beginning of the script and expect it to still be in effect for a matching element later. Each rule is isolated with its own state which is reset between rules. (Except wildcard types - see below)
 
 ### Example
 
@@ -241,6 +241,20 @@ dummy {
 <figcaption>Place arbitrary features on the canvas.</figcaption>
 </figure>
 
+#### Wildcard `*`
+
+*Important: This does **not** render a new layer on the map. Instead it can be used to apply additional rules to other selectors.*
+
+```css
+way[highway=primary] {
+    stroke: green;
+    stroke-width: 2;
+}
+*[tunnel=yes] {
+    opacity: 0.5;
+}
+```
+
 ### Tags
 
 None of the nodes, ways and relations in OSM intrinsically have any meaning. They are given meaning with many different tags by the numerous contributors to OSM. You can check which tags are available at the [OpenStreetMap Wiki](https://wiki.openstreetmap.org/wiki/Map_Features).
@@ -286,8 +300,6 @@ way[railway=rail][frequency=50] {
 </figure>
 
 #### Tag Inequalities
-
-*Not supported yet. But hopefully soon.*
 
 ```css
 way[railway=rail][frequency=0] {
@@ -349,7 +361,7 @@ Tests some property of the way or area.
 Implemented properties*:
 
 * `area` - Area enclosed by shape. Calculated by the cross-product method but taking the absolute value to ensure positive area.
-* `length` - Overall length of way or area
+* `length` - Overall length of way or perimeter of area
 * `width` - horizontal width of the bounding box of this shape
 * `height` - horizontal width of the bounding box of this shape
 
@@ -536,6 +548,14 @@ node[place=town]::content-box {
 ### Match Queries
 
 Analogous to media queries in CSS but use the keyword `@match` instead.
+
+```css
+@match (zoom >= 16) {
+    area[building] {
+        fill: pink;
+    }
+}
+```
 
 ## Declarations / Properties
 
