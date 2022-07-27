@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/map-maker/static/css/main.bf01ead8.css",
-    "main.js": "/map-maker/static/js/main.1047c500.js",
+    "main.js": "/map-maker/static/js/main.44a75442.js",
     "index.html": "/map-maker/index.html",
     "main.bf01ead8.css.map": "/map-maker/static/css/main.bf01ead8.css.map",
-    "main.1047c500.js.map": "/map-maker/static/js/main.1047c500.js.map"
+    "main.44a75442.js.map": "/map-maker/static/js/main.44a75442.js.map"
   },
   "entrypoints": [
     "static/css/main.bf01ead8.css",
-    "static/js/main.1047c500.js"
+    "static/js/main.44a75442.js"
   ]
 }
