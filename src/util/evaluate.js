@@ -7,29 +7,16 @@ const SHIFT_REGISTER_VALUE = 473;
  *  content: "hello";
  *  content: tag(name);
  *  content: "hello " tag(name);
- *  fill: tag(color);
- *  size: tag(count);
- *
- * Constants should just pass straight through:
- *  size: 2;
- *  fill: red;
- *  fill: #000;
- *  fill: rgb(255,0,0);
  *
  * @param {string} value
  * @param {OverpassElement?} element
  * @param {MapContext} context
  * @returns
  */
-export function evaluateValue (value, element, context) {
+ export function evaluateText (value, element, context) {
 
     if (!value) {
         return "";
-    }
-
-    // Gives (deterministic) random colour
-    if (value === "random") {
-        return `hsl(${((element?.id ?? 0) * SHIFT_REGISTER_VALUE)%360}, 100%, 50%)`;
     }
 
     let index = 0;
@@ -99,4 +86,73 @@ export function evaluateValue (value, element, context) {
     }
 
     return out.join("");
+}
+
+/**
+ * Evaluate right-hand-side in following usage examples:
+ *  fill: tag(color);
+ *
+ * Constants should just pass straight through:
+ *  fill: red;
+ *  fill: #000;
+ *  fill: rgb(255,0,0);
+ *
+ * @param {string} value
+ * @param {OverpassElement?} element
+ * @param {MapContext} context
+ * @returns
+ */
+export function evaluateColour (value, element, context) {
+
+    if (!value) {
+        return "";
+    }
+
+    // Gives (deterministic) random colour
+    if (value === "random") {
+        return `hsl(${((element?.id ?? 0) * SHIFT_REGISTER_VALUE)%360}, 100%, 50%)`;
+    }
+
+    // Handle tag() function.
+    // Evaluates to the value of a tag, or optionally a default constant.
+    // e.g.
+    //  tag(name, "UNKNOWN");
+    //  tag(size, 3);
+    const match = /^tag\(([^),]+)(?:,\s*([^),]+))?\s*\)/.exec(value);
+    if (element && match) {
+        return (element.tags[match[1]] || match[2]?.replace(/^"|"$/g, "") || "");
+    }
+
+    return value;
+}
+
+/**
+ * Evaluate right-hand-side in following usage examples:
+ *  size: tag(count);
+ *
+ * Constants should just pass straight through:
+ *  size: 2;
+ *
+ * @param {string} value
+ * @param {OverpassElement?} element
+ * @param {MapContext} context
+ * @returns
+ */
+export function evaluateDimension (value, element, context) {
+
+    if (!value) {
+        return "";
+    }
+
+    // Handle tag() function.
+    // Evaluates to the value of a tag, or optionally a default constant.
+    // e.g.
+    //  tag(name, "UNKNOWN");
+    //  tag(size, 3);
+    const match = /^tag\(([^),]+)(?:,\s*([^),]+))?\s*\)/.exec(value);
+    if (element && match) {
+        return (element.tags[match[1]] || match[2]?.replace(/^"|"$/g, "") || "");
+    }
+
+    return value;
 }

@@ -1,4 +1,4 @@
-import { evaluateValue } from "./evaluate";
+import { evaluateColour } from "./evaluate";
 
 /**
  * @param {{ [property: string]: string }} declarations
@@ -6,9 +6,9 @@ import { evaluateValue } from "./evaluate";
  * @param {MapContext} context
  */
 export function parseStrokeFill(declarations, element, context) {
-    const fillStyle = evaluateValue(declarations["fill"], element, context);
+    const fillStyle = evaluateColour(declarations["fill"], element, context);
     let lineWidth;
-    let strokeStyle = evaluateValue(declarations["stroke"], element, context);
+    let strokeStyle = evaluateColour(declarations["stroke"], element, context);
     /** @type {number[]} */
     let lineDash;
 

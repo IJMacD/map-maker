@@ -1,4 +1,4 @@
-import { evaluateValue } from "../../util/evaluate";
+import { evaluateDimension } from "../../util/evaluate";
 import { renderText } from "./renderText";
 import { setStrokeFill } from "./setStrokeFill";
 import { applyTransform } from "./transform";
@@ -31,7 +31,7 @@ export function renderPoint(ctx, declarations, [x, y], element, context) {
 
         ctx.beginPath();
 
-        const r = +evaluateValue(declarations["size"], element, context) * scale;
+        const r = +evaluateDimension(declarations["size"], element, context) * scale;
 
         if (shape === "square") {
             ctx.moveTo(-r, -r);

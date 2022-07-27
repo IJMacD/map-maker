@@ -1,4 +1,4 @@
-import { evaluateValue } from "./evaluate";
+import { evaluateText } from "./evaluate";
 
 /**
  * @param {{ [property: string]: string }} declarations
@@ -11,5 +11,5 @@ export function getContent(declarations, element, context) {
     if (!content)
         return "";
 
-    return evaluateValue(content, element, context);
+    return evaluateText(content, element, context);
 }
